@@ -5,9 +5,7 @@ namespace Archipelago.HollowKnight
 {
     public class ArchipelagoItem : AbstractItem
     {
-        private readonly int locationId;
-
-        public ArchipelagoItem(string name, int locationId)
+        public ArchipelagoItem(string name)
         {
             this.name = name;
             UIDef = new ItemChanger.UIDefs.MsgUIDef()
@@ -18,16 +16,11 @@ namespace Archipelago.HollowKnight
             };
             InteropTag tag = AddTag<InteropTag>();
             tag.Message = "RecentItems";
-            tag.Properties["IgnoreItem"] = true;
-            this.locationId = locationId;
+            tag.Properties["DisplayMessage"] = $"{this.name}\nsent to the multiworld.";
         }
 
         public override void GiveImmediate(GiveInfo info)
         {
-            if (Archipelago.Instance.session != null && Archipelago.Instance.session.Socket.Connected)
-            {
-                Archipelago.Instance.session.Locations.CompleteLocationChecks(locationId);
-            }
             ItemChanger.Internal.MessageController.Enqueue(Archipelago.Sprite, name);
         }
     }

@@ -7,22 +7,13 @@ namespace Archipelago.HollowKnight
 {
     public class ArchipelagoLocation : AutoLocation
     {
+        private readonly string displayMessage;
 
-        //public override GiveInfo GetGiveInfo()
-        //{
-        //    return new GiveInfo
-        //    {
-        //        FlingType = FlingType.DirectDeposit,
-        //        Callback = (t) => Archipelago.Instance.LogDebug($"Picked up item from AP location: {t.GetPreviewName()}"),
-        //        Container = Container.Chest,
-        //        MessageType = MessageType.Corner,
-        //    };
-        //}
-
-        public ArchipelagoLocation(string name)
+        public ArchipelagoLocation(string name, string displayMessage = null)
         {
             this.name = name;
             sceneName = null;
+            this.displayMessage = displayMessage;
         }
 
         public override AbstractPlacement Wrap()
@@ -32,22 +23,23 @@ namespace Archipelago.HollowKnight
                 Location = this
             };
 
-            InteropTag tag = pmt.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplaySource"] = name;
+            if (!string.IsNullOrWhiteSpace(displayMessage))
+            {
+                InteropTag tag = pmt.AddTag<InteropTag>();
+                tag.Message = "RecentItems";
+                tag.Properties["DisplayMessage"] = displayMessage;
+            }
             return pmt;
         }
 
         protected override void OnLoad()
         {
-            // noop for now
-            // throw new NotImplementedException();
+
         }
 
         protected override void OnUnload()
         {
-            // noop for now
-            // throw new NotImplementedException();
+
         }
     }
 }

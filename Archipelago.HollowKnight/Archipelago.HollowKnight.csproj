@@ -39,11 +39,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\Icon.png" />
-    <None Remove="Resources\IconMono.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Icon.png" />
-    <EmbeddedResource Include="Resources\IconMono.png" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Archipelago.MultiClient.Net">
@@ -90,9 +88,6 @@
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>..\DLLs\PlayMaker.dll</HintPath>
-    </Reference>
-    <Reference Include="RecentItemsDisplay">
-      <HintPath>..\DLLs\RecentItemsDisplay.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition">
       <HintPath>..\DLLs\System.ComponentModel.Composition.dll</HintPath>
