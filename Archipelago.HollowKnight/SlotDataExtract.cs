@@ -9,11 +9,11 @@ namespace Archipelago.HollowKnight
 {
     internal static class SlotDataExtract
     {
-        public static Dictionary<string, int> ExtractCostsFromSlotData(object v)
+        public static T ExtractObjectFromSlotData<T>(object v) where T : class
         {
             var jobj = v as JObject;
-            var costsDict = jobj?.ToObject<Dictionary<string, int>>();
-            Archipelago.Instance.LogDebug($"Successfully read costs from SlotData: {jobj}");
+            var costsDict = jobj?.ToObject<T>() ?? default(T);
+            Archipelago.Instance.LogDebug($"Successfully read object from SlotData: {jobj}");
             return costsDict;
         }
     }

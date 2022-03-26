@@ -10,11 +10,8 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
-using ItemChanger.Placements;
-using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 using Modding;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
@@ -25,7 +22,8 @@ namespace Archipelago.HollowKnight
     // BUG: any grant that gives you the void item doesn't have a sprite
     // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
-    // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop
+    // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
+    // TODO: NEXT: Charm cost rando
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -58,7 +56,6 @@ namespace Archipelago.HollowKnight
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
-            On.UIManager.StartNewGame += UIManager_StartNewGame;
             Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
 
@@ -82,7 +79,7 @@ namespace Archipelago.HollowKnight
             }
             else if (Input.GetKeyDown(KeyCode.K))
             {
-                PlayerData.instance.AddGeo(1000);
+                HeroController.instance.AddGeo(1000);
             }
             else if (Input.GetKeyDown(KeyCode.L))
             {
@@ -93,17 +90,17 @@ namespace Archipelago.HollowKnight
                 PlayerData.instance.IntAdd(nameof(PlayerData.dreamOrbs), 500);
                 EventRegister.SendEvent("DREAM ORB COLLECT");
             }
-            else if (Input.GetKeyDown(KeyCode.Quote))
+            else if (Input.GetKeyDown(KeyCode.V))
             {
                 LifebloodCocoonGrants.AwardBlueHeartsFromItemsSafely(new LifebloodItem() { amount = 4 });
+                HeroController.instance.MaxHealthKeepBlue();
             }
         }
 
-        private void UIManager_StartNewGame(On.UIManager.orig_StartNewGame orig, UIManager self, bool permaDeath, bool bossRush)
+        public void ConnectAndRandomize()
         {
             if (!ArchipelagoEnabled)
             {
-                orig(self, permaDeath, bossRush);
                 return;
             }
 
@@ -114,7 +111,6 @@ namespace Archipelago.HollowKnight
             CreateVanillaItemPlacements();
             stackableItems = new StackableItemGrants();
             grubs = new GrubGrants();
-            orig(self, permaDeath, bossRush);
         }
 
         private void ConnectToArchipelago()
@@ -135,8 +131,8 @@ namespace Archipelago.HollowKnight
                 Random = new System.Random(Convert.ToInt32(seed));
 
                 SpecialPlacementHandler.Random = Random;
-                SpecialPlacementHandler.GrubFatherCosts = SlotDataExtract.ExtractCostsFromSlotData(success.SlotData["grub_costs"]);
-                SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractCostsFromSlotData(success.SlotData["essence_costs"]);
+                SpecialPlacementHandler.GrubFatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["grub_costs"]);
+                SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["essence_costs"]);
             }
         }
 
@@ -263,7 +259,6 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug($"Detected shop placement for location: {location}");
                 SpecialPlacementHandler.PlaceShopItem(pmt, item);
-                
             }
             else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {

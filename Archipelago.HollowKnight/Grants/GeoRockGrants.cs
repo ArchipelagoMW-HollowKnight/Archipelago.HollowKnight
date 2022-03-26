@@ -21,14 +21,17 @@ namespace Archipelago.HollowKnight.Grants
         /// </summary>
         public static void RewardGeoFromItemsSafely(List<AbstractItem> items)
         {
+            var amount = 0;
             foreach (AbstractItem item in items)
             {
                 var geoRockItem = item as GeoRockItem;
                 if (geoRockItem != null)
                 {
-                    PlayerData.instance.AddGeo(geoRockItem.amount);
+                    amount += geoRockItem.amount;
                 }
             }
+
+            PlayerData.instance.AddGeo(amount);
         }
     }
 }
