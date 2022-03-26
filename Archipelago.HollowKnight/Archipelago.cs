@@ -345,6 +345,9 @@ namespace Archipelago.HollowKnight
         private void Events_OnItemChangerUnhook()
         {
             DisconnectArchipelago();
+            vanillaItemPlacements = null;
+            stackableItems = null;
+            grubFatherCosts = null;
         }
 
         private void DisconnectArchipelago()
