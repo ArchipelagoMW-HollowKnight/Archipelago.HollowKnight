@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using ItemChanger;
 
-namespace Archipelago.HollowKnight
+namespace Archipelago.HollowKnight.Grants
 {
     internal class StackableItemGrants
     {
@@ -15,12 +10,17 @@ namespace Archipelago.HollowKnight
         private int sealCounter = 0;
         private int arcaneCounter = 0;
         private int rancidCounter = 0;
+        private int simpleKeyCounter = 0;
+        private int charmNotchCounter = 0;
 
         private AbstractPlacement[] kingsIdols = new AbstractPlacement[8];
         private AbstractPlacement[] wanderersJournals = new AbstractPlacement[14];
         private AbstractPlacement[] hallownestSeals = new AbstractPlacement[17];
         private AbstractPlacement[] arcaneEggs = new AbstractPlacement[4];
         private AbstractPlacement[] rancidEggs = new AbstractPlacement[21];
+        private AbstractPlacement[] simpleKeys = new AbstractPlacement[4];
+        //TODO: Possibly make it an option to put notches in starting inventory and default to 0;
+        private AbstractPlacement[] charmNotches = new AbstractPlacement[8];
 
         public StackableItemGrants()
         {
@@ -69,16 +69,45 @@ namespace Archipelago.HollowKnight
                 rancidEggs[i] = pmt;
             }
 
-            ItemChangerMod.AddPlacements(kingsIdols.Concat(wanderersJournals).Concat(hallownestSeals).Concat(arcaneEggs).Concat(rancidEggs));
+            for (int i = 0; i < 4; i++)
+            {
+                var item = Finder.GetItem("Simple_Key");
+                var location = new ArchipelagoLocation("Simple Key");
+                var pmt = location.Wrap();
+                pmt.Add(item);
+                simpleKeys[i] = pmt;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                var item = Finder.GetItem("Charm_Notch");
+                var location = new ArchipelagoLocation("Charm Notch");
+                var pmt = location.Wrap();
+                pmt.Add(item);
+                charmNotches[i] = pmt;
+            }
+
+            ItemChangerMod.AddPlacements(kingsIdols
+                                        .Concat(wanderersJournals)
+                                        .Concat(hallownestSeals)
+                                        .Concat(arcaneEggs)
+                                        .Concat(rancidEggs)
+                                        .Concat(simpleKeys)
+                                        .Concat(charmNotches));
         }
 
         public static bool IsStackableItem(string itemName)
         {
-            return new string[] { "King's_Idol", "Wanderer's_Journal", "Hallownest_Seal", "Arcane_Egg", "Rancid_Egg" }.Contains(itemName);
+            return new string[] 
+            { 
+                "King's_Idol", "Wanderer's_Journal", "Hallownest_Seal", 
+                "Arcane_Egg", "Rancid_Egg", "Simple_Key", "Charm_Notch" 
+            }.Contains(itemName);
         }
 
         public void GrantItemByName(string itemName)
         {
+            Archipelago.Instance.LogDebug($"Granting stackable item by name: {itemName}");
             switch (itemName)
             {
                 case "King's_Idol":
@@ -95,6 +124,12 @@ namespace Archipelago.HollowKnight
                     break;
                 case "Rancid_Egg":
                     GrantRancidEgg();
+                    break;
+                case "Simple_Key":
+                    GrantSimpleKey();
+                    break;
+                case "Charm_Notch":
+                    GrantCharmNotch();
                     break;
             }
         }
@@ -160,6 +195,34 @@ namespace Archipelago.HollowKnight
             if (rancidCounter < rancidEggs.Length)
             {
                 var pmt = rancidEggs[rancidCounter++];
+                pmt.GiveAll(new GiveInfo()
+                {
+                    Container = Container.Unknown,
+                    FlingType = FlingType.DirectDeposit,
+                    MessageType = MessageType.Corner,
+                });
+            }
+        }
+
+        public void GrantSimpleKey()
+        {
+            if (simpleKeyCounter < simpleKeys.Length)
+            {
+                var pmt = simpleKeys[simpleKeyCounter++];
+                pmt.GiveAll(new GiveInfo()
+                {
+                    Container = Container.Unknown,
+                    FlingType = FlingType.DirectDeposit,
+                    MessageType = MessageType.Corner,
+                });
+            }
+        }
+
+        public void GrantCharmNotch()
+        {
+            if (charmNotchCounter < charmNotches.Length)
+            {
+                var pmt = charmNotches[charmNotchCounter++];
                 pmt.GiveAll(new GiveInfo()
                 {
                     Container = Container.Unknown,

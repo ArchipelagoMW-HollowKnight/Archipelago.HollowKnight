@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Archipelago.HollowKnight.Grants;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
@@ -14,12 +14,18 @@ using ItemChanger.Placements;
 using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 using Modding;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
+    // Known Issues
+    // BUG: grubfather and (maybe) seer placements show twice in recent items display.
+    // BUG: loading a save and resuming a multi doesn't work
+    // BUG: any grant that gives you the void item doesn't have a sprite
+    // TODO: Charm Notch rando
+    // TODO: Grimmkin flame rando, I guess?
+    // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -34,9 +40,9 @@ namespace Archipelago.HollowKnight
 
         internal ArchipelagoSession session;
         private StackableItemGrants stackableItems;
+        private GrubGrants grubs;
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
         private long seed = 0;
-        private Dictionary<string, int> grubFatherCosts = new();
 
         public override string GetVersion() => new Version(0, 0, 1).ToString();
 
@@ -70,6 +76,27 @@ namespace Archipelago.HollowKnight
             {
                 stackableItems.GrantArcaneEgg();
             }
+            else if (Input.GetKeyDown(KeyCode.G))
+            {
+                grubs.GrantGrub();
+            }
+            else if (Input.GetKeyDown(KeyCode.K))
+            {
+                PlayerData.instance.AddGeo(1000);
+            }
+            else if (Input.GetKeyDown(KeyCode.L))
+            {
+                stackableItems.GrantRancidEgg();
+            }
+            else if (Input.GetKeyDown(KeyCode.Semicolon))
+            {
+                PlayerData.instance.IntAdd(nameof(PlayerData.dreamOrbs), 500);
+                EventRegister.SendEvent("DREAM ORB COLLECT");
+            }
+            else if (Input.GetKeyDown(KeyCode.Quote))
+            {
+                LifebloodCocoonGrants.AwardBlueHeartsFromItemsSafely(new LifebloodItem() { amount = 4 });
+            }
         }
 
         private void UIManager_StartNewGame(On.UIManager.orig_StartNewGame orig, UIManager self, bool permaDeath, bool bossRush)
@@ -86,6 +113,7 @@ namespace Archipelago.HollowKnight
             CreateItemPlacements();
             CreateVanillaItemPlacements();
             stackableItems = new StackableItemGrants();
+            grubs = new GrubGrants();
             orig(self, permaDeath, bossRush);
         }
 
@@ -102,44 +130,14 @@ namespace Archipelago.HollowKnight
                 throw new Exception(string.Join(", ", failure.Errors));
             }
             else if (loginResult is LoginSuccessful success)
-            {
-                try
-                {
-                    LogDebug($"Seed object type is: {success.SlotData["seed"].GetType().FullName}");
-                    seed = (long)success.SlotData["seed"];
-                    Random = new System.Random(Convert.ToInt32(seed));
-                    LogDebug("Successfully read the seed from the slot data.");
-                }
-                catch (Exception ex)
-                {
-                    LogError($"Could not get seed out of slot data or seed was invalid format. Message: {ex.Message}");
-                    Random = new System.Random();
-                }
+            {                    
+                seed = (long)success.SlotData["seed"];
+                Random = new System.Random(Convert.ToInt32(seed));
 
-                grubFatherCosts = ExtractGrubfatherCosts(success.SlotData["grub_costs"]);
+                SpecialPlacementHandler.Random = Random;
+                SpecialPlacementHandler.GrubFatherCosts = SlotDataExtract.ExtractCostsFromSlotData(success.SlotData["grub_costs"]);
+                SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractCostsFromSlotData(success.SlotData["essence_costs"]);
             }
-        }
-
-        private Dictionary<string, int> ExtractGrubfatherCosts(object v)
-        {
-            var jobj = v as JObject;
-            var costsDict = jobj?.ToObject<Dictionary<string, int>>();
-            if (costsDict == null)
-            {
-                LogError("Could not read grubfather costs. Defaulting to random costs.");
-                return new Dictionary<string, int>
-                {
-                    ["Grubfather_1"] = Random.Next(0, 47),
-                    ["Grubfather_2"] = Random.Next(0, 47),
-                    ["Grubfather_3"] = Random.Next(0, 47),
-                    ["Grubfather_4"] = Random.Next(0, 47),
-                    ["Grubfather_5"] = Random.Next(0, 47),
-                    ["Grubfather_6"] = Random.Next(0, 47),
-                    ["Grubfather_7"] = Random.Next(0, 47),
-                };
-            }
-            LogDebug("Successfully read grubfather cost.");
-            return costsDict;
         }
 
         private void Items_ItemReceived(ReceivedItemsHelper helper)
@@ -154,25 +152,41 @@ namespace Archipelago.HollowKnight
             var name = session.Items.GetItemName(id);
             LogDebug($"Item name is {name}.");
 
-            //if (IsShopPlacement(name))
-            //{
-            //    var shopLocation = Finder.GetLocation(StripShopSuffix(name));
-            //    var shopPlacement = shopLocation.Wrap() as ShopPlacement;
-            //}
-
-            // TODO: receive item doesn't seem to work
-            // TODO: implement essence and egg shops
-            // TODO: receiving items that belonged to shop slots doesn't work
-            if (StackableItemGrants.IsStackableItem(name))
-            {
-                LogDebug($"Detected stackable item received. Granting a: {name}");
-                stackableItems.GrantItemByName(name);
-                return;
-            }
-
+            // TODO: implement essence and egg shops (possibly by auto granting location check with enough essence/eggs collected)
+            // TODO: buying an item in the shop should send a location check (test it now, see if it works)
+            // TODO: create an interface and genericize the xxxGrants classes.
             if (vanillaItemPlacements.TryGetValue(name, out var placement))
             {
                 LogDebug($"Found vanilla placement for {name}.");
+
+                if (StackableItemGrants.IsStackableItem(name))
+                {
+                    LogDebug($"Detected stackable item received. Granting a: {name}");
+                    stackableItems.GrantItemByName(name);
+                    return;
+                }
+
+                if (GeoRockGrants.IsGeoRockItem(name))
+                {
+                    LogDebug("Detecting vanilla item is geo rock item.");
+                    GeoRockGrants.RewardGeoFromItemsSafely(placement.Items);
+                    return;
+                }
+
+                if (LifebloodCocoonGrants.IsLifebloodCocoonItem(name))
+                {
+                    LogDebug("Detecting vanilla item is lifeblood cocoon.");
+                    LifebloodCocoonGrants.AwardBlueHeartsFromItemsSafely(placement.Items.ToArray());
+                    return;
+                }
+
+                if (name == "Grub")
+                {
+                    LogDebug("Detecting vanilla item is a grub.");
+                    grubs.GrantGrub();
+                    return;
+                }
+
                 placement.GiveAll(new GiveInfo()
                 {
                     FlingType = FlingType.DirectDeposit,
@@ -206,9 +220,10 @@ namespace Archipelago.HollowKnight
         public void PlaceItem(string location, string name, int apLocationId)
         {
             LogDebug($"Placing item {name} into {location} with ID {apLocationId}");
+            var originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
             AbstractLocation loc = Finder.GetLocation(location);
-            // TODO: remove this when logic has properly been imported and AP data isn't corrupt.
+            // TODO: remove this when logic has properly been imported and this mod can handle all location names.
             if (loc == null)
             {
                 LogDebug($"Location was null: Name: {location}.");
@@ -222,7 +237,15 @@ namespace Archipelago.HollowKnight
             if (Finder.ItemNames.Contains(name))
             {
                 // Since HK is a remote items game, I don't want the placement to actually do anything. The item will come from the server.
-                item = new VoidItem();
+                var originalItem = Finder.GetItem(name);
+                if (originalItem != null)
+                {
+                    item = new DisguisedVoidItem(originalItem);
+                }
+                else
+                {
+                    item = new VoidItem();
+                }
             }
             else
             {
@@ -230,29 +253,32 @@ namespace Archipelago.HollowKnight
                 item = new ArchipelagoItem(name);
             }
 
-            pmt.OnVisitStateChanged += (x) =>
+            item.OnGive += (x) =>
             {
-                LogDebug($"State visit changed. Old flags: {x.Orig} New flags: {x.NewFlags}");
-                if (!x.NoChange && x.NewFlags.HasFlag(VisitState.ObtainedAnyItem))
-                {
-                    session.Locations.CompleteLocationChecks(apLocationId);
-                }
+                var id = session.Locations.GetLocationIdFromName("Hollow Knight", originalLocation);
+                session.Locations.CompleteLocationChecks(id);
             };
 
-            if (IsShopPlacement(location))
+            if (SpecialPlacementHandler.IsShopPlacement(location))
             {
-                var shopPlacement = pmt as ShopPlacement;
-                shopPlacement.AddItemWithCost(item, GenerateGeoCost());
+                LogDebug($"Detected shop placement for location: {location}");
+                SpecialPlacementHandler.PlaceShopItem(pmt, item);
+                
             }
-            else if (location.StartsWith("Grubfather"))
+            else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {
-                var costChestPlacement = pmt as CostChestPlacement;
-                if (!costChestPlacement.HasTag<DestroyGrubRewardTag>())
-                { 
-                    var tag = costChestPlacement.AddTag<DestroyGrubRewardTag>();
-                    tag.destroyRewards = GrubfatherRewards.AllNonGeo;
-                }
-                costChestPlacement.AddItem(item, Cost.NewGrubCost(GetGrubCostForLocation(location)));
+                LogDebug($"Detected seer placement for location: {location}.");
+                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item);
+            }
+            else if (SpecialPlacementHandler.IsEggShopPlacement(location))
+            {
+                LogDebug($"Detected egg shop placement for location: {location}.");
+                SpecialPlacementHandler.PlaceEggShopItem(pmt, item);
+            }
+            else if (SpecialPlacementHandler.IsGrubfatherPlacement(location))
+            {
+                LogDebug($"Detected Grubfather placement for original location: {originalLocation}. Trimmed location: {location}");
+                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item);
             }
             else
             {
@@ -262,30 +288,6 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.AddPlacements(pmt.Yield());
         }
 
-        private int GetGrubCostForLocation(string location)
-        {
-            if (grubFatherCosts.TryGetValue(location, out var cost))
-            {
-                return cost;
-            }
-            else
-            {
-                LogError($"Attempted to get Grubfather cost for location '{location}' but key was not present.");
-                return 0;
-            }
-        }
-
-        private Cost GenerateGeoCost()
-        {
-            return Cost.NewGeoCost(Random.Next(1, 400));
-        }
-
-        private bool IsShopPlacement(string location)
-        {
-            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra, LocationNames.Leg_Eater };
-            return names.Any(x => location.StartsWith(x));
-        }
-
         private string StripShopSuffix(string location)
         {
             if (string.IsNullOrEmpty(location))
@@ -293,7 +295,12 @@ namespace Archipelago.HollowKnight
                 return null;
             }
 
-            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra, LocationNames.Leg_Eater };
+            var names = new[] 
+            { 
+                LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra, 
+                LocationNames.Leg_Eater, LocationNames.Egg_Shop, LocationNames.Seer, LocationNames.Grubfather 
+            };
+
             foreach (var name in names)
             {
                 if (location.StartsWith(name))
@@ -322,9 +329,6 @@ namespace Archipelago.HollowKnight
                     shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
                     sprite = new BoxedSprite(item.UIDef.GetSprite())
                 };
-                //InteropTag tag = placement.AddTag<InteropTag>();
-                //tag.Message = "RecentItems";
-                //tag.Properties["DisplaySource"] = name;
 
                 vanillaItemPlacements.Add(name, placement);
             }
@@ -343,6 +347,7 @@ namespace Archipelago.HollowKnight
             vanillaItemPlacements = RetrieveVanillaItemPlacementsFromSave();
         }
 
+        //TODO: I don't think this works. I need to retireve the custom placements somehow. homothety suggested ItemChanger.Internal.Ref.Settings.Placements
         private Dictionary<string, AbstractPlacement> RetrieveVanillaItemPlacementsFromSave()
         {
             var placements = new Dictionary<string, AbstractPlacement>();
@@ -365,7 +370,8 @@ namespace Archipelago.HollowKnight
             DisconnectArchipelago();
             vanillaItemPlacements = null;
             stackableItems = null;
-            grubFatherCosts = null;
+            SpecialPlacementHandler.SeerCosts = null;
+            SpecialPlacementHandler.GrubFatherCosts = null;
         }
 
         private void DisconnectArchipelago()
