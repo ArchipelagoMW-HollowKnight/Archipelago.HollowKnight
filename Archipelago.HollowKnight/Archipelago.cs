@@ -340,6 +340,24 @@ namespace Archipelago.HollowKnight
             }
 
             ConnectToArchipelago();
+            vanillaItemPlacements = RetrieveVanillaItemPlacementsFromSave();
+        }
+
+        private Dictionary<string, AbstractPlacement> RetrieveVanillaItemPlacementsFromSave()
+        {
+            var placements = new Dictionary<string, AbstractPlacement>();
+            var allItems = Finder.GetFullItemList().Where(kvp => kvp.Value is not CustomSkillItem).Select(x => x.Key);
+            foreach (var item in allItems)
+            {
+                var location = Finder.GetLocation($"Vanilla_{item}");
+                if (location == null)
+                {
+                    LogDebug($"Could not find previous vanilla item placement for item name: {item}");
+                    continue;
+                }
+                placements.Add(item, location.Wrap());
+            }
+            return placements;
         }
 
         private void Events_OnItemChangerUnhook()
