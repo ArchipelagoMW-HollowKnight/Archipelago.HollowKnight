@@ -321,7 +321,4 @@
       <HintPath>..\DLLs\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\.gitignore" />
-  </ItemGroup>
 </Project>
