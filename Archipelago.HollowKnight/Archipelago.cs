@@ -20,6 +20,7 @@ namespace Archipelago.HollowKnight
     // BUG: grubfather and (maybe) seer placements show twice in recent items display.
     // BUG: loading a save and resuming a multi doesn't work
     // BUG: any grant that gives you the void item doesn't have a sprite
+    // TODO: figure out egg shop logic/how they do placements
     // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
