@@ -30,6 +30,7 @@ namespace Archipelago.HollowKnight
 
         internal static Archipelago Instance;
         internal static Sprite Sprite;
+        internal static Sprite SmallSprite;
         internal static System.Random Random;
         
         internal SpriteManager spriteManager;
@@ -52,6 +53,7 @@ namespace Archipelago.HollowKnight
             Instance = this;
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
             Sprite = spriteManager.GetSprite("Icon");
+            SmallSprite = spriteManager.GetSprite("IconSmall");
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 

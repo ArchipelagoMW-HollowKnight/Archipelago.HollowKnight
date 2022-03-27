@@ -11,8 +11,8 @@ namespace Archipelago.HollowKnight
             UIDef = new ItemChanger.UIDefs.MsgUIDef()
             {
                 name = new BoxedString(this.name),
-                shopDesc = new BoxedString("This looks important. That is, assuming beating the game is important to you."),
-                sprite = new BoxedSprite(Archipelago.Sprite)
+                shopDesc = new BoxedString("This looks important, assuming beating the game is important to you."),
+                sprite = new BoxedSprite(Archipelago.SmallSprite)
             };
             InteropTag tag = AddTag<InteropTag>();
             tag.Message = "RecentItems";

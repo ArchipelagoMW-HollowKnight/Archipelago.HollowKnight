@@ -39,9 +39,13 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\Icon.png" />
+    <None Remove="Resources\IconBig.png" />
+    <None Remove="Resources\IconSmall.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Icon.png" />
+    <EmbeddedResource Include="Resources\IconBig.png" />
+    <EmbeddedResource Include="Resources\IconSmall.png" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Archipelago.MultiClient.Net">
