@@ -5,7 +5,7 @@ using MenuChanger.MenuElements;
 using MenuChanger.MenuPanels;
 using UnityEngine;
 
-namespace Archipelago.HollowKnight
+namespace Archipelago.HollowKnight.MC
 {
     internal class ArchipelagoModeMenuConstructor : ModeMenuConstructor
     {

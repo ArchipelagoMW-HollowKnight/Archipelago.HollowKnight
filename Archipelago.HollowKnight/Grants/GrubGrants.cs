@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Archipelago.HollowKnight.IC;
 using ItemChanger;
 
 namespace Archipelago.HollowKnight.Grants
@@ -22,6 +18,8 @@ namespace Archipelago.HollowKnight.Grants
                 pmt.Add(item);
                 grubs[i] = pmt;
             }
+
+            ItemChangerMod.AddPlacements(grubs);
         }
 
         public void GrantGrub()

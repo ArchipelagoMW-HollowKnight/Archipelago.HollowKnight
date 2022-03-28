@@ -1,63 +1,87 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Archipelago.HollowKnight.IC;
 using ItemChanger;
 using ItemChanger.Items;
-using UnityEngine;
 
 namespace Archipelago.HollowKnight.Grants
 {
-    internal static class LifebloodCocoonGrants
+    internal class LifebloodCocoonGrants
     {
+        private int smallCocoonCounter = 0;
+        private int largeCocoonCounter = 0;
+
+        private AbstractPlacement[] smallCocoons = new AbstractPlacement[10];
+        private AbstractPlacement[] largeCocoons = new AbstractPlacement[10];
+
+        public LifebloodCocoonGrants()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                var item = new LifebloodItem() { amount = 2};
+                var loc = new ArchipelagoLocation($"Two Blue Masks #{i + 1}");
+                var pmt = loc.Wrap();
+                pmt.Add(item);
+                smallCocoons[i] = pmt;
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                var item = new LifebloodItem() { amount = 3 };
+                var loc = new ArchipelagoLocation($"Three Blue Masks #{i + 1}");
+                var pmt = loc.Wrap();
+                pmt.Add(item);
+                largeCocoons[i] = pmt;
+            }
+
+            ItemChangerMod.AddPlacements(smallCocoons.Concat(largeCocoons));
+        }
+
         public static bool IsLifebloodCocoonItem(string itemName)
         {
             return itemName.StartsWith("Lifeblood_Cocoon");
         }
 
-        public static void AwardBlueHeartsFromItemsSafely(params AbstractItem[] items)
+        public void GrantSmallCocoon()
         {
-            var totalAmountToAdd = 0;
-            foreach (AbstractItem item in items)
+            if (smallCocoonCounter < smallCocoons.Length)
             {
-                var lifebloodItem = item as LifebloodItem;
-                if (lifebloodItem != null)
+                var pmt = smallCocoons[smallCocoonCounter++];
+                pmt.GiveAll(new GiveInfo()
                 {
-                    totalAmountToAdd += lifebloodItem.amount;
-                }
+                    Container = Container.Unknown,
+                    FlingType = FlingType.DirectDeposit,
+                    MessageType = MessageType.Any,
+                });
             }
+        }
 
-            var currentBlue = PlayerData.instance.GetInt("healthBlue");
-            var currentMax = PlayerData.instance.GetInt("maxHealth");
+        public void GrantLargeCocoon()
+        {
+            if (largeCocoonCounter < largeCocoons.Length)
+            {
+                var pmt = largeCocoons[largeCocoonCounter++];
+                pmt.GiveAll(new GiveInfo()
+                {
+                    Container = Container.Unknown,
+                    FlingType = FlingType.DirectDeposit,
+                    MessageType = MessageType.Any,
+                });
+            }
+        }
 
-            var sum = currentMax + currentBlue;
-
-            currentBlue += totalAmountToAdd;
-
-            PlayerData.instance.SetInt("healthBlue", currentBlue);
-
-            //TODO: Get blue health display working.
-            //var bhpDisplayFsmOriginal = PlayMakerFSM.FsmList.FirstOrDefault(x => x != null && x.FsmName == "blue_health_display");
-            //var bhpControlFsm = PlayMakerFSM.FsmList.FirstOrDefault(x => x != null && x.FsmName == "Blue Health Control");
-            //var bhpDisplayFsm = GameObject.Instantiate(bhpDisplayFsmOriginal, bhpControlFsm.transform);
-            //if (bhpDisplayFsm != null)
-            //{
-            //    Archipelago.Instance.LogDebug("bhpDisplayFsm was NOT null.");
-            //    var startIdleBool = bhpDisplayFsm.FsmVariables.FindFsmBool("Start Idle");
-            //    startIdleBool.SafeAssign(false);
-
-            //    var bhpNumInt = bhpDisplayFsm.FsmVariables.FindFsmInt("Health Number");
-            //    bhpNumInt.SafeAssign(currentBlue);
-
-            //    //bhpDisplayFsm.SetState("Init");
-            //    //bhpDisplayFsm.SendEvent("APPEAR");
-            //    Archipelago.Instance.LogDebug("Done with bhpDisplayFsm.");
-            //}
-            //else
-            //{
-            //    Archipelago.Instance.LogDebug("bhpDisplayFsm was null.");
-            //}
+        public void GrantCocoonByName(string itemName)
+        {
+            Archipelago.Instance.LogDebug($"Granting lifeblood item by name: {itemName}");
+            switch (itemName)
+            {
+                case "Lifeblood_Cocoon_Small":
+                    GrantSmallCocoon();
+                    break;
+                case "Lifeblood_Cocoon_Large":
+                    GrantLargeCocoon();
+                    break;
+            }
         }
     }
 }

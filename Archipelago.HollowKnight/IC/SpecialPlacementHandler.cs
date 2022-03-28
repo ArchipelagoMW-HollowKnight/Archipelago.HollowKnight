@@ -7,12 +7,13 @@ using ItemChanger.Placements;
 using ItemChanger.Tags;
 using ItemChanger;
 
-namespace Archipelago.HollowKnight
+namespace Archipelago.HollowKnight.IC
 {
     internal static class SpecialPlacementHandler
     {
         public static Dictionary<string, int> GrubFatherCosts;
         public static Dictionary<string, int> SeerCosts;
+        public static Dictionary<string, int> EggCosts;
         public static Random Random;
 
         public static bool IsEggShopPlacement(string location)
@@ -39,9 +40,9 @@ namespace Archipelago.HollowKnight
         public static void PlaceGrubfatherItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
             var costChestPlacement = pmt as CostChestPlacement;
-            
+
             item.OnGive += (x) => Archipelago.Instance.LogDebug($"Running OnGive for grubfather placement in location {originalLocation}.");
-            
+
             if (!costChestPlacement.HasTag<DestroyGrubRewardTag>())
             {
                 var tag = costChestPlacement.AddTag<DestroyGrubRewardTag>();

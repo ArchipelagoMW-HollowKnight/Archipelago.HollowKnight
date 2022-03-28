@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Archipelago.HollowKnight.IC;
 using ItemChanger;
 
 namespace Archipelago.HollowKnight.Grants
@@ -27,7 +28,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 8; i++)
             {
                 var item = Finder.GetItem("King's_Idol");
-                var location = new ArchipelagoLocation("King's Idol");
+                var location = new ArchipelagoLocation($"King's Idol  #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 kingsIdols[i] = pmt;
@@ -36,7 +37,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 14; i++)
             {
                 var item = Finder.GetItem("Wanderer's_Journal");
-                var location = new ArchipelagoLocation("Wanderer's Journal");
+                var location = new ArchipelagoLocation($"Wanderer's Journal  #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 wanderersJournals[i] = pmt;
@@ -45,7 +46,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 17; i++)
             {
                 var item = Finder.GetItem("Hallownest_Seal");
-                var location = new ArchipelagoLocation("Hallownest Seal");
+                var location = new ArchipelagoLocation($"Hallownest Seal #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 hallownestSeals[i] = pmt;
@@ -54,7 +55,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 4; i++)
             {
                 var item = Finder.GetItem("Arcane_Egg");
-                var location = new ArchipelagoLocation("Arcane Egg");
+                var location = new ArchipelagoLocation($"Arcane Egg #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 arcaneEggs[i] = pmt;
@@ -63,7 +64,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 21; i++)
             {
                 var item = Finder.GetItem("Rancid_Egg");
-                var location = new ArchipelagoLocation("Rancid Egg");
+                var location = new ArchipelagoLocation($"Rancid Egg #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 rancidEggs[i] = pmt;
@@ -72,7 +73,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 4; i++)
             {
                 var item = Finder.GetItem("Simple_Key");
-                var location = new ArchipelagoLocation("Simple Key");
+                var location = new ArchipelagoLocation($"Simple Key #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 simpleKeys[i] = pmt;
@@ -81,7 +82,7 @@ namespace Archipelago.HollowKnight.Grants
             for (int i = 0; i < 8; i++)
             {
                 var item = Finder.GetItem("Charm_Notch");
-                var location = new ArchipelagoLocation("Charm Notch");
+                var location = new ArchipelagoLocation($"Charm Notch #{i + 1}");
                 var pmt = location.Wrap();
                 pmt.Add(item);
                 charmNotches[i] = pmt;

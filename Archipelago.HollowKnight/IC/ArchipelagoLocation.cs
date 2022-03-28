@@ -3,9 +3,9 @@ using ItemChanger.Locations;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
 
-namespace Archipelago.HollowKnight
+namespace Archipelago.HollowKnight.IC
 {
-    public class ArchipelagoLocation : AutoLocation
+    public class ArchipelagoLocation : AbstractLocation
     {
         private readonly string displayMessage;
 
@@ -18,10 +18,7 @@ namespace Archipelago.HollowKnight
 
         public override AbstractPlacement Wrap()
         {
-            AutoPlacement pmt = new AutoPlacement(name)
-            {
-                Location = this
-            };
+            var pmt = new ArchipelagoPlacement(name);
 
             if (!string.IsNullOrWhiteSpace(displayMessage))
             {
