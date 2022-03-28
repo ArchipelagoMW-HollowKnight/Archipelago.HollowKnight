@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ItemChanger;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
-using ItemChanger;
 
 namespace Archipelago.HollowKnight.IC
 {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Archipelago.HollowKnight.IC;
 using ItemChanger;
 using ItemChanger.Items;
@@ -18,7 +17,7 @@ namespace Archipelago.HollowKnight.Grants
         {
             for (int i = 0; i < 10; i++)
             {
-                var item = new LifebloodItem() { amount = 2};
+                var item = new LifebloodItem() { amount = 2 };
                 var loc = new ArchipelagoLocation($"Two Blue Masks #{i + 1}");
                 var pmt = loc.Wrap();
                 pmt.Add(item);

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Archipelago.HollowKnight.SlotData
 {
+    // TODO: change to match new slot options someday
     internal class SlotOptions
     {
         [JsonProperty("RandomizeDreamers")]
@@ -118,7 +114,7 @@ namespace Archipelago.HollowKnight.SlotData
         public bool EnemyPogos { get; set; }
 
         [JsonProperty("obscureskips")]
-        public bool ObscureSkips{ get; set; }
+        public bool ObscureSkips { get; set; }
 
         [JsonProperty("randomelevators")]
         public bool RandomElevators { get; set; }
@@ -130,7 +126,7 @@ namespace Archipelago.HollowKnight.SlotData
         public bool RandomFocus { get; set; }
 
         [JsonProperty("shadeskips")]
-        public bool ShadeSkips{ get; set; }
+        public bool ShadeSkips { get; set; }
 
         [JsonProperty("dangerousskips")]
         public bool DangerousSkips { get; set; }
@@ -145,7 +141,7 @@ namespace Archipelago.HollowKnight.SlotData
         public bool InfectionSkips { get; set; }
 
         [JsonProperty("proficientcombat")]
-        public bool ProficientCombat{ get; set; }
+        public bool ProficientCombat { get; set; }
 
         [JsonProperty("cursed")]
         public bool Cursed { get; set; }
@@ -160,7 +156,7 @@ namespace Archipelago.HollowKnight.SlotData
         public bool SpikeTunnels { get; set; }
 
         [JsonProperty("difficultskips")]
-        public bool DifficultSkips{ get; set; }
+        public bool DifficultSkips { get; set; }
 
         [JsonProperty("fireballskips")]
         public bool FireballSkips { get; set; }

@@ -99,10 +99,10 @@ namespace Archipelago.HollowKnight.Grants
 
         public static bool IsStackableItem(string itemName)
         {
-            return new string[] 
-            { 
-                "King's_Idol", "Wanderer's_Journal", "Hallownest_Seal", 
-                "Arcane_Egg", "Rancid_Egg", "Simple_Key", "Charm_Notch" 
+            return new string[]
+            {
+                "King's_Idol", "Wanderer's_Journal", "Hallownest_Seal",
+                "Arcane_Egg", "Rancid_Egg", "Simple_Key", "Charm_Notch"
             }.Contains(itemName);
         }
 

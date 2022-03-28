@@ -1,6 +1,4 @@
 ﻿using ItemChanger;
-using ItemChanger.Locations;
-using ItemChanger.Placements;
 using ItemChanger.Tags;
 
 namespace Archipelago.HollowKnight.IC

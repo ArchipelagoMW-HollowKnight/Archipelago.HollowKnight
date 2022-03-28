@@ -12,7 +12,6 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
-using ItemChanger.Placements;
 using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 using Modding;
