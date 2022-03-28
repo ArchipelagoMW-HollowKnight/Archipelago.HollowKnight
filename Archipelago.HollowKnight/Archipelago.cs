@@ -20,10 +20,10 @@ using UnityEngine;
 namespace Archipelago.HollowKnight
 {
     // Known Issues
-    // BUG: grubfather and (maybe) seer placements show twice in recent items display.
+    // BUG: pickups show up 3 separate times in bottom left corner. once with IC internal name and twice with preview name
+    // TODO: recentitemsdisplay. I can tell it to ignore all my pickups and then manually add an item to the display using the info from the printjson packet.
     // BUG: loading a save and resuming a multi doesn't work
-    // BUG: placements don't seem to "save" when changing scenes. (spits out newtonsoft exceptions into logs but still seems to function for that session)
-    // TODO: figure out egg shop logic/how they do placements
+    // INFO: egg shop has no real logic. costs are just randomized between min and max (0 and 21 default)
     // TODO: Charm Notch rando has to wait until ItemChanger.Modules.PlayerDataEditModule is released (ItemChanger is updated to new version)
     // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
@@ -169,8 +169,6 @@ namespace Archipelago.HollowKnight
             LogDebug($"Item name is {name}.");
 
             // TODO: implement essence and egg shops (possibly by auto granting location check with enough essence/eggs collected)
-            // TODO: buying an item in the shop should send a location check (test it now, see if it works)
-            // TODO: create an interface and genericize the xxxGrants classes.
             if (vanillaItemPlacements.TryGetValue(name, out var placement))
             {
                 LogDebug($"Found vanilla placement for {name}.");
@@ -179,20 +177,6 @@ namespace Archipelago.HollowKnight
                 {
                     LogDebug($"Detected stackable item received. Granting a: {name}");
                     stackableItems.GrantItemByName(name);
-                    return;
-                }
-
-                if (GeoRockGrants.IsGeoRockItem(name))
-                {
-                    LogDebug("Detecting vanilla item is geo rock item.");
-                    GeoRockGrants.RewardGeoFromItemsSafely(placement.Items);
-                    return;
-                }
-
-                if (LifebloodCocoonGrants.IsLifebloodCocoonItem(name))
-                {
-                    LogDebug("Detecting vanilla item is lifeblood cocoon.");
-                    cocoonGrants.GrantCocoonByName(name);
                     return;
                 }
 
@@ -392,6 +376,7 @@ namespace Archipelago.HollowKnight
             cocoonGrants = null;
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;
+            SpecialPlacementHandler.EggCosts = null;
         }
 
         private void DisconnectArchipelago()
