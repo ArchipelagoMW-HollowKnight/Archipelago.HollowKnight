@@ -29,7 +29,7 @@ namespace Archipelago.HollowKnight.MC
             var passwordField = new EntryField<string>(ApPage, "Password: ");
             passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
 
-            var startButton = new SmallButton(ApPage, "Start");
+            var startButton = new BigButton(ApPage, "Start", "Please wait while loading.");
             startButton.OnClick += StartNewGame;
 
             urlField.SetNeighbor(Neighbor.Down, portField);

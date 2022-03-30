@@ -12,7 +12,6 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
-using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 using Modding;
 using UnityEngine;
@@ -20,14 +19,15 @@ using UnityEngine;
 namespace Archipelago.HollowKnight
 {
     // Known Issues
-    // BUG: pickups show up 3 separate times in bottom left corner. once with IC internal name and twice with preview name
-    // TODO: recentitemsdisplay. I can tell it to ignore all my pickups and then manually add an item to the display using the info from the printjson packet.
     // BUG: loading a save and resuming a multi doesn't work
-    // INFO: egg shop has no real logic. costs are just randomized between min and max (0 and 21 default)
-    // TODO: Charm Notch rando has to wait until ItemChanger.Modules.PlayerDataEditModule is released (ItemChanger is updated to new version)
+    // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
     // TODO: Test cases: AP forfeit and AP collect.
+    // NOTE: Tolerances are used to "help" generation of the randomized game be more tolerant of not reaching a precise number of required resources
+    //       Guarantee you can skip X resource with X being your tolerance.
+    // TODO: Far future: put all AP settings into ModeMenu and dynamically generate a YAML (or something)
+    // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -44,7 +44,6 @@ namespace Archipelago.HollowKnight
 
         private StackableItemGrants stackableItems;
         private GrubGrants grubs;
-        private LifebloodCocoonGrants cocoonGrants;
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
         private long seed = 0;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
@@ -106,10 +105,6 @@ namespace Archipelago.HollowKnight
                 PlayerData.instance.IntAdd(nameof(PlayerData.dreamOrbs), 500);
                 EventRegister.SendEvent("DREAM ORB COLLECT");
             }
-            else if (Input.GetKeyDown(KeyCode.V))
-            {
-                cocoonGrants.GrantLargeCocoon();
-            }
         }
 
         public void ConnectAndRandomize()
@@ -132,7 +127,6 @@ namespace Archipelago.HollowKnight
 
             stackableItems = new StackableItemGrants();
             grubs = new GrubGrants();
-            cocoonGrants = new LifebloodCocoonGrants();
         }
 
         private void ConnectToArchipelago()
@@ -173,25 +167,26 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug($"Found vanilla placement for {name}.");
 
-                if (StackableItemGrants.IsStackableItem(name))
-                {
-                    LogDebug($"Detected stackable item received. Granting a: {name}");
-                    stackableItems.GrantItemByName(name);
-                    return;
-                }
+                //if (StackableItemGrants.IsStackableItem(name))
+                //{
+                //    LogDebug($"Detected stackable item received. Granting a: {name}");
+                //    stackableItems.GrantItemByName(name);
+                //    return;
+                //}
 
-                if (name == "Grub")
-                {
-                    LogDebug("Detecting vanilla item is a grub.");
-                    grubs.GrantGrub();
-                    return;
-                }
+                //if (name == "Grub")
+                //{
+                //    LogDebug("Detecting vanilla item is a grub.");
+                //    grubs.GrantGrub();
+                //    return;
+                //}
 
+                // TODO: Note this can be done in itemOnGive in DisguisedVoidItem (and might be better there too)
                 placement.GiveAll(new GiveInfo()
                 {
                     FlingType = FlingType.DirectDeposit,
                     Container = Container.Unknown,
-                    MessageType = MessageType.Corner
+                    MessageType = MessageType.None
                 });
             }
             else
@@ -204,15 +199,20 @@ namespace Archipelago.HollowKnight
         {
             void ScoutCallback(LocationInfoPacket packet)
             {
-                foreach (var item in packet.Locations)
+                MenuChanger.ThreadSupport.BeginInvoke(() =>
                 {
-                    var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                    var itemName = session.Items.GetItemName(item.Item);
+                    foreach (var item in packet.Locations)
+                    {
+                        // TODO: I can do player name in recent item display. Use: item.Player
+                        var locationName = session.Locations.GetLocationNameFromId(item.Location);
+                        var itemName = session.Items.GetItemName(item.Item);
 
-                    PlaceItem(locationName, itemName, item.Item);
-                }
+                        PlaceItem(locationName, itemName, item.Item);
+                    }
+                });
             }
 
+            // TODO: Perhaps wrap this in a coroutine and wait while it's not done?
             var locations = new List<long>(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
         }
@@ -238,17 +238,7 @@ namespace Archipelago.HollowKnight
             {
                 // Since HK is a remote items game, I don't want the placement to actually do anything. The item will come from the server.
                 var originalItem = Finder.GetItem(name);
-                if (originalItem != null)
-                {
-                    item = new DisguisedVoidItem(originalItem);
-                }
-                else
-                {
-                    item = new VoidItem();
-                    InteropTag tag = item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["IgnoreItem"] = true;
-                }
+                item = new DisguisedVoidItem(originalItem);
             }
             else
             {
@@ -288,6 +278,7 @@ namespace Archipelago.HollowKnight
                 pmt.Add(item);
             }
 
+            // Export all placements as IEnumerable and addplacements all at once
             ItemChangerMod.AddPlacements(pmt.Yield());
         }
 
@@ -333,6 +324,10 @@ namespace Archipelago.HollowKnight
                     sprite = new BoxedSprite(item.UIDef.GetSprite())
                 };
 
+                // TODO: This recycling could possibly also reset obtained to false (and ensure WasEverObtained() returns false) so that RecentItemsDisplay
+                // will show the item again if the placement is reused.
+                item.OnGive += (x) => x.Item.RefreshObtained();
+
                 vanillaItemPlacements.Add(name, placement);
             }
 
@@ -351,6 +346,11 @@ namespace Archipelago.HollowKnight
         }
 
         //TODO: I don't think this works. I need to retireve the custom placements somehow. homothety suggested ItemChanger.Internal.Ref.Settings.Placements
+        /* When loading an existing game:
+         *      - Load my vanilla placements, this could be done with a ItemChanger Tag - would have their own Tag type
+         *      - Load my DisguisedVoidItem placements, this could be done with tag (or override OnLoad)
+         *      - Load my ArchipelagoItem placements, which could probably be done with the same tag as DisguisedVoidItem
+        */
         private Dictionary<string, AbstractPlacement> RetrieveVanillaItemPlacementsFromSave()
         {
             var placements = new Dictionary<string, AbstractPlacement>();
@@ -373,7 +373,6 @@ namespace Archipelago.HollowKnight
             DisconnectArchipelago();
             vanillaItemPlacements = null;
             stackableItems = null;
-            cocoonGrants = null;
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;
             SpecialPlacementHandler.EggCosts = null;

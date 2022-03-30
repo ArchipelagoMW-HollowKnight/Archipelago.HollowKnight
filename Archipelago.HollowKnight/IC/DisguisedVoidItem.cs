@@ -18,7 +18,7 @@ namespace Archipelago.HollowKnight.IC
 
         public override void GiveImmediate(GiveInfo info)
         {
-            ItemChanger.Internal.MessageController.Enqueue(UIDef.GetSprite(), name);
+            
         }
     }
 }

@@ -65,6 +65,7 @@ namespace Archipelago.HollowKnight.IC
 
         public static void PlaceEggShopItem(AbstractPlacement pmt, AbstractItem item)
         {
+            // TODO: Note: When rancid eggs are randomized, Tuk does not sell eggs. (in rando4 at least)
             var eggShopPlacement = pmt as EggShopPlacement;
             var tag = item.AddTag<CostTag>();
             tag.Cost = new ItemChanger.Modules.CumulativeRancidEggCost(1);
@@ -77,7 +78,7 @@ namespace Archipelago.HollowKnight.IC
             if (!costChestPlacement.HasTag<DestroySeerRewardTag>())
             {
                 var tag = costChestPlacement.AddTag<DestroySeerRewardTag>();
-                tag.destroyRewards = SeerRewards.All;
+                tag.destroyRewards = SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension;
             }
             costChestPlacement.AddItem(item, Cost.NewEssenceCost(GetEssenceCostForLocation(originalLocation)));
         }
