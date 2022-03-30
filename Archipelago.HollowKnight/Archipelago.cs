@@ -19,6 +19,7 @@ using UnityEngine;
 namespace Archipelago.HollowKnight
 {
     // Known Issues
+    // TODO: ADD COMPLETION CONDITION
     // BUG: loading a save and resuming a multi doesn't work
     // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
@@ -28,6 +29,9 @@ namespace Archipelago.HollowKnight
     //       Guarantee you can skip X resource with X being your tolerance.
     // TODO: Far future: put all AP settings into ModeMenu and dynamically generate a YAML (or something)
     // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
+    // TODO: Save item pickup index for when loading, so I don't reapply all items.
+    // TODO: Sly's key shop is apparently just available within his normal shop?
+    // TODO: What items should be placed into the pool when egg shop is turned on?
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -82,28 +86,6 @@ namespace Archipelago.HollowKnight
             if (DateTime.Now - timeBetweenReceiveItem > lastUpdate && session.Items.Any())
             {
                 ReceiveItem(session.Items.DequeueItem().Item);
-            }
-
-            if (Input.GetKeyDown(KeyCode.O))
-            {
-                stackableItems.GrantArcaneEgg();
-            }
-            else if (Input.GetKeyDown(KeyCode.G))
-            {
-                grubs.GrantGrub();
-            }
-            else if (Input.GetKeyDown(KeyCode.K))
-            {
-                HeroController.instance.AddGeo(1000);
-            }
-            else if (Input.GetKeyDown(KeyCode.L))
-            {
-                stackableItems.GrantRancidEgg();
-            }
-            else if (Input.GetKeyDown(KeyCode.Semicolon))
-            {
-                PlayerData.instance.IntAdd(nameof(PlayerData.dreamOrbs), 500);
-                EventRegister.SendEvent("DREAM ORB COLLECT");
             }
         }
 
@@ -166,20 +148,6 @@ namespace Archipelago.HollowKnight
             if (vanillaItemPlacements.TryGetValue(name, out var placement))
             {
                 LogDebug($"Found vanilla placement for {name}.");
-
-                //if (StackableItemGrants.IsStackableItem(name))
-                //{
-                //    LogDebug($"Detected stackable item received. Granting a: {name}");
-                //    stackableItems.GrantItemByName(name);
-                //    return;
-                //}
-
-                //if (name == "Grub")
-                //{
-                //    LogDebug("Detecting vanilla item is a grub.");
-                //    grubs.GrantGrub();
-                //    return;
-                //}
 
                 // TODO: Note this can be done in itemOnGive in DisguisedVoidItem (and might be better there too)
                 placement.GiveAll(new GiveInfo()
@@ -274,7 +242,6 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                LogDebug("[PlaceItem] Placement was not a special placement.");
                 pmt.Add(item);
             }
 
@@ -291,7 +258,7 @@ namespace Archipelago.HollowKnight
 
             var names = new[]
             {
-                LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra,
+                LocationNames.Sly_Key, LocationNames.Sly, LocationNames.Iselda, LocationNames.Salubra,
                 LocationNames.Leg_Eater, LocationNames.Egg_Shop, LocationNames.Seer, LocationNames.Grubfather
             };
 

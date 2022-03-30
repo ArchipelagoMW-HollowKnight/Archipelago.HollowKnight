@@ -18,6 +18,7 @@ namespace Archipelago.HollowKnight.MC
 
             var urlField = new EntryField<string>(ApPage, "Server URL: ");
             urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
+            urlField.InputField.characterLimit = 500;
 
             var portField = new NumericEntryField<int>(ApPage, "Server Port: ");
             portField.SetClamp(0, 65535);
@@ -25,11 +26,13 @@ namespace Archipelago.HollowKnight.MC
 
             var nameField = new EntryField<string>(ApPage, "Slot Name: ");
             nameField.Bind(settings, settingsType.GetProperty("SlotName"));
+            nameField.InputField.characterLimit = 500;
 
             var passwordField = new EntryField<string>(ApPage, "Password: ");
             passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
+            passwordField.InputField.characterLimit = 500;
 
-            var startButton = new BigButton(ApPage, "Start", "Please wait while loading.");
+            var startButton = new BigButton(ApPage, "Start", "Will stall after clicking.");
             startButton.OnClick += StartNewGame;
 
             urlField.SetNeighbor(Neighbor.Down, portField);
