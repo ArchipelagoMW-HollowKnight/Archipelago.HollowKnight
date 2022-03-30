@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Archipelago.HollowKnight.Grants;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
@@ -20,7 +19,8 @@ namespace Archipelago.HollowKnight
 {
     // Known Issues
     // TODO: ADD COMPLETION CONDITION
-    // BUG: loading a save and resuming a multi doesn't work
+    // TODO: make vanilla placements not shiny because kono hates me
+    // BUG:  loading a save and resuming a multi doesn't work
     // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
@@ -46,8 +46,6 @@ namespace Archipelago.HollowKnight
         internal bool ArchipelagoEnabled = false;
         internal ArchipelagoSession session;
 
-        private StackableItemGrants stackableItems;
-        private GrubGrants grubs;
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
         private long seed = 0;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
@@ -106,9 +104,6 @@ namespace Archipelago.HollowKnight
             {
                 // TODO: Eventually would load up PlayerDataEditModule and alter charm costs once IC updates.
             }
-
-            stackableItems = new StackableItemGrants();
-            grubs = new GrubGrants();
         }
 
         private void ConnectToArchipelago()
@@ -339,7 +334,6 @@ namespace Archipelago.HollowKnight
         {
             DisconnectArchipelago();
             vanillaItemPlacements = null;
-            stackableItems = null;
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;
             SpecialPlacementHandler.EggCosts = null;
