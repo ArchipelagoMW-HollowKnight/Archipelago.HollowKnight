@@ -55,7 +55,6 @@ namespace Archipelago.HollowKnight
         private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private SlotOptions slotOptions;
         private int[] notchCosts;
 
         public override string GetVersion() => new Version(0, 0, 1).ToString();
