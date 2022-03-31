@@ -77,8 +77,22 @@ namespace Archipelago.HollowKnight
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
             ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            On.GameCompletionScreen.Start += OnGameComplete;
 
             Log("Initialized");
+        }
+
+        private void OnGameComplete(On.GameCompletionScreen.orig_Start orig, GameCompletionScreen self)
+        {
+            if (ArchipelagoEnabled)
+            {
+                session.Socket.SendPacket(new StatusUpdatePacket()
+                {
+                    Status = ArchipelagoClientState.ClientGoal
+                });
+            }
+
+            orig(self);
         }
 
         private void ModHooks_HeroUpdateHook()
