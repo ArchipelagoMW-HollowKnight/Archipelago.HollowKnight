@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    // Known Issues
+    // Known Issues 
     // TODO: ADD COMPLETION CONDITION
     // TODO: make vanilla placements not shiny because kono hates me
     // BUG:  loading a save and resuming a multi doesn't work
@@ -31,12 +31,11 @@ namespace Archipelago.HollowKnight
     // TODO: Test cases: AP forfeit and AP collect.
     // NOTE: Tolerances are used to "help" generation of the randomized game be more tolerant of not reaching a precise number of required resources
     //       Guarantee you can skip X resource with X being your tolerance.
-    // TODO: Far future: put all AP settings into ModeMenu and dynamically generate a YAML (or something)
     // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
-    // TODO: Sly's key shop is apparently just available within his normal shop?
     // TODO: What items should be placed into the pool when egg shop is turned on?
     // BUG:  Sometimes spells are not progressive.
     // BUG:  Collected items should disappear from shops
+    // TODO: Scout with CreateAsHint for when you open shops or check seer/grubfather tablets
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -55,7 +54,6 @@ namespace Archipelago.HollowKnight
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
         private long seed = 0;
         private int slot;
-        private int itemIndex = 0;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
         private SlotOptions slotOptions;
@@ -92,9 +90,16 @@ namespace Archipelago.HollowKnight
 
             if (DateTime.Now - timeBetweenReceiveItem > lastUpdate && session.Items.Any())
             {
-                LogDebug($"Item Index is: {session.Items.Index}");
-                ReceiveItem(session.Items.DequeueItem());
-                ApSettings.ItemIndex = session.Items.Index;
+                LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {ApSettings.ItemIndex}");
+                if (ApSettings.ItemIndex >= session.Items.Index)
+                {
+                    session.Items.DequeueItem();
+                }
+                else
+                {
+                    ReceiveItem(session.Items.DequeueItem());
+                    ApSettings.ItemIndex = session.Items.Index;
+                }
             }
         }
 
@@ -400,7 +405,6 @@ namespace Archipelago.HollowKnight
             DisconnectArchipelago();
             slot = 0;
             seed = 0;
-            itemIndex = 0;
             vanillaItemPlacements = null;
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;
