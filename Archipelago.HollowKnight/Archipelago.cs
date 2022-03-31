@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
+using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 using Modding;
+using RecentItemsDisplay;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
@@ -29,9 +33,10 @@ namespace Archipelago.HollowKnight
     //       Guarantee you can skip X resource with X being your tolerance.
     // TODO: Far future: put all AP settings into ModeMenu and dynamically generate a YAML (or something)
     // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
-    // TODO: Save item pickup index for when loading, so I don't reapply all items.
     // TODO: Sly's key shop is apparently just available within his normal shop?
     // TODO: What items should be placed into the pool when egg shop is turned on?
+    // BUG:  Sometimes spells are not progressive.
+    // BUG:  Collected items should disappear from shops
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -40,6 +45,7 @@ namespace Archipelago.HollowKnight
         internal static Sprite Sprite;
         internal static Sprite SmallSprite;
         internal static System.Random Random;
+        internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
         internal ConnectionDetails ApSettings;
@@ -48,6 +54,8 @@ namespace Archipelago.HollowKnight
 
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
         private long seed = 0;
+        private int slot;
+        private int itemIndex = 0;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
         private SlotOptions slotOptions;
@@ -64,11 +72,12 @@ namespace Archipelago.HollowKnight
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
             Sprite = spriteManager.GetSprite("Icon");
             SmallSprite = spriteManager.GetSprite("IconSmall");
+            obtainStateFieldInfo = typeof(AbstractItem).GetField("obtainState", BindingFlags.NonPublic | BindingFlags.Instance);
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
-            Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
+            ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
 
             Log("Initialized");
@@ -83,7 +92,9 @@ namespace Archipelago.HollowKnight
 
             if (DateTime.Now - timeBetweenReceiveItem > lastUpdate && session.Items.Any())
             {
-                ReceiveItem(session.Items.DequeueItem().Item);
+                LogDebug($"Item Index is: {session.Items.Index}");
+                ReceiveItem(session.Items.DequeueItem());
+                ApSettings.ItemIndex = session.Items.Index;
             }
         }
 
@@ -114,13 +125,15 @@ namespace Archipelago.HollowKnight
 
             if (loginResult is LoginFailure failure)
             {
-                // TODO: Better error handling to come later.
-                throw new Exception(string.Join(", ", failure.Errors));
+                var errors = string.Join(", ", failure.Errors);
+                LogError($"Unable to connect to Archipelago because: {string.Join(", ", failure.Errors)}");
+                throw new ArchipelagoConnectionException(errors);
             }
             else if (loginResult is LoginSuccessful success)
             {
                 // Read slot data.
                 seed = (long)success.SlotData["seed"];
+                slot = success.Slot;
                 Random = new System.Random(Convert.ToInt32(seed));
 
                 SpecialPlacementHandler.Random = Random;
@@ -133,10 +146,10 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void ReceiveItem(int id)
+        public void ReceiveItem(NetworkItem item)
         {
-            LogDebug($"Receiving item ID {id}");
-            var name = session.Items.GetItemName(id);
+            LogDebug($"Receiving item ID {item.Item}");
+            var name = session.Items.GetItemName(item.Item);
             LogDebug($"Item name is {name}.");
 
             // TODO: implement essence and egg shops (possibly by auto granting location check with enough essence/eggs collected)
@@ -144,7 +157,25 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug($"Found vanilla placement for {name}.");
 
-                // TODO: Note this can be done in itemOnGive in DisguisedVoidItem (and might be better there too)
+                var uiName = placement.GetUIName();
+                var sprite = placement.Items.FirstOrDefault()?.UIDef.GetSprite();
+                if (item.Player == slot)
+                {
+                    ItemDisplayMethods.ShowItem(new ItemDisplayArgs(uiName, string.Empty, sprite)
+                    {
+                        DisplayMessage = $"{uiName}\nreceived from yourself."
+                    });
+                }
+                else
+                {
+                    var playerName = session.Players.GetPlayerName(item.Player);
+                    ItemDisplayMethods.ShowItem(new ItemDisplayArgs(uiName, string.Empty, sprite)
+                    {
+                        DisplayMessage = $"{uiName}\nreceived from {playerName}."
+                    });
+                }
+
+                // TODO: Note this can be done in item.OnGive in DisguisedVoidItem (and might be better there too)
                 placement.GiveAll(new GiveInfo()
                 {
                     FlingType = FlingType.DirectDeposit,
@@ -166,23 +197,21 @@ namespace Archipelago.HollowKnight
                 {
                     foreach (var item in packet.Locations)
                     {
-                        // TODO: I can do player name in recent item display. Use: item.Player
                         var locationName = session.Locations.GetLocationNameFromId(item.Location);
                         var itemName = session.Items.GetItemName(item.Item);
 
-                        PlaceItem(locationName, itemName, item.Item);
+                        PlaceItem(locationName, itemName, item);
                     }
                 });
             }
 
-            // TODO: Perhaps wrap this in a coroutine and wait while it's not done?
             var locations = new List<long>(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
         }
 
-        public void PlaceItem(string location, string name, int apLocationId)
+        public void PlaceItem(string location, string name, NetworkItem netItem)
         {
-            LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {apLocationId}");
+            LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
             var originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
             AbstractLocation loc = Finder.GetLocation(location);
@@ -202,6 +231,28 @@ namespace Archipelago.HollowKnight
                 // Since HK is a remote items game, I don't want the placement to actually do anything. The item will come from the server.
                 var originalItem = Finder.GetItem(name);
                 item = new DisguisedVoidItem(originalItem);
+
+                item.ModifyItem += (x) =>
+                {
+                    try
+                    {
+                        x.Info.MessageType = MessageType.None;
+                    }
+                    catch { }
+                };
+
+                var tag = item.AddTag<InteropTag>();
+                tag.Message = "RecentItems";
+
+                if (netItem.Player != slot)
+                {
+                    var receivingPlayer = session.Players.GetPlayerName(netItem.Player);
+                    tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPreviewName()}\nsent to {receivingPlayer}.";
+                }
+                else
+                {
+                    tag.Properties["IgnoreItem"] = true;
+                }
             }
             else
             {
@@ -218,7 +269,7 @@ namespace Archipelago.HollowKnight
             if (SpecialPlacementHandler.IsShopPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceShopItem(pmt, item);
+                SpecialPlacementHandler.PlaceShopItem(pmt, item, session.Players.GetPlayerName(netItem.Player));
             }
             else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {
@@ -285,10 +336,24 @@ namespace Archipelago.HollowKnight
                     shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
                     sprite = new BoxedSprite(item.UIDef.GetSprite())
                 };
+                var tag = item.AddTag<InteropTag>();
+                tag.Message = "RecentItems";
+                tag.Properties["IgnoreItem"] = true;
 
                 // TODO: This recycling could possibly also reset obtained to false (and ensure WasEverObtained() returns false) so that RecentItemsDisplay
                 // will show the item again if the placement is reused.
-                item.OnGive += (x) => x.Item.RefreshObtained();
+                item.OnGive += (x) =>
+                {
+                    try
+                    {
+                        obtainStateFieldInfo.SetValue(x.Item, ObtainState.Unobtained);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Failure in OnGive() on a vanilla placement.");
+                        LogError(ex);
+                    }
+                };
 
                 vanillaItemPlacements.Add(name, placement);
             }
@@ -333,6 +398,9 @@ namespace Archipelago.HollowKnight
         private void Events_OnItemChangerUnhook()
         {
             DisconnectArchipelago();
+            slot = 0;
+            seed = 0;
+            itemIndex = 0;
             vanillaItemPlacements = null;
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;

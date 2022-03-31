@@ -93,6 +93,9 @@
     <Reference Include="PlayMaker">
       <HintPath>..\DLLs\PlayMaker.dll</HintPath>
     </Reference>
+    <Reference Include="RecentItemsDisplay">
+      <HintPath>..\DLLs\RecentItemsDisplay.dll</HintPath>
+    </Reference>
     <Reference Include="System.ComponentModel.Composition">
       <HintPath>..\DLLs\System.ComponentModel.Composition.dll</HintPath>
     </Reference>

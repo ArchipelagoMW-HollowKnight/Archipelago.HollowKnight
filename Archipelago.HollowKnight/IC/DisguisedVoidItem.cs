@@ -9,11 +9,6 @@ namespace Archipelago.HollowKnight.IC
         {
             name = originalItem.name;
             UIDef = new ArchipelagoUIDef(originalItem.UIDef);
-
-            InteropTag tag = AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["IgnoreItem"] = true;
-            //tag.Properties["DisplayMessage"] = $"{this.name}";
         }
 
         public override void GiveImmediate(GiveInfo info)

@@ -4,6 +4,7 @@ using System.Linq;
 using ItemChanger;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
+using ItemChanger.UIDefs;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -96,9 +97,20 @@ namespace Archipelago.HollowKnight.IC
             }
         }
 
-        public static void PlaceShopItem(AbstractPlacement pmt, AbstractItem item)
+        public static void PlaceShopItem(AbstractPlacement pmt, AbstractItem item, string targetSlotName)
         {
             var shopPlacement = pmt as ShopPlacement;
+            var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
+            item.UIDef = new MsgUIDef()
+            {
+                name = name,
+                shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
+                sprite = item.UIDef switch
+                {
+                    MsgUIDef def => def.sprite.Clone(),
+                    _ => new EmptySprite()
+                } 
+            };
             shopPlacement.AddItemWithCost(item, GenerateGeoCost());
         }
 

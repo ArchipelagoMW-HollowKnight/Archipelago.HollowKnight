@@ -4,7 +4,8 @@
     {
         public string ServerUrl { get; set; } = "localhost";
         public int ServerPort { get; set; } = 38281;
-        public string SlotName { get; set; } = "WhoAmI1";
+        public string SlotName { get; set; } = "ijwu";
         public string ServerPassword { get; set; }
+        public int ItemIndex { get; set; }
     }
 }

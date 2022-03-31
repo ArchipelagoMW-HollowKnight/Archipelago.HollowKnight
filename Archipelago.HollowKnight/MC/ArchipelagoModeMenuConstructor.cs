@@ -9,6 +9,7 @@ namespace Archipelago.HollowKnight.MC
     internal class ArchipelagoModeMenuConstructor : ModeMenuConstructor
     {
         MenuPage ApPage;
+        private MenuLabel errorLabel;
 
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
@@ -35,6 +36,8 @@ namespace Archipelago.HollowKnight.MC
             var startButton = new BigButton(ApPage, "Start", "Will stall after clicking.");
             startButton.OnClick += StartNewGame;
 
+            errorLabel = new MenuLabel(ApPage, "");
+
             urlField.SetNeighbor(Neighbor.Down, portField);
             portField.SetNeighbor(Neighbor.Down, nameField);
             nameField.SetNeighbor(Neighbor.Down, passwordField);
@@ -48,7 +51,8 @@ namespace Archipelago.HollowKnight.MC
                 portField,
                 nameField,
                 passwordField,
-                startButton
+                startButton,
+                errorLabel
             };
             new VerticalItemPanel(ApPage, new Vector2(0, 300), 100, false, elements);
         }
@@ -56,9 +60,17 @@ namespace Archipelago.HollowKnight.MC
         private void StartNewGame()
         {
             Archipelago.Instance.ArchipelagoEnabled = true;
-            MenuChangerMod.HideAllMenuPages();
-            Archipelago.Instance.ConnectAndRandomize();
-            UIManager.instance.StartNewGame();
+            try
+            {
+                Archipelago.Instance.ConnectAndRandomize();
+                MenuChangerMod.HideAllMenuPages();
+                UIManager.instance.StartNewGame();
+            }
+            catch (ArchipelagoConnectionException ex)
+            {
+                errorLabel.Text.text = ex.Message;
+            }
+            
         }
 
         public override void OnExitMainMenu()
