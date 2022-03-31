@@ -22,7 +22,6 @@ using UnityEngine;
 namespace Archipelago.HollowKnight
 {
     // Known Issues 
-    // TODO: ADD COMPLETION CONDITION
     // TODO: make vanilla placements not shiny because kono hates me
     // BUG:  loading a save and resuming a multi doesn't work
     // TODO: Charm Notch rando
@@ -77,8 +76,22 @@ namespace Archipelago.HollowKnight
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
             ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            On.GameCompletionScreen.Start += OnGameComplete;
 
             Log("Initialized");
+        }
+
+        private void OnGameComplete(On.GameCompletionScreen.orig_Start orig, GameCompletionScreen self)
+        {
+            if (ArchipelagoEnabled)
+            {
+                session.Socket.SendPacket(new StatusUpdatePacket()
+                {
+                    Status = ArchipelagoClientState.ClientGoal
+                });
+            }
+
+            orig(self);
         }
 
         private void ModHooks_HeroUpdateHook()
