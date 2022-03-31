@@ -24,7 +24,6 @@ namespace Archipelago.HollowKnight
     // Known Issues 
     // TODO: make vanilla placements not shiny because kono hates me
     // BUG:  loading a save and resuming a multi doesn't work
-    // TODO: Charm Notch rando
     // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
     // TODO: Test cases: AP forfeit and AP collect.
@@ -35,6 +34,7 @@ namespace Archipelago.HollowKnight
     // BUG:  Sometimes spells are not progressive.
     // BUG:  Collected items should disappear from shops
     // TODO: Scout with CreateAsHint for when you open shops or check seer/grubfather tablets
+    // TODO: SlotOptions deserialization from SlotData.
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
@@ -55,7 +55,8 @@ namespace Archipelago.HollowKnight
         private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private int[] notchCosts;
+        private List<int> notchCosts;
+        private SlotOptions slotOptions;
 
         public override string GetVersion() => new Version(0, 0, 1).ToString();
 
@@ -100,6 +101,11 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                HeroController.instance.AddGeo(1000);
+            }
+
             if (DateTime.Now - timeBetweenReceiveItem > lastUpdate && session.Items.Any())
             {
                 LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {ApSettings.ItemIndex}");
@@ -110,7 +116,7 @@ namespace Archipelago.HollowKnight
                 else
                 {
                     ReceiveItem(session.Items.DequeueItem());
-                    ApSettings.ItemIndex = session.Items.Index;
+                    ApSettings.ItemIndex++;
                 }
             }
         }
@@ -125,8 +131,24 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.CreateSettingsProfile();
 
             ConnectToArchipelago();
+            if (slotOptions.RandomCharmCosts != -1)
+            {
+                RandomizeCharmCosts();
+            }
             CreateItemPlacements();
             CreateVanillaItemPlacements();
+        }
+
+        private void RandomizeCharmCosts()
+        {
+            ItemChangerMod.Modules.Add<ItemChanger.Modules.NotchCostUI>();
+            ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
+            var playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
+            LogDebug(playerDataEditModule);
+            for (int i = 0; i < notchCosts.Count; i++)
+            {
+                playerDataEditModule.AddPDEdit($"charmCost_{i + 1}", notchCosts[i]);
+            }
         }
 
         private void ConnectToArchipelago()
@@ -152,8 +174,10 @@ namespace Archipelago.HollowKnight
                 SpecialPlacementHandler.GrubFatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["grub_costs"]);
                 SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["essence_costs"]);
                 SpecialPlacementHandler.EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["egg_costs"]);
+                SpecialPlacementHandler.SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["charm_costs"]);
 
-                notchCosts = SlotDataExtract.ExtractObjectFromSlotData<int[]>(success.SlotData["charm_costs"]);
+                notchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
+                slotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
             }
         }
 
@@ -186,12 +210,11 @@ namespace Archipelago.HollowKnight
                     });
                 }
 
-                // TODO: Note this can be done in item.OnGive in DisguisedVoidItem (and might be better there too)
                 placement.GiveAll(new GiveInfo()
                 {
                     FlingType = FlingType.DirectDeposit,
                     Container = Container.Unknown,
-                    MessageType = MessageType.None
+                    MessageType = MessageType.Corner
                 });
             }
             else
@@ -276,16 +299,21 @@ namespace Archipelago.HollowKnight
                 var id = session.Locations.GetLocationIdFromName("Hollow Knight", originalLocation);
                 session.Locations.CompleteLocationChecks(id);
             };
-
-            if (SpecialPlacementHandler.IsShopPlacement(location))
+            var targetSlotName = session.Players.GetPlayerName(netItem.Player);
+            if (SpecialPlacementHandler.IsShopPlacement(location) || SpecialPlacementHandler.IsSalubraPlacement(location) && !originalLocation.Contains("Requires_Charms"))
             {
                 LogDebug($"[PlaceItem] Detected shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceShopItem(pmt, item, session.Players.GetPlayerName(netItem.Player));
+                SpecialPlacementHandler.PlaceShopItem(pmt, item, targetSlotName);
+            }
+            else if (SpecialPlacementHandler.IsSalubraCharmShopPlacement(originalLocation))
+            {
+                LogDebug($"[PlaceItem] Detected Salubra charm shop placement for location: {location}");
+                SpecialPlacementHandler.PlaceSalubraCharmShop(pmt, item, targetSlotName, originalLocation);
             }
             else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected seer placement for location: {location}.");
-                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item);
+                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item, targetSlotName);
             }
             else if (SpecialPlacementHandler.IsEggShopPlacement(location))
             {
@@ -295,14 +323,14 @@ namespace Archipelago.HollowKnight
             else if (SpecialPlacementHandler.IsGrubfatherPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected Grubfather placement for original location: {originalLocation}. Trimmed location: {location}");
-                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item);
+                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item, targetSlotName);
             }
             else
             {
                 pmt.Add(item);
             }
 
-            // Export all placements as IEnumerable and addplacements all at once
+            // TODO: Export all placements as IEnumerable and addplacements all at once
             ItemChangerMod.AddPlacements(pmt.Yield());
         }
 
@@ -415,6 +443,7 @@ namespace Archipelago.HollowKnight
             SpecialPlacementHandler.SeerCosts = null;
             SpecialPlacementHandler.GrubFatherCosts = null;
             SpecialPlacementHandler.EggCosts = null;
+            SpecialPlacementHandler.SalubraCharmCosts = null;
         }
 
         private void DisconnectArchipelago()
