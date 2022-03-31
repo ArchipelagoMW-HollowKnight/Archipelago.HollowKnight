@@ -34,10 +34,9 @@ namespace Archipelago.HollowKnight
     // BUG:  Sometimes spells are not progressive.
     // BUG:  Collected items should disappear from shops
     // TODO: Scout with CreateAsHint for when you open shops or check seer/grubfather tablets
-    // TODO: SlotOptions deserialization from SlotData.
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
-        private readonly Version ArchipelagoProtocolVersion = new Version(0, 2, 6);
+        private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
 
         internal static Archipelago Instance;
         internal static Sprite Sprite;
@@ -99,11 +98,6 @@ namespace Archipelago.HollowKnight
             if (!ArchipelagoEnabled)
             {
                 return;
-            }
-
-            if (Input.GetKeyDown(KeyCode.K))
-            {
-                HeroController.instance.AddGeo(1000);
             }
 
             if (DateTime.Now - timeBetweenReceiveItem > lastUpdate && session.Items.Any())
