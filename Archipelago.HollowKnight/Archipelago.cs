@@ -127,11 +127,6 @@ namespace Archipelago.HollowKnight
             ConnectToArchipelago();
             CreateItemPlacements();
             CreateVanillaItemPlacements();
-
-            if (slotOptions.RandomCharmCosts != -1)
-            {
-                // TODO: Eventually would load up PlayerDataEditModule and alter charm costs once IC updates.
-            }
         }
 
         private void ConnectToArchipelago()
@@ -158,7 +153,6 @@ namespace Archipelago.HollowKnight
                 SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["essence_costs"]);
                 SpecialPlacementHandler.EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["egg_costs"]);
 
-                slotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
                 notchCosts = SlotDataExtract.ExtractObjectFromSlotData<int[]>(success.SlotData["charm_costs"]);
             }
         }
