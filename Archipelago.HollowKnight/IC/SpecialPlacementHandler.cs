@@ -73,14 +73,26 @@ namespace Archipelago.HollowKnight.IC
             }
         }
 
-        //TODO: not currently used
-        public static void PlaceEggShopItem(AbstractPlacement pmt, AbstractItem item)
+        public static void PlaceEggShopItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
-            // TODO: Note: When rancid eggs are randomized, Tuk does not sell eggs. (in rando4 at least)
+            var cost = GetEggCostForLocation(originalLocation);
             var eggShopPlacement = pmt as EggShopPlacement;
             var tag = item.AddTag<CostTag>();
-            tag.Cost = new ItemChanger.Modules.CumulativeRancidEggCost(1);
+            tag.Cost = new ItemChanger.Modules.CumulativeRancidEggCost(cost);
             eggShopPlacement.Add(item);
+        }
+
+        private static int GetEggCostForLocation(string originalLocation)
+        {
+            if (EggCosts.TryGetValue(originalLocation, out var cost))
+            {
+                return cost;
+            }
+            else
+            {
+                Archipelago.Instance.LogError($"Attempted to get Egg cost for location '{originalLocation}' but key was not present.");
+                return 0;
+            }
         }
 
         public static void PlaceSeerItem(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
@@ -130,7 +142,7 @@ namespace Archipelago.HollowKnight.IC
             };
         }
 
-        public static void PlaceSalubraCharmShop(AbstractPlacement pmt, AbstractItem item, string targetSlotName, string apLocationName)
+        public static void PlaceSalubraCharmShop(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
         {
             var shopPlacement = pmt as ShopPlacement;
             var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
@@ -145,7 +157,7 @@ namespace Archipelago.HollowKnight.IC
                 }
             };
 
-            var charmCostAmount = GetCharmCostForLocation(apLocationName);
+            var charmCostAmount = GetCharmCostForLocation(originalLocation);
             var charmCost = new PDIntCost(charmCostAmount, nameof(PlayerData.charmsOwned), $"Acquire {charmCostAmount} total charms to buy this item.");
             var cost = new MultiCost(GenerateGeoCost(), charmCost);
 

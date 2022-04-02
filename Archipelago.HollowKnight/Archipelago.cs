@@ -302,7 +302,7 @@ namespace Archipelago.HollowKnight
             else if (SpecialPlacementHandler.IsSalubraCharmShopPlacement(originalLocation))
             {
                 LogDebug($"[PlaceItem] Detected Salubra charm shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceSalubraCharmShop(pmt, item, targetSlotName, originalLocation);
+                SpecialPlacementHandler.PlaceSalubraCharmShop(originalLocation, pmt, item, targetSlotName);
             }
             else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {
@@ -312,7 +312,7 @@ namespace Archipelago.HollowKnight
             else if (SpecialPlacementHandler.IsEggShopPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected egg shop placement for location: {location}.");
-                SpecialPlacementHandler.PlaceEggShopItem(pmt, item);
+                SpecialPlacementHandler.PlaceEggShopItem(originalLocation, pmt, item);
             }
             else if (SpecialPlacementHandler.IsGrubfatherPlacement(location))
             {
