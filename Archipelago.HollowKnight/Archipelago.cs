@@ -22,18 +22,12 @@ using UnityEngine;
 namespace Archipelago.HollowKnight
 {
     // Known Issues 
-    // TODO: make vanilla placements not shiny because kono hates me
-    // BUG:  loading a save and resuming a multi doesn't work
-    // TODO: Grimmkin flame rando, I guess?
     // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
     // TODO: Test cases: AP forfeit and AP collect.
     // NOTE: Tolerances are used to "help" generation of the randomized game be more tolerant of not reaching a precise number of required resources
     //       Guarantee you can skip X resource with X being your tolerance.
     // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
-    // TODO: What items should be placed into the pool when egg shop is turned on?
     // BUG:  Sometimes spells are not progressive.
-    // BUG:  Collected items should disappear from shops
-    // TODO: Scout with CreateAsHint for when you open shops or check seer/grubfather tablets
     public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
@@ -181,7 +175,6 @@ namespace Archipelago.HollowKnight
             var name = session.Items.GetItemName(item.Item);
             LogDebug($"Item name is {name}.");
 
-            // TODO: implement essence and egg shops (possibly by auto granting location check with enough essence/eggs collected)
             if (vanillaItemPlacements.TryGetValue(name, out var placement))
             {
                 LogDebug($"Found vanilla placement for {name}.");
@@ -243,7 +236,7 @@ namespace Archipelago.HollowKnight
             var originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
             AbstractLocation loc = Finder.GetLocation(location);
-            // TODO: remove this when logic has properly been imported and this mod can handle all location names.
+
             if (loc == null)
             {
                 LogDebug($"[PlaceItem] Location was null: Name: {location}.");
@@ -324,7 +317,6 @@ namespace Archipelago.HollowKnight
                 pmt.Add(item);
             }
 
-            // TODO: Export all placements as IEnumerable and addplacements all at once
             ItemChangerMod.AddPlacements(pmt.Yield());
         }
 
@@ -363,18 +355,29 @@ namespace Archipelago.HollowKnight
                 var apLocation = new ArchipelagoLocation("Vanilla_" + name);
                 var placement = apLocation.Wrap();
                 placement.Add(item);
-                item.UIDef = new MsgUIDef()
+
+                try
                 {
-                    name = new BoxedString(item.UIDef.GetPreviewName()),
-                    shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
-                    sprite = new BoxedSprite(item.UIDef.GetSprite())
-                };
+                    item.UIDef = new MsgUIDef()
+                    {
+                        name = new BoxedString(item.UIDef.GetPreviewName()),
+                        shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
+                        sprite = new BoxedSprite(item.UIDef.GetSprite())
+                    };
+                }
+                catch (Exception ex)
+                {
+                    item.UIDef = new MsgUIDef()
+                    {
+                        name = new BoxedString(item.UIDef.GetPreviewName()),
+                        shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
+                        sprite = new EmptySprite()
+                    };
+                }
                 var tag = item.AddTag<InteropTag>();
                 tag.Message = "RecentItems";
                 tag.Properties["IgnoreItem"] = true;
 
-                // TODO: This recycling could possibly also reset obtained to false (and ensure WasEverObtained() returns false) so that RecentItemsDisplay
-                // will show the item again if the placement is reused.
                 item.OnGive += (x) =>
                 {
                     try
@@ -405,7 +408,7 @@ namespace Archipelago.HollowKnight
             vanillaItemPlacements = RetrieveVanillaItemPlacementsFromSave();
         }
 
-        //TODO: I don't think this works. I need to retireve the custom placements somehow. homothety suggested ItemChanger.Internal.Ref.Settings.Placements
+        //TODO: I don't think this works. I need to retrieve the custom placements somehow. homothety suggested ItemChanger.Internal.Ref.Settings.Placements
         /* When loading an existing game:
          *      - Load my vanilla placements, this could be done with a ItemChanger Tag - would have their own Tag type
          *      - Load my DisguisedVoidItem placements, this could be done with tag (or override OnLoad)
@@ -431,6 +434,10 @@ namespace Archipelago.HollowKnight
         private void Events_OnItemChangerUnhook()
         {
             DisconnectArchipelago();
+        }
+
+        public void DisconnectArchipelago()
+        {
             slot = 0;
             seed = 0;
             vanillaItemPlacements = null;
@@ -438,10 +445,7 @@ namespace Archipelago.HollowKnight
             SpecialPlacementHandler.GrubFatherCosts = null;
             SpecialPlacementHandler.EggCosts = null;
             SpecialPlacementHandler.SalubraCharmCosts = null;
-        }
 
-        private void DisconnectArchipelago()
-        {
             if (session?.Socket != null && session.Socket.Connected)
             {
                 session.Socket.DisconnectAsync();

@@ -75,6 +75,7 @@ namespace Archipelago.HollowKnight.MC
             {
                 errorLabel.Text.text = "An error occurred when attempting to connect. Please report in Discord to @ijwu.";
                 Archipelago.Instance.LogError(ex);
+                Archipelago.Instance.DisconnectArchipelago();
             }
             
         }
