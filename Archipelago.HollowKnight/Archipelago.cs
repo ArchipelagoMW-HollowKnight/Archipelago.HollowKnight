@@ -28,7 +28,7 @@ namespace Archipelago.HollowKnight
     //       Guarantee you can skip X resource with X being your tolerance.
     // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
     // BUG:  Sometimes spells are not progressive.
-    public partial class Archipelago : Mod, ILocalSettings<ConnectionDetails>
+    public class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
 
