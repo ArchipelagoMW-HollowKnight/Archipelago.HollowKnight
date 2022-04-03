@@ -13,6 +13,7 @@ namespace Archipelago.HollowKnight.IC
         public static Dictionary<string, int> GrubFatherCosts;
         public static Dictionary<string, int> SeerCosts;
         public static Dictionary<string, int> EggCosts;
+        public static Dictionary<string, int> SalubraCharmCosts;
         public static Random Random;
 
         public static bool IsEggShopPlacement(string location)
@@ -32,21 +33,29 @@ namespace Archipelago.HollowKnight.IC
 
         public static bool IsShopPlacement(string location)
         {
-            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra, LocationNames.Leg_Eater };
+            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Leg_Eater };
             return names.Any(x => location.StartsWith(x));
         }
 
-        public static void PlaceGrubfatherItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
+        public static bool IsSalubraPlacement(string location)
+        {
+            return location == LocationNames.Salubra;
+        }
+
+        public static bool IsSalubraCharmShopPlacement(string location)
+        {
+            return location.StartsWith("Salubra_(Requires_Charms)");
+        }
+
+        public static void PlaceGrubfatherItem(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
         {
             var costChestPlacement = pmt as CostChestPlacement;
-
-            item.OnGive += (x) => Archipelago.Instance.LogDebug($"Running OnGive for grubfather placement in location {originalLocation}.");
-
             if (!costChestPlacement.HasTag<DestroyGrubRewardTag>())
             {
                 var tag = costChestPlacement.AddTag<DestroyGrubRewardTag>();
                 tag.destroyRewards = GrubfatherRewards.AllNonGeo;
             }
+            SetUIDefToContainTargetSlotName(item, targetSlotName);
 
             costChestPlacement.AddItem(item, Cost.NewGrubCost(GetGrubCostForLocation(originalLocation)));
         }
@@ -64,16 +73,29 @@ namespace Archipelago.HollowKnight.IC
             }
         }
 
-        public static void PlaceEggShopItem(AbstractPlacement pmt, AbstractItem item)
+        public static void PlaceEggShopItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
-            // TODO: Note: When rancid eggs are randomized, Tuk does not sell eggs. (in rando4 at least)
+            var cost = GetEggCostForLocation(originalLocation);
             var eggShopPlacement = pmt as EggShopPlacement;
             var tag = item.AddTag<CostTag>();
-            tag.Cost = new ItemChanger.Modules.CumulativeRancidEggCost(1);
+            tag.Cost = new ItemChanger.Modules.CumulativeRancidEggCost(cost);
             eggShopPlacement.Add(item);
         }
 
-        public static void PlaceSeerItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
+        private static int GetEggCostForLocation(string originalLocation)
+        {
+            if (EggCosts.TryGetValue(originalLocation, out var cost))
+            {
+                return cost;
+            }
+            else
+            {
+                Archipelago.Instance.LogError($"Attempted to get Egg cost for location '{originalLocation}' but key was not present.");
+                return 0;
+            }
+        }
+
+        public static void PlaceSeerItem(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
         {
             var costChestPlacement = pmt as CostChestPlacement;
             if (!costChestPlacement.HasTag<DestroySeerRewardTag>())
@@ -81,6 +103,7 @@ namespace Archipelago.HollowKnight.IC
                 var tag = costChestPlacement.AddTag<DestroySeerRewardTag>();
                 tag.destroyRewards = SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension;
             }
+            SetUIDefToContainTargetSlotName(item, targetSlotName);
             costChestPlacement.AddItem(item, Cost.NewEssenceCost(GetEssenceCostForLocation(originalLocation)));
         }
 
@@ -100,6 +123,12 @@ namespace Archipelago.HollowKnight.IC
         public static void PlaceShopItem(AbstractPlacement pmt, AbstractItem item, string targetSlotName)
         {
             var shopPlacement = pmt as ShopPlacement;
+            SetUIDefToContainTargetSlotName(item, targetSlotName);
+            shopPlacement.AddItemWithCost(item, GenerateGeoCost());
+        }
+
+        private static void SetUIDefToContainTargetSlotName(AbstractItem item, string targetSlotName)
+        {
             var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
             item.UIDef = new MsgUIDef()
             {
@@ -109,9 +138,43 @@ namespace Archipelago.HollowKnight.IC
                 {
                     MsgUIDef def => def.sprite.Clone(),
                     _ => new EmptySprite()
-                } 
+                }
             };
-            shopPlacement.AddItemWithCost(item, GenerateGeoCost());
+        }
+
+        public static void PlaceSalubraCharmShop(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
+        {
+            var shopPlacement = pmt as ShopPlacement;
+            var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
+            item.UIDef = new MsgUIDef()
+            {
+                name = name,
+                shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
+                sprite = item.UIDef switch
+                {
+                    MsgUIDef def => def.sprite.Clone(),
+                    _ => new EmptySprite()
+                }
+            };
+
+            var charmCostAmount = GetCharmCostForLocation(originalLocation);
+            var charmCost = new PDIntCost(charmCostAmount, nameof(PlayerData.charmsOwned), $"Acquire {charmCostAmount} total charms to buy this item.");
+            var cost = new MultiCost(GenerateGeoCost(), charmCost);
+
+            shopPlacement.AddItemWithCost(item, cost);
+        }
+
+        private static int GetCharmCostForLocation(string originalLocation)
+        {
+            if (SalubraCharmCosts.TryGetValue(originalLocation, out var cost))
+            {
+                return cost;
+            }
+            else
+            {
+                Archipelago.Instance.LogError($"Attempted to get Charm cost for location '{originalLocation}' but key was not present.");
+                return 0;
+            }
         }
 
         private static Cost GenerateGeoCost()

@@ -21,13 +21,12 @@ namespace Archipelago.HollowKnight.IC
             tag.Properties["DisplayMessage"] = $"{this.name}\nsent to the multiworld.";
         }
 
-        // TODO: this can be used to restore placements from save
+        // INFO: this can be used to restore placements from save
         protected override void OnLoad()
         {
             base.OnLoad();
         }
 
-        // TODO: this can be used for nothing I dont know why I put it here
         protected override void OnUnload()
         {
             base.OnUnload();

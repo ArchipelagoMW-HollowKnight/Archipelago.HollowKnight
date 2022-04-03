@@ -1,4 +1,5 @@
-﻿using MenuChanger;
+﻿using System;
+using MenuChanger;
 using MenuChanger.Extensions;
 using MenuChanger.MenuElements;
 using MenuChanger.MenuPanels;
@@ -69,6 +70,12 @@ namespace Archipelago.HollowKnight.MC
             catch (ArchipelagoConnectionException ex)
             {
                 errorLabel.Text.text = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                errorLabel.Text.text = "An error occurred when attempting to connect. Please report in Discord to @ijwu.";
+                Archipelago.Instance.LogError(ex);
+                Archipelago.Instance.DisconnectArchipelago();
             }
             
         }
