@@ -51,7 +51,7 @@ namespace Archipelago.HollowKnight
         private List<int> notchCosts;
         private SlotOptions slotOptions;
 
-        public override string GetVersion() => new Version(0, 0, 1).ToString();
+        public override string GetVersion() => new Version(0, 0, 2).ToString();
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
