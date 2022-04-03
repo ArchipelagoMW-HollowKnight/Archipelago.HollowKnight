@@ -139,31 +139,31 @@ namespace Archipelago.HollowKnight.SlotData
         [JsonProperty("RandomizeElevatorPass")]
         public bool RandomizeElevatorPass { get; set; }
 
-        [JsonProperty("start_location")]
+        [JsonProperty("StartLocation")]
         public int StartLocation { get; set; }
 
-        [JsonProperty("minimum_grub_price")]
+        [JsonProperty("MinimumGrubPrice")]
         public int MinGrubPrice { get; set; }
 
-        [JsonProperty("maximum_grub_price")]
+        [JsonProperty("MaximumGrubPrice")]
         public int MaxGrubPrice { get; set; }
 
-        [JsonProperty("minimum_essence_price")]
+        [JsonProperty("MinimumEssencePrice")]
         public int MinEssencePrice { get; set; }
 
-        [JsonProperty("maximum_essence_price")]
+        [JsonProperty("MaximumEssencePrice")]
         public int MaxEssencePrice { get; set; }
 
-        [JsonProperty("minimum_egg_price")]
+        [JsonProperty("MinimumEggPrice")]
         public int MinEggPrice { get; set; }
 
-        [JsonProperty("maximum_egg_price")]
+        [JsonProperty("MaximumEggPrice")]
         public int MaxEggPrice { get; set; }
 
-        [JsonProperty("random_charm_costs")]
+        [JsonProperty("RandomCharmCosts")]
         public int RandomCharmCosts { get; set; }
 
-        [JsonProperty("egg_shop_slots")]
+        [JsonProperty("EggShopSlots")]
         public int EggShopSlots { get; set; }
     }
 }
