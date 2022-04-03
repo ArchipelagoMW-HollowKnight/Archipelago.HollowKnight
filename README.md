@@ -3,6 +3,14 @@
 A mod which enables Hollow Knight to act as an Archipelago client, enabling multiworld and randomization driven by the [Archipelago multigame multiworld system](https://archipelago.gg).
 
 ## Installing Archipelago.HollowKnight
+### Installing with Scarab
+1. Download Scarab from the [Scarab releases page](https://github.com/fifty-six/Scarab/releases).
+2. Extract Scarab and run it.
+	* If it does not detect your HK install directory, lead Scarab to the correct directory.
+	* Also, don’t pirate the game. >:(
+3. Install and enable Archipelago.
+4. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
+
 ### Installing Manually
 1. Download Scarab from the [Scarab releases page](https://github.com/fifty-six/Scarab/releases).
 2. Extract Scarab and run it.
@@ -18,9 +26,6 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 10. In the resulting folder, extract the Archipelago.HollowKnight.zip file you Downloaded.
 	* There should now be a new folder called Archipelago.HollowKnight which contains the mod files.
 11. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
-
-### Installing with Scarab
-Coming Soon...
 
 ## Joining an Archipelago Session
 1. Start the game after installing all necessary mods.
