@@ -3,7 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archipelago.HollowKnight", "Archipelago.HollowKnight\Archipelago.HollowKnight.csproj", "{7B597421-1AA1-4880-B095-7A293B7FF39E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Archipelago.HollowKnight", "Archipelago.HollowKnight\Archipelago.HollowKnight.csproj", "{7B597421-1AA1-4880-B095-7A293B7FF39E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA5CCD5F-7520-420B-B06F-5506BB4E18F6}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
