@@ -230,12 +230,24 @@ namespace Archipelago.HollowKnight
             session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
         }
 
+        internal void SetItemTags(AbstractItem item, string name, string slotName)
+        {
+            var tag = item.AddTag<InteropTag>();
+            tag.Message = "RecentItems";
+            tag.Properties["DisplayMessage"] = $"{name}\nsent to {slotName}.";
+        }
+
         public void PlaceItem(string location, string name, NetworkItem netItem)
         {
             LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
             var originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
             AbstractLocation loc = Finder.GetLocation(location);
+            string targetSlotName = null;
+            if (netItem.Player != slot)
+            {
+                targetSlotName = session.Players.GetPlayerName(netItem.Player);
+            }
 
             if (loc == null)
             {
@@ -251,34 +263,33 @@ namespace Archipelago.HollowKnight
             {
                 // Since HK is a remote items game, I don't want the placement to actually do anything. The item will come from the server.
                 var originalItem = Finder.GetItem(name);
-                item = new DisguisedVoidItem(originalItem);
+                item = new DisguisedVoidItem(originalItem, targetSlotName);
 
-                item.ModifyItem += (x) =>
+                if (netItem.Player == slot)
                 {
-                    try
+                    item.ModifyItem += (x) =>
                     {
-                        x.Info.MessageType = MessageType.None;
-                    }
-                    catch { }
-                };
+                        try
+                        {
+                            x.Info.MessageType = MessageType.None;
+                        }
+                        catch { }
+                    };
 
-                var tag = item.AddTag<InteropTag>();
-                tag.Message = "RecentItems";
-
-                if (netItem.Player != slot)
-                {
-                    var receivingPlayer = session.Players.GetPlayerName(netItem.Player);
-                    tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPreviewName()}\nsent to {receivingPlayer}.";
+                    var tag = item.AddTag<InteropTag>();
+                    tag.Message = "RecentItems";
+                    tag.Properties["IgnoreItem"] = true;
                 }
                 else
                 {
-                    tag.Properties["IgnoreItem"] = true;
+                    SetItemTags(item, originalItem.GetPreviewName(), targetSlotName);
                 }
             }
             else
             {
                 // If item doesn't belong to Hollow Knight, then it is a remote item for another game.
-                item = new ArchipelagoItem(name);
+                item = new ArchipelagoItem(name, targetSlotName, netItem.Flags);
+                SetItemTags(item, name, targetSlotName);
             }
 
             item.OnGive += (x) =>
@@ -286,21 +297,21 @@ namespace Archipelago.HollowKnight
                 var id = session.Locations.GetLocationIdFromName("Hollow Knight", originalLocation);
                 session.Locations.CompleteLocationChecks(id);
             };
-            var targetSlotName = session.Players.GetPlayerName(netItem.Player);
+            targetSlotName = session.Players.GetPlayerName(netItem.Player);
             if (SpecialPlacementHandler.IsShopPlacement(location) || SpecialPlacementHandler.IsSalubraPlacement(location) && !originalLocation.Contains("Requires_Charms"))
             {
                 LogDebug($"[PlaceItem] Detected shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceShopItem(pmt, item, targetSlotName);
+                SpecialPlacementHandler.PlaceShopItem(pmt, item);
             }
             else if (SpecialPlacementHandler.IsSalubraCharmShopPlacement(originalLocation))
             {
                 LogDebug($"[PlaceItem] Detected Salubra charm shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceSalubraCharmShop(originalLocation, pmt, item, targetSlotName);
+                SpecialPlacementHandler.PlaceSalubraCharmShop(originalLocation, pmt, item);
             }
             else if (SpecialPlacementHandler.IsSeerPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected seer placement for location: {location}.");
-                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item, targetSlotName);
+                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item);
             }
             else if (SpecialPlacementHandler.IsEggShopPlacement(location))
             {
@@ -310,7 +321,7 @@ namespace Archipelago.HollowKnight
             else if (SpecialPlacementHandler.IsGrubfatherPlacement(location))
             {
                 LogDebug($"[PlaceItem] Detected Grubfather placement for original location: {originalLocation}. Trimmed location: {location}");
-                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item, targetSlotName);
+                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item);
             }
             else
             {
