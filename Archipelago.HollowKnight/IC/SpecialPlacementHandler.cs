@@ -47,7 +47,7 @@ namespace Archipelago.HollowKnight.IC
             return location.StartsWith("Salubra_(Requires_Charms)");
         }
 
-        public static void PlaceGrubfatherItem(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
+        public static void PlaceGrubfatherItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
             var costChestPlacement = pmt as CostChestPlacement;
             if (!costChestPlacement.HasTag<DestroyGrubRewardTag>())
@@ -55,8 +55,6 @@ namespace Archipelago.HollowKnight.IC
                 var tag = costChestPlacement.AddTag<DestroyGrubRewardTag>();
                 tag.destroyRewards = GrubfatherRewards.AllNonGeo;
             }
-            SetUIDefToContainTargetSlotName(item, targetSlotName);
-
             costChestPlacement.AddItem(item, Cost.NewGrubCost(GetGrubCostForLocation(originalLocation)));
         }
 
@@ -95,7 +93,7 @@ namespace Archipelago.HollowKnight.IC
             }
         }
 
-        public static void PlaceSeerItem(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
+        public static void PlaceSeerItem(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
             var costChestPlacement = pmt as CostChestPlacement;
             if (!costChestPlacement.HasTag<DestroySeerRewardTag>())
@@ -103,7 +101,6 @@ namespace Archipelago.HollowKnight.IC
                 var tag = costChestPlacement.AddTag<DestroySeerRewardTag>();
                 tag.destroyRewards = SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension;
             }
-            SetUIDefToContainTargetSlotName(item, targetSlotName);
             costChestPlacement.AddItem(item, Cost.NewEssenceCost(GetEssenceCostForLocation(originalLocation)));
         }
 
@@ -120,43 +117,15 @@ namespace Archipelago.HollowKnight.IC
             }
         }
 
-        public static void PlaceShopItem(AbstractPlacement pmt, AbstractItem item, string targetSlotName)
+        public static void PlaceShopItem(AbstractPlacement pmt, AbstractItem item)
         {
             var shopPlacement = pmt as ShopPlacement;
-            SetUIDefToContainTargetSlotName(item, targetSlotName);
             shopPlacement.AddItemWithCost(item, GenerateGeoCost());
         }
 
-        private static void SetUIDefToContainTargetSlotName(AbstractItem item, string targetSlotName)
-        {
-            var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
-            item.UIDef = new MsgUIDef()
-            {
-                name = name,
-                shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
-                sprite = item.UIDef switch
-                {
-                    MsgUIDef def => def.sprite.Clone(),
-                    _ => new EmptySprite()
-                }
-            };
-        }
-
-        public static void PlaceSalubraCharmShop(string originalLocation, AbstractPlacement pmt, AbstractItem item, string targetSlotName)
+        public static void PlaceSalubraCharmShop(string originalLocation, AbstractPlacement pmt, AbstractItem item)
         {
             var shopPlacement = pmt as ShopPlacement;
-            var name = new BoxedString($"{item.GetPreviewName()} (for {targetSlotName})");
-            item.UIDef = new MsgUIDef()
-            {
-                name = name,
-                shopDesc = new BoxedString(item.UIDef.GetShopDesc()),
-                sprite = item.UIDef switch
-                {
-                    MsgUIDef def => def.sprite.Clone(),
-                    _ => new EmptySprite()
-                }
-            };
-
             var charmCostAmount = GetCharmCostForLocation(originalLocation);
             var charmCost = new PDIntCost(charmCostAmount, nameof(PlayerData.charmsOwned), $"Acquire {charmCostAmount} total charms to buy this item.");
             var cost = new MultiCost(GenerateGeoCost(), charmCost);
