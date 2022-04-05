@@ -5,21 +5,10 @@ namespace Archipelago.HollowKnight.IC
 {
     internal class DisguisedVoidItem : AbstractItem
     {
-        public DisguisedVoidItem(AbstractItem originalItem, string targetSlotName = null)
+        public DisguisedVoidItem(AbstractItem originalItem)
         {
             name = originalItem.name;
-            UIDef = new ArchipelagoUIDef(originalItem.UIDef, targetSlotName);
-
-            InteropTag tag = AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            if (targetSlotName != null)
-            {
-                tag.Properties["DisplayMessage"] = $"{originalItem.GetPreviewName()}\nsent to {targetSlotName}.";
-            }
-            else
-            {
-                tag.Properties["DisplayMessage"] = $"{originalItem.GetPreviewName()}\nsent to the multiworld.";
-            }
+            UIDef = new ArchipelagoUIDef(originalItem.UIDef);
         }
 
         public override void GiveImmediate(GiveInfo info)
