@@ -94,28 +94,28 @@
       <HintPath>$(HollowKnightRefs)/Mods/RecentItemsDisplay/RecentItemsDisplay.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition">
-      <HintPath>..\DLLs\System.ComponentModel.Composition.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.ComponentModel.Composition.dll</HintPath>
     </Reference>
     <Reference Include="System.Configuration">
-      <HintPath>..\DLLs\System.Configuration.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="System.Diagnostics.StackTrace">
-      <HintPath>..\DLLs\System.Diagnostics.StackTrace.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.Diagnostics.StackTrace.dll</HintPath>
     </Reference>
     <Reference Include="System.EnterpriseServices">
-      <HintPath>..\DLLs\System.EnterpriseServices.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.EnterpriseServices.dll</HintPath>
     </Reference>
     <Reference Include="System.Globalization.Extensions">
-      <HintPath>..\DLLs\System.Globalization.Extensions.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.Globalization.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Runtime.Serialization.Xml" />
     <Reference Include="System.Transactions">
-      <HintPath>..\DLLs\System.Transactions.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.Transactions.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.XPath.XDocument">
-      <HintPath>..\DLLs\System.Xml.XPath.XDocument.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)/System.Xml.XPath.XDocument.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Timeline">
       <HintPath>$(HollowKnightRefs)/Unity.Timeline.dll</HintPath>
