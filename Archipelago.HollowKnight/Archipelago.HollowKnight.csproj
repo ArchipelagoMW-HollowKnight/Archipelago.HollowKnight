@@ -48,9 +48,9 @@
     <EmbeddedResource Include="Resources\IconSmall.png" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Archipelago.MultiClient.Net">
-      <HintPath>$(HollowKnightRefs)/Mods/Archipelago.HollowKnight/Archipelago.MultiClient.Net.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="3.0.1" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -86,9 +86,6 @@
     </Reference>
     <Reference Include="netstandard">
       <HintPath>$(HollowKnightRefs)/netstandard.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>$(HollowKnightRefs)/Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>$(HollowKnightRefs)/PlayMaker.dll</HintPath>
@@ -320,9 +317,6 @@
     </Reference>
     <Reference Include="UnityEngine.XRModule">
       <HintPath>$(HollowKnightRefs)/UnityEngine.XRModule.dll</HintPath>
-    </Reference>
-    <Reference Include="websocket-sharp">
-      <HintPath>$(HollowKnightRefs)/Mods/Archipelago.HollowKnight/websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
