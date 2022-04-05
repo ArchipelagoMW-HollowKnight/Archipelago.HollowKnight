@@ -21,18 +21,14 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    // Known Issues 
-    // TODO: Test cases: Items send and receive from: Grubfather, Seer, Shops, Chests, Lore tablets, Geo Rocks, Lifeblood cocoons, Shinies, Egg Shop, Soul totems
-    // TODO: Test cases: AP forfeit and AP collect.
-    // NOTE: Tolerances are used to "help" generation of the randomized game be more tolerant of not reaching a precise number of required resources
-    //       Guarantee you can skip X resource with X being your tolerance.
-    // INFO: Known issue: Start Game button on Archipelago Mode Menu may appear off-center for certain aspect ratios. Oh well.
-    // BUG:  Sometimes spells are not progressive.
     public class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
 
-        internal static Archipelago Instance;
+        public static Archipelago Instance;
+        public SlotOptions SlotOptions { get; set; }
+        public bool ArchipelagoEnabled { get; set; }
+
         internal static Sprite Sprite;
         internal static Sprite SmallSprite;
         internal static System.Random Random;
@@ -40,7 +36,6 @@ namespace Archipelago.HollowKnight
 
         internal SpriteManager spriteManager;
         internal ConnectionDetails ApSettings;
-        internal bool ArchipelagoEnabled = false;
         internal ArchipelagoSession session;
 
         private Dictionary<string, AbstractPlacement> vanillaItemPlacements = new();
@@ -49,7 +44,6 @@ namespace Archipelago.HollowKnight
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
         private List<int> notchCosts;
-        private SlotOptions slotOptions;
 
         public override string GetVersion() => new Version(0, 0, 2).ToString();
 
@@ -119,7 +113,7 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.CreateSettingsProfile();
 
             ConnectToArchipelago();
-            if (slotOptions.RandomCharmCosts != -1)
+            if (SlotOptions.RandomCharmCosts != -1)
             {
                 RandomizeCharmCosts();
             }
@@ -165,7 +159,7 @@ namespace Archipelago.HollowKnight
                 SpecialPlacementHandler.SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Charm_costs"]);
 
                 notchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
-                slotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
+                SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
             }
         }
 

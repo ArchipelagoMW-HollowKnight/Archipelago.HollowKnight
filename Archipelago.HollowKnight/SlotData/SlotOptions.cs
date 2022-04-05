@@ -2,7 +2,7 @@
 
 namespace Archipelago.HollowKnight.SlotData
 {
-    internal class SlotOptions
+    public class SlotOptions
     {
         [JsonProperty("RandomizeDreamers")]
         public bool RandomizeDreamers { get; set; }
