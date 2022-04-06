@@ -9,11 +9,11 @@ using ItemChanger.Tags;
 
 namespace Archipelago.HollowKnight.Placements
 {
-    internal class SeetPlacementHandler : IPlacementHandler
+    internal class SeerPlacementHandler : IPlacementHandler
     {
         public Dictionary<string, int> SeerCosts { get; }
 
-        public SeetPlacementHandler(Dictionary<string, int> seerCosts)
+        public SeerPlacementHandler(Dictionary<string, int> seerCosts)
         {
             SeerCosts = seerCosts;
         }
