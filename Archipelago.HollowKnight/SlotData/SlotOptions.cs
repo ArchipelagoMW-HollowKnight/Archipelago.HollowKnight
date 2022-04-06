@@ -165,5 +165,8 @@ namespace Archipelago.HollowKnight.SlotData
 
         [JsonProperty("EggShopSlots")]
         public int EggShopSlots { get; set; }
+
+        [JsonProperty("ArchipelagoGoal")]
+        public Archipelago.Goal Goal { get; set; }
     }
 }

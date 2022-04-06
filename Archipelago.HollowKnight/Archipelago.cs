@@ -21,8 +21,38 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
+
     public class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
+        public enum Goal
+        {
+            Any = 0,
+            HollowKnight = 1,
+            SealedSiblings = 2,
+            Radiance = 3,
+            Godhome = 4,
+            MAX = Godhome
+        }
+
+        public static readonly Dictionary<Goal, string> GoalNames = new Dictionary<Goal, string>()
+        {
+            [Goal.Any] = "Beat the Game",
+            [Goal.HollowKnight] = "The Hollow Knight",
+            [Goal.SealedSiblings] = "Sealed Siblings",
+            [Goal.Radiance] = "Dream No More",
+            [Goal.Godhome] = "Embrace the Void"
+        };
+
+        public static readonly Dictionary<Goal, string> GoalDescriptions = new Dictionary<Goal, string>()
+        {
+            [Goal.Any] = "Complete Hollow Knight with any ending.",
+            [Goal.HollowKnight] = "Defeat The Hollow Knight<br>or any other ending with 3 dreamers.",
+            [Goal.SealedSiblings] = "Complete the Sealed Siblings ending<br>or any other ending with Void Heart equipped.",
+            [Goal.Radiance] = "Defeat The Radiance or Absolute Radiance<br>after obtaining Void Heart and 3 dreamers.",
+            [Goal.Godhome] = "Defeat Absolute Radiance<br>at the end of Pantheon 5."
+        };
+
+
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
 
         public static Archipelago Instance;
@@ -63,22 +93,57 @@ namespace Archipelago.HollowKnight
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
             ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            On.GameCompletionScreen.Start += OnGameComplete;
-
+            // On.GameCompletionScreen.Start += OnGameComplete;
+            ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
+            // ModHooks.SceneChanged += ModHooks_SceneChanged;
             Log("Initialized");
         }
 
-        private void OnGameComplete(On.GameCompletionScreen.orig_Start orig, GameCompletionScreen self)
+        private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene scene)
         {
-            if (ArchipelagoEnabled)
+            string sceneName = scene.name;
+            LogDebug($"Detected change of scene to: {sceneName}.");
+            if (!ArchipelagoEnabled) return;
+
+            bool acquiredVoidHeart = PlayerData.instance.GetInt(nameof(PlayerData.royalCharmState)) == 4;
+            bool equippedVoidHeart = acquiredVoidHeart && PlayerData.instance.GetBool(nameof(PlayerData.equippedCharm_36));
+            bool threeDreamers = PlayerData.instance.GetInt(nameof(PlayerData.guardiansDefeated)) >= 3;
+            LogDebug($"VH Acquired: {acquiredVoidHeart}; VH Equipped: {equippedVoidHeart}; Three Dreamers: {threeDreamers}");
+
+            bool victory = false;
+            Goal goal = SlotOptions.Goal;
+
+            switch (sceneName)
             {
-                session.Socket.SendPacket(new StatusUpdatePacket()
-                {
-                    Status = ArchipelagoClientState.ClientGoal
-                });
+                case SceneNames.Cinematic_Ending_A:  // THK ending
+                    victory = goal == Goal.Any || goal == Goal.HollowKnight;
+                    break;
+                case SceneNames.Cinematic_Ending_B:  // Sealed Siblings ending
+                    victory = goal == Goal.Any || goal == Goal.HollowKnight || goal == Goal.SealedSiblings;
+                    break;
+                case SceneNames.Cinematic_Ending_C:  // Radiance ending
+                    victory = goal == Goal.Any || goal == Goal.HollowKnight || goal == Goal.SealedSiblings || goal == Goal.Radiance;
+                    break;
+                case "Cinematic_Ending_D":  // This isn't listed in SceneNames; it's possible it's unused.  Godhome ending  (TODO: Verify this)
+                case SceneNames.Cinematic_Ending_E:  // ... with flower quest?  (TODO: Verify this)
+                    victory = (
+                        (goal == Goal.Any || goal == Goal.Godhome)
+                        || (threeDreamers && (
+                            (goal == Goal.HollowKnight)
+                            || (acquiredVoidHeart && (goal == Goal.SealedSiblings || goal == Goal.Radiance))
+                        ))
+                    );
+                    break;
+                default:
+                    return;
             }
 
-            orig(self);
+            if (!victory) return;
+            LogDebug("Declaring victory!");
+            session.Socket.SendPacket(new StatusUpdatePacket()
+            {
+                Status = ArchipelagoClientState.ClientGoal
+            });
         }
 
         private void ModHooks_HeroUpdateHook()
@@ -119,6 +184,22 @@ namespace Archipelago.HollowKnight
             }
             CreateItemPlacements();
             CreateVanillaItemPlacements();
+            SetupLanguageEdits();
+
+        }
+
+        private void SetupLanguageEdits()
+        {
+            Goal goal = SlotOptions.Goal;
+            if(goal < 0 || goal > Goal.MAX)
+            {
+                goal = Goal.Any;
+            }
+            string name = GoalNames[goal];
+            string desc = GoalDescriptions[goal];
+            ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_TOP"), (ref string s) => { s = "Your goal is"; });
+            ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_MAIN"), (ref string s) => { s = name; });
+            ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_DESC"), (ref string s) => { s = desc; });
         }
 
         private void RandomizeCharmCosts()
@@ -160,6 +241,14 @@ namespace Archipelago.HollowKnight
 
                 notchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
+
+                if(SlotOptions.Goal < 0 || SlotOptions.Goal > Goal.MAX)
+                {
+                    // TODO: Should probably yell about using an outdated client here.  I'm not certain the best way to do that, so just default it to ANY for now
+                    // --Dewin
+                    SlotOptions.Goal = Goal.Any;
+                }
+
             }
         }
 
