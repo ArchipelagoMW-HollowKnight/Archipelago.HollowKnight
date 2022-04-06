@@ -12,8 +12,8 @@ namespace Archipelago.HollowKnight.Placements
     {
         public bool CanHandlePlacement(string location)
         {
-            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Leg_Eater };
-            return (names.Any(x => location.StartsWith(x)) || location == LocationNames.Salubra) && !location.Contains("Requires_Charms");
+            var names = new[] { LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Leg_Eater, LocationNames.Salubra };
+            return names.Any(x => location.StartsWith(x)) && !location.Contains("Requires_Charms");
         }
 
         public void HandlePlacement(AbstractPlacement pmt, AbstractItem item, string originalLocationName)
