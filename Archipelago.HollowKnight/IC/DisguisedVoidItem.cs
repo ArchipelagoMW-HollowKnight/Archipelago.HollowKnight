@@ -12,7 +12,7 @@ namespace Archipelago.HollowKnight.IC
 
             InteropTag tag = AddTag<InteropTag>();
             tag.Message = "RecentItems";
-            if (targetSlotName != null)
+            if (!string.IsNullOrEmpty(targetSlotName))
             {
                 tag.Properties["DisplayMessage"] = $"{originalItem.GetPreviewName()}\nsent to {targetSlotName}.";
             }

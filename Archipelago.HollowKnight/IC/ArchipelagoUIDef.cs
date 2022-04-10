@@ -9,21 +9,15 @@ namespace Archipelago.HollowKnight.IC
         {
             if (def is MsgUIDef msgDef)
             {
+                name = string.IsNullOrEmpty(targetSlotName) ? msgDef.name.Clone() : new BoxedString($"{targetSlotName}'s {def.GetPreviewName()}");
                 shopDesc = msgDef.shopDesc.Clone();
                 sprite = msgDef.sprite.Clone();
             }
             else
             {
+                name = string.IsNullOrEmpty(targetSlotName) ? new BoxedString(def.GetPreviewName()) : new BoxedString($"{targetSlotName}'s {def.GetPreviewName()}");
                 shopDesc = new BoxedString(def.GetShopDesc());
                 sprite = new EmptySprite();
-            }
-            if (targetSlotName == null)
-            {
-                name = new BoxedString(def.GetPreviewName());
-            }
-            else
-            {
-                name = new BoxedString($"{targetSlotName}'s {def.GetPreviewName()}");
             }
         }
     }

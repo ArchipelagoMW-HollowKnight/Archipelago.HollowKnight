@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
+using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
@@ -21,7 +22,6 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-
     public class Archipelago : Mod, ILocalSettings<ConnectionDetails>
     {
         public enum Goal
@@ -58,6 +58,11 @@ namespace Archipelago.HollowKnight
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
+        public Dictionary<string, int> GrubfatherCosts { get; private set; }
+        public Dictionary<string, int> SeerCosts { get; private set; }
+        public Dictionary<string, int> EggCosts { get; private set; }
+        public Dictionary<string, int> SalubraCharmCosts { get; private set; }
+        public List<int> NotchCosts { get; private set; }
 
         internal static Sprite Sprite;
         internal static Sprite SmallSprite;
@@ -73,7 +78,8 @@ namespace Archipelago.HollowKnight
         private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private List<int> notchCosts;
+        private List<IPlacementHandler> placementHandlers;
+        
 
         public override string GetVersion() => new Version(0, 0, 2).ToString();
 
@@ -208,9 +214,9 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
             var playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
             LogDebug(playerDataEditModule);
-            for (int i = 0; i < notchCosts.Count; i++)
+            for (int i = 0; i < NotchCosts.Count; i++)
             {
-                playerDataEditModule.AddPDEdit($"charmCost_{i + 1}", notchCosts[i]);
+                playerDataEditModule.AddPDEdit($"charmCost_{i + 1}", NotchCosts[i]);
             }
         }
 
@@ -233,13 +239,12 @@ namespace Archipelago.HollowKnight
                 slot = success.Slot;
                 Random = new System.Random(Convert.ToInt32(seed));
 
-                SpecialPlacementHandler.Random = Random;
-                SpecialPlacementHandler.GrubFatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Grub_costs"]);
-                SpecialPlacementHandler.SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Essence_costs"]);
-                SpecialPlacementHandler.EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Egg_costs"]);
-                SpecialPlacementHandler.SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Charm_costs"]);
-
-                notchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
+                Costs.Random = Random;
+                GrubfatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Grub_costs"]);
+                SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Essence_costs"]);
+                EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Egg_costs"]);
+                SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Charm_costs"]);
+                NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
 
                 if(SlotOptions.Goal < 0 || SlotOptions.Goal > Goal.MAX)
@@ -248,8 +253,20 @@ namespace Archipelago.HollowKnight
                     // --Dewin
                     SlotOptions.Goal = Goal.Any;
                 }
-
+                InitializePlacementHandlers();
             }
+        }
+
+        private void InitializePlacementHandlers()
+        {
+            placementHandlers = new List<IPlacementHandler>()
+            {
+                new ShopPlacementHandler(),
+                new GrubfatherPlacementHandler(GrubfatherCosts),
+                new SeerPlacementHandler(SeerCosts),
+                new EggShopPlacementHandler(EggCosts),
+                new SalubraCharmShopPlacementHandler(SalubraCharmCosts)
+            };
         }
 
         public void ReceiveItem(NetworkItem item)
@@ -323,9 +340,12 @@ namespace Archipelago.HollowKnight
         public void PlaceItem(string location, string name, NetworkItem netItem)
         {
             LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
+            
             var originalLocation = string.Copy(location);
+            
             location = StripShopSuffix(location);
             AbstractLocation loc = Finder.GetLocation(location);
+            
             string targetSlotName = null;
             if (netItem.Player != slot)
             {
@@ -380,33 +400,19 @@ namespace Archipelago.HollowKnight
                 var id = session.Locations.GetLocationIdFromName("Hollow Knight", originalLocation);
                 session.Locations.CompleteLocationChecks(id);
             };
-            targetSlotName = session.Players.GetPlayerName(netItem.Player);
-            if (SpecialPlacementHandler.IsShopPlacement(location) || SpecialPlacementHandler.IsSalubraPlacement(location) && !originalLocation.Contains("Requires_Charms"))
+
+            bool handled = false;
+            foreach (var handler in placementHandlers)
             {
-                LogDebug($"[PlaceItem] Detected shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceShopItem(pmt, item);
+                if (handler.CanHandlePlacement(originalLocation))
+                {
+                    handler.HandlePlacement(pmt, item, originalLocation);
+                    handled = true;
+                    break;
+                }
             }
-            else if (SpecialPlacementHandler.IsSalubraCharmShopPlacement(originalLocation))
-            {
-                LogDebug($"[PlaceItem] Detected Salubra charm shop placement for location: {location}");
-                SpecialPlacementHandler.PlaceSalubraCharmShop(originalLocation, pmt, item);
-            }
-            else if (SpecialPlacementHandler.IsSeerPlacement(location))
-            {
-                LogDebug($"[PlaceItem] Detected seer placement for location: {location}.");
-                SpecialPlacementHandler.PlaceSeerItem(originalLocation, pmt, item);
-            }
-            else if (SpecialPlacementHandler.IsEggShopPlacement(location))
-            {
-                LogDebug($"[PlaceItem] Detected egg shop placement for location: {location}.");
-                SpecialPlacementHandler.PlaceEggShopItem(originalLocation, pmt, item);
-            }
-            else if (SpecialPlacementHandler.IsGrubfatherPlacement(location))
-            {
-                LogDebug($"[PlaceItem] Detected Grubfather placement for original location: {originalLocation}. Trimmed location: {location}");
-                SpecialPlacementHandler.PlaceGrubfatherItem(originalLocation, pmt, item);
-            }
-            else
+
+            if (!handled)
             {
                 pmt.Add(item);
             }
@@ -535,10 +541,7 @@ namespace Archipelago.HollowKnight
             slot = 0;
             seed = 0;
             vanillaItemPlacements = null;
-            SpecialPlacementHandler.SeerCosts = null;
-            SpecialPlacementHandler.GrubFatherCosts = null;
-            SpecialPlacementHandler.EggCosts = null;
-            SpecialPlacementHandler.SalubraCharmCosts = null;
+            placementHandlers = null;
 
             if (session?.Socket != null && session.Socket.Connected)
             {
