@@ -111,13 +111,13 @@ namespace Archipelago.HollowKnight
             LogDebug($"Detected change of scene to: {sceneName}.");
             if (!ArchipelagoEnabled) return;
 
+            Goal goal = SlotOptions.Goal;
             bool acquiredVoidHeart = PlayerData.instance.GetInt(nameof(PlayerData.royalCharmState)) == 4;
             bool equippedVoidHeart = acquiredVoidHeart && PlayerData.instance.GetBool(nameof(PlayerData.equippedCharm_36));
             bool threeDreamers = PlayerData.instance.GetInt(nameof(PlayerData.guardiansDefeated)) >= 3;
-            LogDebug($"VH Acquired: {acquiredVoidHeart}; VH Equipped: {equippedVoidHeart}; Three Dreamers: {threeDreamers}");
-
             bool victory = false;
-            Goal goal = SlotOptions.Goal;
+            LogDebug($"VH Acquired: {acquiredVoidHeart}; VH Equipped: {equippedVoidHeart}; Three Dreamers: {threeDreamers}; Goal: {goal}");
+
 
             switch (sceneName)
             {

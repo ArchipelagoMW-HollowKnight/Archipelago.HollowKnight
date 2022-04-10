@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Archipelago.HollowKnight.SlotData
 {
@@ -166,7 +167,8 @@ namespace Archipelago.HollowKnight.SlotData
         [JsonProperty("EggShopSlots")]
         public int EggShopSlots { get; set; }
 
-        [JsonProperty("ArchipelagoGoal")]
+        // Even though this is encoded as an int, it doesn't import properly without doing this.
+        [JsonConverter(typeof(StringEnumConverter))]
         public Archipelago.Goal Goal { get; set; }
     }
 }
