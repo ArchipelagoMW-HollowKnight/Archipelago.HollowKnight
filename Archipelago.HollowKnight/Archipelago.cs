@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    public class Archipelago : Mod, ILocalSettings<ConnectionDetails>
+    public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
     {
         private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 0);
 
@@ -58,7 +58,6 @@ namespace Archipelago.HollowKnight
         {
             base.Initialize();
             Log("Initializing");
-
             Instance = this;
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
             Sprite = spriteManager.GetSprite("Icon");
@@ -466,12 +465,32 @@ namespace Archipelago.HollowKnight
 
         public void OnLoadLocal(ConnectionDetails details)
         {
+            if(details.SlotName == null || details.SlotName == "")  // Apparently, this is called even before a save is loaded.  Catch this.
+            {
+                return;
+            }
             ApSettings = details;
         }
 
         public ConnectionDetails OnSaveLocal()
         {
             return ApSettings;
+        }
+
+        public void OnLoadGlobal(ConnectionDetails details)
+        {
+            ApSettings = details;
+            ApSettings.ItemIndex = 0;
+        }
+
+        public ConnectionDetails OnSaveGlobal()
+        {
+            return new ConnectionDetails()
+            {
+                ServerUrl = ApSettings.ServerUrl,
+                ServerPort = ApSettings.ServerPort,
+                SlotName = ApSettings.SlotName
+            };
         }
     }
 }
