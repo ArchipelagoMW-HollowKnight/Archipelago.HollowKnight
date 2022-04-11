@@ -3,6 +3,7 @@ using MenuChanger;
 using MenuChanger.Extensions;
 using MenuChanger.MenuElements;
 using MenuChanger.MenuPanels;
+using Modding;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight.MC
@@ -14,25 +15,40 @@ namespace Archipelago.HollowKnight.MC
 
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
+            var perpetua = CanvasUtil.GetFont("Perpetua");
+            
             ApPage = new MenuPage("Archipelago Settings", modeMenu);
             var settingsType = typeof(ConnectionDetails);
             var settings = Archipelago.Instance.ApSettings;
 
             var urlField = new EntryField<string>(ApPage, "Server URL: ");
-            urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
             urlField.InputField.characterLimit = 500;
+            var urlRect = urlField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            urlRect.sizeDelta = new Vector2(1500f, 63.2f);
+            urlField.InputField.textComponent.font = perpetua;
+            urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
+            
 
             var portField = new NumericEntryField<int>(ApPage, "Server Port: ");
             portField.SetClamp(0, 65535);
+            portField.InputField.textComponent.font = perpetua;
             portField.Bind(settings, settingsType.GetProperty("ServerPort"));
 
             var nameField = new EntryField<string>(ApPage, "Slot Name: ");
-            nameField.Bind(settings, settingsType.GetProperty("SlotName"));
             nameField.InputField.characterLimit = 500;
+            nameField.InputField.textComponent.font = perpetua;
+            var nameRect = nameField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            nameRect.sizeDelta = new Vector2(1500f, 63.2f);
+            nameField.Bind(settings, settingsType.GetProperty("SlotName"));
+            
 
             var passwordField = new EntryField<string>(ApPage, "Password: ");
-            passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
             passwordField.InputField.characterLimit = 500;
+            passwordField.InputField.textComponent.font = perpetua;
+            var passwordRect = passwordField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            passwordRect.sizeDelta = new Vector2(1500f, 63.2f);
+            passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
+            
 
             var startButton = new BigButton(ApPage, "Start", "Will stall after clicking.");
             startButton.OnClick += StartNewGame;
