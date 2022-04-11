@@ -20,6 +20,7 @@ namespace Archipelago.HollowKnight.Placements
         {
             var shopPlacement = pmt as ShopPlacement;
             shopPlacement.AddItemWithCost(item, Costs.GenerateGeoCost());
+            shopPlacement.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
         }
     }
 }
