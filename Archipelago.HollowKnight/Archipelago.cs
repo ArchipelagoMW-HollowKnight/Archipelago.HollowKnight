@@ -33,6 +33,8 @@ namespace Archipelago.HollowKnight
         public Dictionary<string, int> SeerCosts { get; private set; }
         public Dictionary<string, int> EggCosts { get; private set; }
         public Dictionary<string, int> SalubraCharmCosts { get; private set; }
+        public Dictionary<string, List<long>> LocationIDsByLocation { get; private set; }
+
         public List<int> NotchCosts { get; private set; }
 
         internal static Sprite Sprite;
@@ -116,6 +118,7 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
+            LocationIDsByLocation = new();
             ItemChangerMod.CreateSettingsProfile();
 
             ConnectToArchipelago();
@@ -328,7 +331,27 @@ namespace Archipelago.HollowKnight
             {
                 pmt.Add(item);
             }
-
+            if (LocationIDsByLocation.TryGetValue(location, out List<long> ids))
+            {
+                ids.Add(netItem.Location);
+            }
+            else
+            {
+                LocationIDsByLocation.Add(location, new List<long> { netItem.Location });
+            }
+            // I'm not certain why this override has to be added *every* time, rather than just the first time for each location.
+            // But shops and other multi-item checks don't work otherwise.
+            pmt.OnVisitStateChanged += (VisitStateChangedEventArgs obj) =>
+            {
+                if (obj.NewFlags.HasFlag(VisitState.Previewed) && !obj.Orig.HasFlag(VisitState.Previewed))
+                {
+                    session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                    {
+                        CreateAsHint = true,
+                        Locations = LocationIDsByLocation[location].ToArray()
+                    });
+                };
+            };
             ItemChangerMod.AddPlacements(pmt.Yield());
         }
 
