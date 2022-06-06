@@ -52,7 +52,7 @@ namespace Archipelago.HollowKnight
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
         private List<IPlacementHandler> placementHandlers;
-        
+        private Goal goal = null;
 
         public override string GetVersion() => new Version(0, 0, 2).ToString();
 
@@ -71,13 +71,13 @@ namespace Archipelago.HollowKnight
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
             ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            On.GameCompletionScreen.Start += OnGameComplete;
 
             Log("Initialized");
         }
 
-        private void OnGameComplete(On.GameCompletionScreen.orig_Start orig, GameCompletionScreen self)
+        public void DeclareVictory()
         {
+            Archipelago.Instance.LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
             if (ArchipelagoEnabled)
             {
                 session.Socket.SendPacket(new StatusUpdatePacket()
@@ -85,8 +85,6 @@ namespace Archipelago.HollowKnight
                     Status = ArchipelagoClientState.ClientGoal
                 });
             }
-
-            orig(self);
         }
 
         private void ModHooks_HeroUpdateHook()
@@ -122,6 +120,15 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.CreateSettingsProfile();
 
             ConnectToArchipelago();
+
+            goal = Goal.GetGoal(SlotOptions.Goal);
+            if (goal == null)
+            {
+                LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {Goals.MAX}.  Is this an outdated client?");
+                throw new Exception("Unrecognized goal condition (are you running an outdated client?)");
+            }
+            goal.Select();
+
             if (SlotOptions.RandomCharmCosts != -1)
             {
                 RandomizeCharmCosts();
