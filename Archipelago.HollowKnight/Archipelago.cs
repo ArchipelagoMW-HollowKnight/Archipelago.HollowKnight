@@ -452,6 +452,7 @@ namespace Archipelago.HollowKnight
                     tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPostviewName()}\nsent to {recipientName}.";
                     item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
                 }
+            } 
             else
             {
                 // Items from other games.
