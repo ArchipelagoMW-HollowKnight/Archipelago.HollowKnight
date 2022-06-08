@@ -8,7 +8,7 @@ using ItemChanger;
 
 namespace Archipelago.HollowKnight
 {
-    public enum Goals
+    public enum GoalsLookup
     {
         Any = 0,
         HollowKnight = 1,
@@ -19,23 +19,23 @@ namespace Archipelago.HollowKnight
     }
 
     abstract class Goal {
-        private static readonly Dictionary<Goals, Goal> Lookup = new Dictionary<Goals, Goal>()
+        private static readonly Dictionary<GoalsLookup, Goal> Lookup = new Dictionary<GoalsLookup, Goal>()
         {
-            [Goals.Any] = new AnyGoal(),
-            [Goals.HollowKnight] = new HollowKnightGoal(),
-            [Goals.SealedSiblings] = new SealedSiblingsGoal(),
-            [Goals.Radiance] = new RadianceGoal(),
-            [Goals.Godhome] = new GodhomeGoal()
+            [GoalsLookup.Any] = new AnyGoal(),
+            [GoalsLookup.HollowKnight] = new HollowKnightGoal(),
+            [GoalsLookup.SealedSiblings] = new SealedSiblingsGoal(),
+            [GoalsLookup.Radiance] = new RadianceGoal(),
+            [GoalsLookup.Godhome] = new GodhomeGoal()
         };
 
-        public static Goal GetGoal(Goals key)
+        public static Goal GetGoal(GoalsLookup key)
         {
             Goal value;
             if (Lookup.TryGetValue(key, out value))
             {
                 return value;
             }
-            return null;
+            throw new ArgumentOutOfRangeException($"Unrecognized goal condition {key} (are you running an outdated client?)");
         }
 
         public abstract string Name { get; }
@@ -62,16 +62,14 @@ namespace Archipelago.HollowKnight
 
         public void Unselect()
         {
-            {
-                ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_TOP"), FountainPlaqueTopEdit);
-                ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_MAIN"), FountainPlaqueNameEdit);
-                ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_DESC"), FountainPlaqueDescEdit);
-                ItemChanger.Events.OnSceneChange -= CheckForVictory;
-            }
+            ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_TOP"), FountainPlaqueTopEdit);
+            ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_MAIN"), FountainPlaqueNameEdit);
+            ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_DESC"), FountainPlaqueDescEdit);
+            ItemChanger.Events.OnSceneChange -= CheckForVictory;
         }
-        public void FountainPlaqueTopEdit(ref string s) { s = "Your goal is"; }
-        public void FountainPlaqueNameEdit(ref string s) { s = Name; }
-        public void FountainPlaqueDescEdit(ref string s) { s = Description; }
+        protected void FountainPlaqueTopEdit(ref string s) { s = "Your goal is"; }
+        protected void FountainPlaqueNameEdit(ref string s) { s = Name; }
+        protected void FountainPlaqueDescEdit(ref string s) { s = Description; }
 
         // Helpers for subclasses.
         protected bool AcquiredVoidHeart

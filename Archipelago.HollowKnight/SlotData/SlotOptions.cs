@@ -170,6 +170,6 @@ namespace Archipelago.HollowKnight.SlotData
 
         // Even though this is encoded as an int, it doesn't import properly without doing this.
         [JsonConverter(typeof(StringEnumConverter))]
-        public Goals Goal { get; set; }
+        public GoalsLookup Goal { get; set; }
     }
 }

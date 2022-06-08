@@ -121,11 +121,14 @@ namespace Archipelago.HollowKnight
 
             ConnectToArchipelago();
 
-            goal = Goal.GetGoal(SlotOptions.Goal);
-            if (goal == null)
+            try
             {
-                LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {Goals.MAX}.  Is this an outdated client?");
-                throw new Exception("Unrecognized goal condition (are you running an outdated client?)");
+                goal = Goal.GetGoal(SlotOptions.Goal);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
+                throw ex;
             }
             goal.Select();
 
