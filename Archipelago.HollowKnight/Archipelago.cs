@@ -41,7 +41,7 @@ namespace Archipelago.HollowKnight
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
-        internal ConnectionDetails ApSettings;
+        internal ConnectionDetails ApSettings = new();
         internal ArchipelagoSession session;
 
         /// <summary>
