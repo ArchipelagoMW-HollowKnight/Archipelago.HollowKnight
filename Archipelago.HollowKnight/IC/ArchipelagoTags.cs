@@ -75,6 +75,23 @@ namespace Archipelago.HollowKnight.IC
                     obj.Item = new ArchipelagoDummyItem(obj.Orig);
                 }
             }
+            // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
+            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot) {
+                var tags = obj.Item.GetTags<InteropTag>();
+                foreach (var tag in tags)
+                { 
+                    if(tag.Message == "RecentItems")
+                    {
+                        tag.Properties["IgnoreItem"] = true;
+                        return;
+                    }
+                }
+                {
+                    var tag = obj.Item.AddTag<InteropTag>();
+                    tag.Message = "RecentItems";
+                    tag.Properties["IgnoreItem"] = true;
+                }
+            }
         }
 
         public override void Unload(object parent)
@@ -105,7 +122,7 @@ namespace Archipelago.HollowKnight.IC
         {
             base.Load(parent);
             AbstractPlacement pmt = (AbstractPlacement)parent;
-            Archipelago.Instance.LogDebug($"In ArchipelagoPlacementTag:Load for {parent}, locations ({String.Join(", ", PlacementUtils.GetLocationIDs(pmt))})");
+            //Archipelago.Instance.LogDebug($"In ArchipelagoPlacementTag:Load for {parent}, locations ({String.Join(", ", PlacementUtils.GetLocationIDs(pmt))})");
 
             foreach (long locationId in PlacementUtils.GetLocationIDs(pmt))
             {
@@ -122,7 +139,7 @@ namespace Archipelago.HollowKnight.IC
 
         public override void Unload(object parent)
         {
-            Archipelago.Instance.LogDebug($"In ArchipelagoPlacementTag:UNLOAD for {parent}, locations ({String.Join(", ", PlacementUtils.GetLocationIDs((AbstractPlacement)parent))})");
+            //Archipelago.Instance.LogDebug($"In ArchipelagoPlacementTag:UNLOAD for {parent}, locations ({String.Join(", ", PlacementUtils.GetLocationIDs((AbstractPlacement)parent))})");
             ((AbstractPlacement)parent).OnVisitStateChanged -= OnVisitStateChanged;
 
             foreach (long locationId in PlacementUtils.GetLocationIDs((AbstractPlacement)parent))

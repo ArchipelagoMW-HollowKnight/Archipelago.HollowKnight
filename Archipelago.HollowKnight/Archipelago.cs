@@ -15,9 +15,7 @@ using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
-using ItemChanger.UIDefs;
 using Modding;
-using RecentItemsDisplay;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
@@ -36,34 +34,10 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        /// <summary>
-        /// Costs of Grubfather shop items (in Grubs) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> GrubfatherCosts { get; private set; }
-        /// <summary>
-        /// Costs of Seer shop items (in Essence) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> SeerCosts { get; private set; }
-        /// <summary>
-        /// Costs of Egg Shop items (in Rancid Eggs) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> EggCosts { get; private set; }
-        /// <summary>
-        /// Costs of Salubra shop items (in required charms) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> SalubraCharmCosts { get; private set; }
-        /// <summary>
-        /// Our slot number.
-        /// </summary>
         public int Slot { get => slot; }
-        /// <summary>
-        /// Randomized charm notch costs as stored in slot data.
-        /// </summary>
-        public List<int> NotchCosts { get; private set; }
 
         internal static Sprite Sprite;
         internal static Sprite SmallSprite;
-        internal static System.Random Random;
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
@@ -73,19 +47,19 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Allows lookup of a placement by its location ID number.  Used during syncing and shared-slot coop.
         /// </summary>
-        internal Dictionary<long, AbstractPlacement> placementsByLocationID = new();
+        internal readonly Dictionary<long, AbstractPlacement> placementsByLocationID = new();
 
         /// <summary>
         /// List of pending locations.
         /// </summary>
-        private HashSet<long> deferredLocationChecks = new();
+        private readonly HashSet<long> deferredLocationChecks = new();
+
+        public bool DeferringLocationChecks { get => deferringLocationChecks; }
         private bool deferringLocationChecks = false;
 
-        private long seed = 0;
         private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private List<IPlacementHandler> placementHandlers;
         private Goal goal = null;
 
         /// <summary>
@@ -110,7 +84,6 @@ namespace Archipelago.HollowKnight
             MessageType = MessageType.None
         };
 
-
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
@@ -124,19 +97,12 @@ namespace Archipelago.HollowKnight
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
-            ItemChanger.Events.OnItemChangerUnhook += Events_OnItemChangerUnhook;
-            ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            On.HeroController.Start += HeroController_Start;
-
             Log("Initialized");
         }
 
         private void HeroController_Start(On.HeroController.orig_Start orig, HeroController self)
         {
             orig(self);
-            // self.AddGeo(0);  // See if we can force the geo counter to appear immediately.
-            // self.AddGeoToCounter(0);
-            // self.geoCounter.AddGeo(0);
             SynchronizeCheckedLocations();
             StopDeferringLocationChecks();
         }
@@ -150,7 +116,6 @@ namespace Archipelago.HollowKnight
 
                 foreach(long location in session.Locations.AllLocationsChecked)
                 {
-                    LogDebug($"Marking location {location} as checked in-game.");
                     MarkLocationAsChecked(location);
                 }
             }
@@ -158,7 +123,7 @@ namespace Archipelago.HollowKnight
 
         public void DeclareVictory()
         {
-            Archipelago.Instance.LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
+            LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
             if (ArchipelagoEnabled)
             {
                 session.Socket.SendPacket(new StatusUpdatePacket()
@@ -175,6 +140,7 @@ namespace Archipelago.HollowKnight
                 return false;  // No items are waiting.
             }
             LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {ApSettings.ItemIndex}");
+
             NetworkItem netItem = session.Items.DequeueItem();  // Read the next item
             if (ApSettings.ItemIndex >= session.Items.Index)  // We've already handled this, so be done
             {
@@ -193,10 +159,6 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_HeroUpdateHook()
         {
-            if (!ArchipelagoEnabled)
-            {
-                return;
-            }
             if(deferringLocationChecks)
             {
                 StopDeferringLocationChecks();
@@ -208,16 +170,50 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void ConnectAndRandomize()
+        public void EndGame()
+        {
+            DisconnectArchipelago();
+            ArchipelagoEnabled = false;
+
+            ItemChanger.Events.OnItemChangerUnhook -= EndGame;
+            ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
+            On.HeroController.Start -= HeroController_Start;
+
+            if (goal != null)
+            {
+                goal.Unselect();
+                goal = null;
+            }
+        }
+
+        /// <summary>
+        /// Call when starting or resuming a game to randomize and restore state.
+        /// </summary>
+        public void StartOrResumeGame(bool randomize)
         {
             if (!ArchipelagoEnabled)
             {
                 return;
             }
-            ItemChangerMod.CreateSettingsProfile();
+            ItemChanger.Events.OnItemChangerUnhook += EndGame;
+            ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            On.HeroController.Start += HeroController_Start;
 
-            ConnectToArchipelago();
+            LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
+            DeferLocationChecks();
+            if (randomize)
+            {
+                ApSettings.ItemIndex = 0;
 
+                var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
+                randomizer.Randomize();
+            }
+            // Discard from the beginning of the incoming item queue up to how many items we have received.
+            for (int i = 0; i < ApSettings.ItemIndex; ++i)
+            {
+                NetworkItem netItem = session.Items.DequeueItem();
+                LogDebug($"Fast-forwarding past an already-acquired {session.Items.GetItemName(netItem.Item)}");
+            }
             try
             {
                 goal = Goal.GetGoal(SlotOptions.Goal);
@@ -227,32 +223,9 @@ namespace Archipelago.HollowKnight
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }
-            goal.Select();
-
-            ApSettings.ItemIndex = 0;
-            if (SlotOptions.RandomCharmCosts != -1)
-            {
-                RandomizeCharmCosts();
-            }
-            InitializePlacementHandlers();
-            CreateItemPlacements();
         }
 
-
-
-        private void RandomizeCharmCosts()
-        {
-            ItemChangerMod.Modules.Add<ItemChanger.Modules.NotchCostUI>();
-            ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
-            var playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
-            LogDebug(playerDataEditModule);
-            for (int i = 0; i < NotchCosts.Count; i++)
-            {
-                playerDataEditModule.AddPDEdit($"charmCost_{i + 1}", NotchCosts[i]);
-            }
-        }
-
-        private void ConnectToArchipelago()
+        private LoginResult ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
 
@@ -267,30 +240,15 @@ namespace Archipelago.HollowKnight
             else if (loginResult is LoginSuccessful success)
             {
                 // Read slot data.
-                seed = (long)success.SlotData["seed"];
                 slot = success.Slot;
-                Random = new System.Random(Convert.ToInt32(seed));
-
-                Costs.Random = Random;
-                GrubfatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Grub_costs"]);
-                SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Essence_costs"]);
-                EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Egg_costs"]);
-                SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(success.SlotData["Charm_costs"]);
-                NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(success.SlotData["notch_costs"]);
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
-            }
-        }
-
-        private void InitializePlacementHandlers()
-        {
-            placementHandlers = new List<IPlacementHandler>()
+                return loginResult;
+            } 
+            else
             {
-                new ShopPlacementHandler(),
-                new GrubfatherPlacementHandler(GrubfatherCosts),
-                new SeerPlacementHandler(SeerCosts),
-                new EggShopPlacementHandler(EggCosts),
-                new SalubraCharmShopPlacementHandler(SalubraCharmCosts)
-            };
+                LogError($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}");
+                throw new ArchipelagoConnectionException("Unexpected login result.");
+            }
         }
 
         public void MarkLocationAsChecked(long locationID)
@@ -299,6 +257,10 @@ namespace Archipelago.HollowKnight
             // This also grants items at said locations.
             AbstractPlacement pmt;
             ArchipelagoItemTag tag;
+            bool hadNewlyObtainedItems = false;
+            bool hadUnobtainedItems = false;
+
+            LogDebug($"Marking location {locationID} as checked.");
             if (!placementsByLocationID.TryGetValue(locationID, out pmt))
             {
                 LogDebug($"Could not find a placement for location {locationID}");
@@ -307,18 +269,37 @@ namespace Archipelago.HollowKnight
 
             foreach (AbstractItem item in pmt.Items)
             {
-                if (!item.GetTag<ArchipelagoItemTag>(out tag)) continue;
-                if (tag.Location != locationID) continue;
-                if (item.WasEverObtained()) continue;
+                if (!item.GetTag<ArchipelagoItemTag>(out tag))
+                {
+                    hadUnobtainedItems = true;
+                    continue;
+                }
+                if (item.WasEverObtained())
+                {
+                    continue;
+                }
+                if (tag.Location != locationID)
+                {
+                    hadUnobtainedItems = true;
+                    continue;
+                }
+
+                hadNewlyObtainedItems = true;
+                pmt.AddVisitFlag(VisitState.ObtainedAnyItem);
 
                 // Soul items shouldn't be granted if the hero controller isn't instantiated, ItemChanger doesn't like that.
-                if((item is SoulItem) && (HeroController.instance == null))
+                if ((item is SoulItem) && (HeroController.instance == null))
                 {
                     // Just mark it as obtained instead
                     item.SetObtained();
                     return;
                 }
-                item.Give(pmt, RemoteGiveInfo);
+                item.Give(pmt, deferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
+            }
+
+            if(hadNewlyObtainedItems && !hadUnobtainedItems)
+            {
+                pmt.AddVisitFlag(VisitState.Opened | VisitState.Dropped | VisitState.Accepted);
             }
         }
 
@@ -381,154 +362,16 @@ namespace Archipelago.HollowKnight
                 pmt.GiveAll(RemoteGiveInfo);
             }
         }
-        private void CreateItemPlacements()
-        {
-            void ScoutCallback(LocationInfoPacket packet)
-            {
-                MenuChanger.ThreadSupport.BeginInvoke(() =>
-                {
-                    DeferLocationChecks();
-                    Dictionary<AbstractLocation, AbstractPlacement> placements = new();
-                    foreach (var item in packet.Locations)
-                    {
-                        var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                        var itemName = session.Items.GetItemName(item.Item);
-
-                        PlaceItem(locationName, itemName, item, placements);
-                    }
-                    ItemChangerMod.AddPlacements(placements.Values);
-                });
-            }
-
-            var locations = new List<long>(session.Locations.AllLocations);
-            session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
-        }
-
-        internal void SetItemTags(AbstractItem item, string name, string slotName)
-        {
-            var tag = item.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplayMessage"] = $"{name}\nsent to {slotName}.";
-        }
-
-        public void PlaceItem(string location, string name, NetworkItem netItem, Dictionary<AbstractLocation, AbstractPlacement> placements)
-        {
-            LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
-            
-            var originalLocation = string.Copy(location);
-            location = StripShopSuffix(location);
-            
-            AbstractLocation loc = Finder.GetLocation(location);
-            if (loc == null)
-            {
-                LogDebug($"[PlaceItem] Location was null: Name: {location}.");
-                return;
-            }
-
-            string recipientName = null;
-            if (netItem.Player != slot)
-            {
-                recipientName = session.Players.GetPlayerName(netItem.Player);
-            }
-
-            AbstractPlacement pmt = placements.GetOrDefault(loc);
-            if (pmt == null)
-            {
-                pmt = loc.Wrap();
-                pmt.AddTag<ArchipelagoPlacementTag>();
-                placements[loc] = pmt;
-            }
-
-            AbstractItem item;
-            InteropTag tag;
-            if (Finder.ItemNames.Contains(name))
-            {
-                // Items from Hollow Knight.
-                item = Finder.GetItem(name);  // This is already a clone per what I can tell from IC source
-                if (recipientName != null)
-                {
-                    tag = item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPostviewName()}\nsent to {recipientName}.";
-                    item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
-                }
-            } 
-            else
-            {
-                // Items from other games.
-                item = new ArchipelagoItem(name, recipientName, netItem.Flags);
-                tag = item.AddTag<InteropTag>();
-                tag.Message = "RecentItems";
-                tag.Properties["DisplayMessage"] = $"{name}\nsent to {recipientName}.";
-            }
-            // Create a tag containing all AP-relevant information on the item.
-            ArchipelagoItemTag itemTag;
-            itemTag = item.AddTag<ArchipelagoItemTag>();
-            itemTag.ReadNetItem(netItem);
-
-            // Handle placement
-            bool handled = false;
-            foreach (var handler in placementHandlers)
-            {
-                if (handler.CanHandlePlacement(originalLocation))
-                {
-                    handler.HandlePlacement(pmt, item, originalLocation);
-                    handled = true;
-                    break;
-                }
-            }
-            if (!handled)
-            {
-                pmt.Add(item);
-            }
-
-            //ItemChangerMod.AddPlacements(pmt.Yield());
-        }
-
-        private string StripShopSuffix(string location)
-        {
-            if (string.IsNullOrEmpty(location))
-            {
-                return null;
-            }
-
-            var names = new[]
-            {
-                LocationNames.Sly_Key, LocationNames.Sly, LocationNames.Iselda, LocationNames.Salubra,
-                LocationNames.Leg_Eater, LocationNames.Egg_Shop, LocationNames.Seer, LocationNames.Grubfather
-            };
-
-            foreach (var name in names)
-            {
-                if (location.StartsWith(name))
-                {
-                    return location.Substring(0, name.Length);
-                }
-            }
-            return location;
-        }
 
         private void ModHooks_SavegameLoadHook(int obj)
         {
-            if (ApSettings == default)
-            {
-                return;
-            }
-
-            DeferLocationChecks();
-            ConnectToArchipelago();
-        }
-
-        private void Events_OnItemChangerUnhook()
-        {
-            DisconnectArchipelago();
+            ArchipelagoEnabled = (ApSettings != default);
+            StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
         public void DisconnectArchipelago()
         {
             slot = 0;
-            seed = 0;
-            placementHandlers = null;
 
             if (session?.Socket != null && session.Socket.Connected)
             {
@@ -543,6 +386,8 @@ namespace Archipelago.HollowKnight
         /// </summary>
         /// <remarks>
         /// During initial synchronization and other cases, we want to collect individual locations and send them as one batch.  This begins that process.
+        /// 
+        /// Locations marked as obtained during deferred location checks will also have their messaging suppressed unless they are for our own world.
         /// </remarks>
         public void DeferLocationChecks()
         {
