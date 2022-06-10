@@ -8,26 +8,26 @@ using ItemChanger.Placements;
 
 namespace Archipelago.HollowKnight.Placements
 {
-    internal class SalubraCharmShopPlacementHandler : IPlacementHandler
+    internal class SalubraCharmShopPlacementHandler : ShopPlacementHandler
     {
         public Dictionary<string, int> CharmCosts { get; }
 
-        public SalubraCharmShopPlacementHandler(Dictionary<string, int> charmCosts)
+        public SalubraCharmShopPlacementHandler(Dictionary<string, int> charmCosts, Random Random) : base(Random)
         {
             CharmCosts = charmCosts;
         }
 
-        public bool CanHandlePlacement(string location)
+        public override bool CanHandlePlacement(string location)
         {
             return location.StartsWith("Salubra_(Requires_Charms)");
         }
 
-        public void HandlePlacement(AbstractPlacement pmt, AbstractItem item, string originalLocationName)
+        public override void HandlePlacement(AbstractPlacement pmt, AbstractItem item, string originalLocationName)
         {
             var shopPlacement = pmt as ShopPlacement;
             var charmCostAmount = GetCharmCostForLocation(originalLocationName);
             var charmCost = new PDIntCost(charmCostAmount, nameof(PlayerData.charmsOwned), $"Acquire {charmCostAmount} total charms to buy this item.");
-            var cost = new MultiCost(Costs.GenerateGeoCost(), charmCost);
+            var cost = new MultiCost(Cost.NewGeoCost(GetGeoCost(item)), charmCost);
 
             shopPlacement.AddItemWithCost(item, cost);
         }

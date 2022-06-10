@@ -79,7 +79,8 @@ namespace Archipelago.HollowKnight.MC
             Archipelago.Instance.ArchipelagoEnabled = true;
             try
             {
-                Archipelago.Instance.ConnectAndRandomize();
+                // Archipelago.Instance.ConnectAndRandomize();
+                Archipelago.Instance.StartOrResumeGame(true);
                 MenuChangerMod.HideAllMenuPages();
                 UIManager.instance.StartNewGame();
             }

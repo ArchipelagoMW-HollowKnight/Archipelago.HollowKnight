@@ -5,9 +5,25 @@ using ItemChanger.UIDefs;
 
 namespace Archipelago.HollowKnight.IC
 {
-    public class ArchipelagoItem : AbstractItem
+    public class ArchipelagoDummyItem : AbstractItem
     {
-        public ArchipelagoItem(string name, string targetSlotName = null, ItemFlags itemFlags = 0)
+        public ArchipelagoDummyItem()
+        { }
+        public ArchipelagoDummyItem(AbstractItem source)
+        {
+            this.name = source.name;
+            this.UIDef = source.UIDef.Clone();
+        }
+
+        public override void GiveImmediate(GiveInfo info)
+        {
+            // Intentional no-op
+        }
+    }
+
+    public class ArchipelagoItem : ArchipelagoDummyItem
+    {
+        public ArchipelagoItem(string name, string recipientName = null, ItemFlags itemFlags = 0) : base()
         {
             string desc;
             if (itemFlags.HasFlag(ItemFlags.Advancement))
@@ -26,33 +42,17 @@ namespace Archipelago.HollowKnight.IC
             {
                 desc += " Seems kinda suspicious though. It might be full of bees.";
             }
+            //if(recipientName != null)
+            //{
+            //    name = $"{recipientName}'s {name}";
+            //}
             this.name = name;
-            if(targetSlotName != null)
+            UIDef = new ArchipelagoUIDef()
             {
-                name = $"{targetSlotName}'s {name}";
-            }
-            UIDef = new ArchipelagoUIDef(new MsgUIDef
-            {
-                name = new BoxedString(name),
+                name = new BoxedString($"{recipientName}'s {name}"),
                 shopDesc = new BoxedString(desc),
                 sprite = new BoxedSprite(Archipelago.SmallSprite)
-            });
-        }
-
-        // INFO: this can be used to restore placements from save
-        protected override void OnLoad()
-        {
-            base.OnLoad();
-        }
-
-        protected override void OnUnload()
-        {
-            base.OnUnload();
-        }
-
-        public override void GiveImmediate(GiveInfo info)
-        {
-            
+            };
         }
     }
 }

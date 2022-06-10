@@ -18,7 +18,7 @@ namespace Archipelago.HollowKnight
         MAX = Godhome
     }
 
-    abstract class Goal {
+    abstract public class Goal {
         private static readonly Dictionary<GoalsLookup, Goal> Lookup = new Dictionary<GoalsLookup, Goal>()
         {
             [GoalsLookup.Any] = new AnyGoal(),
@@ -35,6 +35,7 @@ namespace Archipelago.HollowKnight
             {
                 return value;
             }
+            Archipelago.Instance.LogError($"Listed goal is {key}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
             throw new ArgumentOutOfRangeException($"Unrecognized goal condition {key} (are you running an outdated client?)");
         }
 
@@ -89,7 +90,7 @@ namespace Archipelago.HollowKnight
         }
     }
 
-    class AnyGoal : Goal
+    public class AnyGoal : Goal
     {
         public override string Name => "Beat the Game";
         public override string Description => "Complete Hollow Knight with any ending.";
@@ -106,7 +107,7 @@ namespace Archipelago.HollowKnight
         }
     }
 
-    class HollowKnightGoal : Goal
+    public class HollowKnightGoal : Goal
     {
         public override string Name => "The Hollow Knight";
         public override string Description => "Defeat The Hollow Knight<br>or any other ending with 3 dreamers.";
@@ -122,8 +123,8 @@ namespace Archipelago.HollowKnight
             );
         }
     }
-
-    class SealedSiblingsGoal : Goal
+    
+    public class SealedSiblingsGoal : Goal
     {
         public override string Name => "Sealed Siblings";
         public override string Description => "Complete the Sealed Siblings ending<br>or any other ending with 3 dreamers and Void Heart equipped.";
@@ -139,7 +140,7 @@ namespace Archipelago.HollowKnight
         }
     }
 
-    class RadianceGoal : Goal
+    public class RadianceGoal : Goal
     {
         public override string Name => "Dream No More";
         public override string Description => "Defeat The Radiance or Absolute Radiance<br>after obtaining Void Heart and 3 dreamers.";
@@ -153,8 +154,7 @@ namespace Archipelago.HollowKnight
             );
         }
     }
-
-    class GodhomeGoal : Goal
+    public class GodhomeGoal : Goal
     {
         public override string Name => "Embrace the Void";
         public override string Description => "Defeat Absolute Radiance<br>at the end of Pantheon 5.";
