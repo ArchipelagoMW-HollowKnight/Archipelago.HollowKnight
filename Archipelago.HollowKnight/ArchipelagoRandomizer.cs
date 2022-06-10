@@ -6,6 +6,7 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
+using ItemChanger.Items;
 using ItemChanger.Tags;
 using System;
 using System.Collections.Generic;
@@ -156,6 +157,11 @@ namespace Archipelago.HollowKnight
                     tag.Message = "RecentItems";
                     tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPostviewName()}\nsent to {recipientName}.";
                     item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
+
+                    if (item is SoulItem soulItem)
+                    {
+                        soulItem.soul = 0;
+                    }
                 }
             }
             else
