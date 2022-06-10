@@ -438,7 +438,7 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                session.Locations.CompleteLocationChecks(locationID);
+                session.Locations.CompleteLocationChecksAsync(null, locationID);
             }
         }
 
