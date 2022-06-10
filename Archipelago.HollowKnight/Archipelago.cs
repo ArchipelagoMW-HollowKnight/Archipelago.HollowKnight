@@ -57,6 +57,8 @@ namespace Archipelago.HollowKnight
         public bool DeferringLocationChecks { get => deferringLocationChecks; }
         private bool deferringLocationChecks = false;
 
+        private int pendingGeo = 0;
+
         private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
@@ -105,6 +107,11 @@ namespace Archipelago.HollowKnight
             orig(self);
             SynchronizeCheckedLocations();
             StopDeferringLocationChecks();
+            if(pendingGeo > 0)
+            {
+                self.AddGeo(pendingGeo);
+                pendingGeo = 0;
+            }
         }
 
         private void SynchronizeCheckedLocations()
@@ -207,6 +214,11 @@ namespace Archipelago.HollowKnight
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
                 randomizer.Randomize();
+                pendingGeo = SlotOptions.StartingGeo;
+            }
+            else
+            {
+                pendingGeo = 0;
             }
             // Discard from the beginning of the incoming item queue up to how many items we have received.
             for (int i = 0; i < ApSettings.ItemIndex; ++i)
