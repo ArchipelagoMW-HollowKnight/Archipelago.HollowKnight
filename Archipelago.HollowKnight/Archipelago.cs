@@ -305,14 +305,16 @@ namespace Archipelago.HollowKnight
                 {
                     // Just mark it as obtained instead
                     item.SetObtained();
-                    return;
                 }
-                item.Give(pmt, deferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
+                else
+                {
+                    item.Give(pmt, deferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
+                }
             }
 
             if(hadNewlyObtainedItems && !hadUnobtainedItems)
             {
-                pmt.AddVisitFlag(VisitState.Opened | VisitState.Dropped | VisitState.Accepted);
+                pmt.AddVisitFlag(VisitState.Opened | VisitState.Dropped | VisitState.Accepted | VisitState.ObtainedAnyItem);
             }
         }
 
