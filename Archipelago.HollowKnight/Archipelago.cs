@@ -223,6 +223,7 @@ namespace Archipelago.HollowKnight
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }
+            goal.Select();
         }
 
         private LoginResult ConnectToArchipelago()
