@@ -29,7 +29,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 0, 3).ToString();
+        public override string GetVersion() => new Version(0, 0, 3, 1).ToString();
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
@@ -41,7 +41,13 @@ namespace Archipelago.HollowKnight
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
+        internal ConnectionDetails MenuSettings = new()
+        {
+            ServerUrl = "archipelago.gg",
+            ServerPort = 38281,
+        };
         internal ConnectionDetails ApSettings = new();
+
         internal ArchipelagoSession session;
 
         /// <summary>
@@ -99,6 +105,7 @@ namespace Archipelago.HollowKnight
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
+
             Log("Initialized");
         }
 
@@ -181,6 +188,7 @@ namespace Archipelago.HollowKnight
         {
             DisconnectArchipelago();
             ArchipelagoEnabled = false;
+            ApSettings = new();
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
@@ -200,16 +208,19 @@ namespace Archipelago.HollowKnight
         {
             if (!ArchipelagoEnabled)
             {
+                LogDebug("StartOrResumeGame: This is not an Archipelago Game, so not doing anything.");
                 return;
             }
+            LogDebug("StartOrResumeGame: This is an Archipelago Game.");
+
             ItemChanger.Events.OnItemChangerUnhook += EndGame;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             On.HeroController.Start += HeroController_Start;
-
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
             if (randomize)
             {
+                LogDebug("StartOrResumeGame: Beginning first time randomization.");
                 ApSettings.ItemIndex = 0;
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
@@ -380,7 +391,7 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_SavegameLoadHook(int obj)
         {
-            ArchipelagoEnabled = (ApSettings != default);
+            ArchipelagoEnabled = ApSettings.ServerUrl != "" && ApSettings.ServerPort != 0 && ApSettings.SlotName != "";
             StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
@@ -466,6 +477,10 @@ namespace Archipelago.HollowKnight
         /// <returns></returns>
         public ConnectionDetails OnSaveLocal()
         {
+            if(!ArchipelagoEnabled)
+            {
+                return default;
+            }
             return ApSettings;
         }
 
@@ -478,8 +493,8 @@ namespace Archipelago.HollowKnight
         /// <param name="details"></param>
         public void OnLoadGlobal(ConnectionDetails details)
         {
-            ApSettings = details;
-            ApSettings.ItemIndex = 0;
+            MenuSettings = details;
+            MenuSettings.ItemIndex = 0;
         }
 
         /// <summary>
@@ -490,9 +505,9 @@ namespace Archipelago.HollowKnight
         {
             return new ConnectionDetails()
             {
-                ServerUrl = ApSettings.ServerUrl,
-                ServerPort = ApSettings.ServerPort,
-                SlotName = ApSettings.SlotName
+                ServerUrl = MenuSettings.ServerUrl,
+                ServerPort = MenuSettings.ServerPort,
+                SlotName = MenuSettings.SlotName
             };
         }
     }

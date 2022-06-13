@@ -19,7 +19,7 @@ namespace Archipelago.HollowKnight.MC
             
             ApPage = new MenuPage("Archipelago Settings", modeMenu);
             var settingsType = typeof(ConnectionDetails);
-            var settings = Archipelago.Instance.ApSettings;
+            var settings = Archipelago.Instance.MenuSettings;
 
             var urlField = new EntryField<string>(ApPage, "Server URL: ");
             urlField.InputField.characterLimit = 500;
@@ -77,6 +77,7 @@ namespace Archipelago.HollowKnight.MC
         private void StartNewGame()
         {
             Archipelago.Instance.ArchipelagoEnabled = true;
+            Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with {};  // Clone MenuSettings into ApSettings
             try
             {
                 // Archipelago.Instance.ConnectAndRandomize();
