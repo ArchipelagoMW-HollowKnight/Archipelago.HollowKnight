@@ -4,10 +4,8 @@ using System.Linq;
 using System.Reflection;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
-using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
@@ -16,7 +14,6 @@ using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
-using ItemChanger.UIDefs;
 using Modding;
 using UnityEngine;
 
@@ -36,15 +33,8 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        private ShadeInfo shade = null;
-        private DeathLinkStatus deathlinkStatus = DeathLinkStatus.None;
-        private DeathLinkService deathLinkService = null;
-        private System.Random deathLinkRandom = new();  // This is only messaging, so does not need to be seeded.
-        private int outgoingDeathlinks = 0;
-        private int lastDamageType = 0;
-        private DateTime lastDamageTime = DateTime.MinValue;
-
         public int Slot { get => slot; }
+        public string Player { get => session.Players.GetPlayerName(slot);  }
 
         internal static Sprite Sprite;
         internal static Sprite SmallSprite;
@@ -194,126 +184,6 @@ namespace Archipelago.HollowKnight
             {
                 ReceiveNextItem();
             }
-
-            if (deathlinkStatus == DeathLinkStatus.Pending && CanMurderPlayer())
-            {
-                MurderPlayer();
-            }
-        }
-
-        public bool CanMurderPlayer()
-        {
-            HeroController hc = HeroController.instance;
-            return hc.acceptingInput && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE;
-        }
-
-        public void MurderPlayer()
-        {
-            HeroController hc = HeroController.instance;
-            string scene = GameManager.instance.sceneName;
-            LogDebug($"So, somebody else has chosen... death.  Current scene: {scene}");
-
-            bool switcharoo = (!(
-                // These are all conditions where the death should be processed like a vanilla death with no shade switcharoo
-                SlotOptions.DeathLink == DeathLinkType.Vanilla
-                || (SlotOptions.DeathLink == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
-                || (scene.StartsWith("Dream_") && scene != SceneNames.Dream_Final_Boss)  // Most dream sequences, except Radiance
-                || scene.StartsWith("GG_")  // All Godhome sequences
-                || scene.StartsWith("White_Palace_")  // White Palace is a dream.
-                || scene == SceneNames.Grimm_Nightmare  // NKG
-            ));
-
-            if (switcharoo && scene == "Room_Colosseum_Spectate")
-            {
-                switcharoo = false;
-            }
-            if (switcharoo)
-            {
-                // Do the shade switcharoo
-                deathlinkStatus = DeathLinkStatus.Dying;
-                shade = ShadeInfo.FromPlayerData();
-            }
-            else
-            {
-                deathlinkStatus = DeathLinkStatus.None;
-            }
-            HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other, 9999, 0);
-        }
-
-        public void SendDeathLink()
-        {
-            if (deathLinkService == null)
-            {
-                return;
-            }
-
-            if ((DateTime.UtcNow - lastDamageTime).TotalSeconds > 5000)
-            {
-                // Damage source was more than 5 seconds ago, so ignore damage type
-                lastDamageType = 0;
-            }
-
-            var player = session.Players.GetPlayerName(slot);
-
-            // Messages that are valid options all the time.
-            List<string> deathMessages = new()
-            {
-                "@ died.",
-                "@ has perished.",
-                "@ made poor life choices.",
-                "@ didn't listen to Hornet's advice.",
-                "@ took damage equal to or more than their current HP.",
-                "@ made a fatal mistake.",
-                "@ threw some shade at @.",
-            };
-
-            // Additional messages
-            switch (lastDamageType)
-            {
-                case 1:  // Enemy damage
-                    deathMessages.AddRange(new[] {
-                        "@ has discovered that there are bugs in Hallownest.",
-                        "@ should have dodged.",
-                        "@ should have jumped.",
-                        "@ significantly mistimed their parry attempt.",
-                        "@ should have considered equipping Dreamshield.",
-                        "@ must have never fought that enemy before.",
-                        "@ did not make it to phase 2.",
-                    });
-                break;
-                case 2:  // Spikes
-                    deathMessages.AddRange(new[] {
-                        "@ was in the wrong place.",
-                        "@ mistimed their jump.",
-                        "@ didn't see the sharp things.",
-                        "@ didn't see that saw.",
-                        "@ fought the spikes and the spikes won.",
-                    });
-                break;
-                case 3:  // Acid, probably also water.
-                    deathMessages.AddRange(new[] {
-                        "@ was in the wrong place.",
-                        "@ mistimed their jump.",
-                        "@ forgot their floaties.",
-                        "What @ thought was H2O was H2SO4.",
-                        "@ wishes they could swim.",
-                        "@ used the wrong kind of dive.",
-                        "@ got into a fight with a pool of liquid and lost.",
-                    });
-                break;
-                default:  // Unspecified death message types.
-                    deathMessages.AddRange(new[] {
-                        "@ has died in a manner most unusual.",
-                        "@ found a way to break the game, and the game broke @ back.",
-                        "@ has lost The Game",
-                    });
-                    break;
-            }
-
-            // Choose a deathlink message
-            outgoingDeathlinks += 1;
-            var message = deathMessages[deathLinkRandom.Next(0, deathMessages.Count)].Replace("@", player);
-            deathLinkService.SendDeathLink(new(player, message));
         }
 
         public void EndGame()
@@ -325,10 +195,8 @@ namespace Archipelago.HollowKnight
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
-            ModHooks.BeforePlayerDeadHook -= ModHooks_BeforePlayerDeadHook;
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start -= HeroController_Start;
-            On.HeroController.TakeDamage -= HeroController_TakeDamage;
 
             if (goal != null)
             {
@@ -351,10 +219,8 @@ namespace Archipelago.HollowKnight
 
             ItemChanger.Events.OnItemChangerUnhook += EndGame;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            ModHooks.BeforePlayerDeadHook += ModHooks_BeforePlayerDeadHook;
             ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start += HeroController_Start;
-            On.HeroController.TakeDamage += HeroController_TakeDamage;
 
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
@@ -389,56 +255,6 @@ namespace Archipelago.HollowKnight
             goal.Select();
         }
 
-        private void HeroController_TakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self, GameObject go, GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
-        {
-            orig(self, go, damageSide, damageAmount, hazardType);
-            lastDamageTime = DateTime.UtcNow;
-            lastDamageType = hazardType;
-        }
-
-        private void ModHooks_BeforePlayerDeadHook()
-        {
-            // If it's a deathlink death, do nothing.
-            if (deathlinkStatus == DeathLinkStatus.Dying)
-            {
-                return;
-            }
-            SendDeathLink();
-        }
-
-
-        private void ModHooks_AfterPlayerDeadHook()
-        {
-            LogDebug("Oh.  You died.");
-            if (deathlinkStatus != DeathLinkStatus.Dying)
-            {
-                deathlinkStatus = DeathLinkStatus.None;
-                shade = ShadeInfo.FromPlayerData();
-                if (shade != null)
-                {
-                    LogDebug($"Detected normal death at scene {shade.Scene}.  Lost {shade.Geo} geo.");
-                }
-                return;
-            }
-            deathlinkStatus = DeathLinkStatus.None;
-            PlayerData pd = PlayerData.instance;
-            LogDebug($"Dying due to deathlink.  Recovering {pd.geoPool} lost geo.");
-            HeroController.instance.AddGeoQuietly(pd.geoPool);
-            pd.geoPool = 0;
-            if(shade == null || shade.Scene == "None") 
-            {
-                LogDebug("No saved shade info, so deleting the new one.");
-                GameManager.instance.EndSoulLimiter();
-                PlayerData.instance.soulLimited = false;
-            }
-            else
-            {
-                LogDebug("Had saved shade data, so restoring it.");
-                LogDebug($"Respawning shade at {shade.Scene} with {shade.Geo} geo.");
-                shade.WritePlayerData();
-            }
-        }
-
         private LoginResult ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
@@ -461,13 +277,11 @@ namespace Archipelago.HollowKnight
                 // Enable Deathlink
                 if(SlotOptions.DeathLink != DeathLinkType.None)
                 {
-                    deathLinkService = session.CreateDeathLinkServiceAndEnable();
-                    deathLinkService.OnDeathLinkReceived += OnDeathLinkReceived;
-                    session.UpdateConnectionOptions(new[] { "DeathLink" }, ItemsHandlingFlags.AllItems);
+                    DeathLinkSupport.Instance.Enable();
                 }
                 else
                 {
-                    deathLinkService = null;
+                    DeathLinkSupport.Instance.Disable();
                 }
                 return loginResult;
             } 
@@ -476,43 +290,6 @@ namespace Archipelago.HollowKnight
                 LogError($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}");
                 throw new ArchipelagoConnectionException("Unexpected login result.");
             }
-        }
-
-        private void OnDeathLinkReceived(DeathLink deathLink)
-        {
-            if (outgoingDeathlinks > 0)
-            {
-                outgoingDeathlinks--;
-                return;
-            }
-            if (deathlinkStatus == DeathLinkStatus.None)
-            {
-                deathlinkStatus = DeathLinkStatus.Pending;
-            }
-            string cause = deathLink.Cause;
-            if (cause == null || cause == "")
-            {
-                cause = $"{deathLink.Source} died.";
-            }
-            new MsgUIDef()
-            {
-                name = new BoxedString(cause),
-                sprite = new BoxedSprite(DeathLinkSprite)
-//                    GameCameras.instance.hudCamera.GetComponentsInChildren<JournalEntryStats>(true)
-//                    .Where(x => x.notesConvo == "NOTE_HOLLOW_SHADE")
-//                    .First()
-//                    .GetSprite()
-//                )
-            }.SendMessage(MessageType.Corner, null);
-/*
-            ArchipelagoLocation location = new(deathLink.Source);
-            AbstractPlacement pmt = location.Wrap();
-            pmt.Add(new DeathlinkItem(deathLink.Source, deathLink.Cause));
-            var tag = pmt.AddTag<InteropTag>();
-            tag.Properties["DisplaySource"] = deathLink.Source;
-            ItemChangerMod.AddPlacements(pmt.Yield());
-            pmt.GiveAll(RemoteGiveInfo);
-*/
         }
 
         private System.Collections.IEnumerator HeroController_Respawn(On.HeroController.orig_Respawn orig, HeroController self)
@@ -641,13 +418,27 @@ namespace Archipelago.HollowKnight
             StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
+        private void ModHooks_AfterPlayerDeadHook()
+        {
+            // Fixes up some bad shade placement by vanilla HK.
+            PlayerData pd = PlayerData.instance;
+            switch (pd.shadeScene)
+            {
+                case "Abyss_08":
+                    pd.shadePositionX = 90;
+                    pd.shadePositionY = 90;
+                    break;
+                case "Room_Colosseum_Spectate":
+                    pd.shadePositionX = 124;
+                    pd.shadePositionY = 10;
+                    break;
+                // noop on default
+            }
+        }
+
         public void DisconnectArchipelago()
         {
-            if(deathLinkService != null)
-            {
-                deathLinkService.OnDeathLinkReceived -= OnDeathLinkReceived;
-                deathLinkService = null;
-            }
+            DeathLinkSupport.Instance.Disable();
             slot = 0;
 
             if (session?.Socket != null && session.Socket.Connected)
