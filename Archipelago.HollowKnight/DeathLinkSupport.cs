@@ -1,11 +1,10 @@
 ﻿using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
+using HutongGames.PlayMaker;
 using ItemChanger;
 using Modding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
 {
@@ -68,7 +67,19 @@ namespace Archipelago.HollowKnight
                     "@ got into a fight with a pool of liquid and lost.",
                 }
             },
-
+            {
+                999,  // Deaths in the dream realm
+                new List<string> {
+                    "@ dozed off for good.",
+                    "@ was caught sleeping on the job.",
+                    "@ sought dreams but found only nightmares.",
+                    "@ got lost in Limbo.",
+                    "Good night, @.",
+                    "@ is resting in pieces.",
+                    "@ exploded into a thousand pieces of essence.",
+                    "Hey, @, you're finally awake.",
+                }
+            },
         };
     };
 
@@ -85,7 +96,6 @@ namespace Archipelago.HollowKnight
         private int lastDamageType;
         private DateTime lastDamageTime;
         private ShadeInfo shade;
-        internal static UnityEngine.Sprite Sprite = null;
 
         private DeathLinkSupport()
         {
@@ -115,9 +125,11 @@ namespace Archipelago.HollowKnight
             service = ap.session.CreateDeathLinkServiceAndEnable();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            ModHooks.BeforePlayerDeadHook += ModHooks_BeforePlayerDeadHook;
+            ModHooks.BeforePlayerDeadHook += SendDeathLink;
             ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.TakeDamage += HeroController_TakeDamage;
+            ItemChanger.Events.AddFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
+            // SetupDreamDeathFSMOverride(true);
         }
 
         public void Disable()
@@ -137,10 +149,25 @@ namespace Archipelago.HollowKnight
             }
             Enabled = false;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
-            ModHooks.BeforePlayerDeadHook -= ModHooks_BeforePlayerDeadHook;
+            ModHooks.BeforePlayerDeadHook -= SendDeathLink;
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.TakeDamage -= HeroController_TakeDamage;
+            ItemChanger.Events.RemoveFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
+            // SetupDreamDeathFSMOverride(false);
         }
+
+
+        private void FsmEdit(PlayMakerFSM obj)
+        {
+            // Edit hero dream deaths to trigger deathlink.
+            var state = obj.Fsm.GetState("Anim Start");
+            state.Actions = state.Actions.Append<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(() =>
+            {
+                lastDamageType = 999;  // Dream death messaging.
+                SendDeathLink();
+            })).ToArray();
+        }
+
 
         /// <summary>
         /// Returns True if it is safe to kill the current player -- i.e. they can take damage, have character control, and are not in an unsafe scene.
@@ -160,14 +187,12 @@ namespace Archipelago.HollowKnight
         public bool ShouldShadeSwap()
         {
             string scene = GameManager.instance.sceneName;
+            string zone = GameManager.instance.GetCurrentMapZone();
             return (!(
                 // These are all conditions where the death should be processed like a vanilla death with no shade switcharoo
                 Mode == DeathLinkType.Vanilla
                 || (Mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
-                || (scene.StartsWith("Dream_") && scene != SceneNames.Dream_Final_Boss)  // Most dream sequences, except Radiance
-                || scene.StartsWith("GG_")  // All Godhome sequences
-                || scene.StartsWith("White_Palace_")  // White Palace is a dream.
-                || scene == SceneNames.Grimm_Nightmare  // NKG
+                || zone == "DREAM_WORLD" || zone == "GODS_GLORY" || zone == "WHITE_PALACE"  // Most dream sequences, except Radiance
             ));
         }
 
@@ -230,16 +255,6 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        private void ModHooks_BeforePlayerDeadHook()
-        {
-            // If it's a deathlink death, do nothing.
-            if (Status == DeathLinkStatus.Dying)
-            {
-                return;
-            }
-            SendDeathLink();
-        }
-
         private void HeroController_TakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self, UnityEngine.GameObject go, GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
         {
             orig(self, go, damageSide, damageAmount, hazardType);
@@ -249,6 +264,11 @@ namespace Archipelago.HollowKnight
 
         public void SendDeathLink()
         {
+            // Don't send death links if we're currently in the process of dying to another deathlink.
+            if (Status == DeathLinkStatus.Dying)
+            {
+                return;
+            }
             if (service == null || !Enabled)
             {
                 return;
@@ -256,6 +276,7 @@ namespace Archipelago.HollowKnight
 
             if ((DateTime.UtcNow - lastDamageTime).TotalSeconds > 5)
             {
+                Archipelago.Instance.LogWarn("Last damage was a long time ago, resetting damage type to zero.");
                 // Damage source was more than 5 seconds ago, so ignore damage type
                 lastDamageType = 0;
             }
@@ -268,13 +289,16 @@ namespace Archipelago.HollowKnight
             {
                 messages = new(messages);
                 messages.AddRange(DeathLinkMessages.DefaultMessages);
+            } else
+            {
+                messages = DeathLinkMessages.UnknownMessages;
             }
 
             // Choose one at random
             string message = messages[random.Next(0, messages.Count)].Replace("@", Archipelago.Instance.Player);
 
             // If it's an unknown death, tag in some debugging info
-            if(!knownCauseOfDeath)
+            if (!knownCauseOfDeath)
             {
                 Archipelago.Instance.LogWarn($"UNKNOWN cause of death {lastDamageType}");
                 message += $" (Type: {lastDamageType})";
@@ -306,21 +330,7 @@ namespace Archipelago.HollowKnight
             {
                 name = new BoxedString(cause),
                 sprite = new BoxedSprite(Archipelago.DeathLinkSprite)
-                //                    GameCameras.instance.hudCamera.GetComponentsInChildren<JournalEntryStats>(true)
-                //                    .Where(x => x.notesConvo == "NOTE_HOLLOW_SHADE")
-                //                    .First()
-                //                    .GetSprite()
-                //                )
             }.SendMessage(MessageType.Corner, null);
-            /*
-                        ArchipelagoLocation location = new(deathLink.Source);
-                        AbstractPlacement pmt = location.Wrap();
-                        pmt.Add(new DeathlinkItem(deathLink.Source, deathLink.Cause));
-                        var tag = pmt.AddTag<InteropTag>();
-                        tag.Properties["DisplaySource"] = deathLink.Source;
-                        ItemChangerMod.AddPlacements(pmt.Yield());
-                        pmt.GiveAll(RemoteGiveInfo);
-            */
         }
     }
 }
