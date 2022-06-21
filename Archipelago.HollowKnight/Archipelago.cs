@@ -17,6 +17,7 @@ using ItemChanger.Items;
 using ItemChanger.Tags;
 using Modding;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Archipelago.HollowKnight
 {
@@ -234,6 +235,10 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
                 ApSettings.ItemIndex = 0;
+                ApSettings.Seed = Convert.ToInt32((long)loginResult.SlotData["seed"]);
+                ApSettings.RoomSeed = session.RoomState.Seed;
+
+                LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
                 randomizer.Randomize();
@@ -241,6 +246,14 @@ namespace Archipelago.HollowKnight
             }
             else
             {
+                LogDebug($"StartOrResumeGame: Local : Room: {ApSettings.RoomSeed}; Seed = {ApSettings.Seed}");
+                var seed = Convert.ToInt32((long)loginResult.SlotData["seed"]);
+                LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
+                if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
+                {
+                    UIManager.instance.UIReturnToMainMenu();
+                    throw new ArchipelagoConnectionException("Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
+                }
                 pendingGeo = 0;
             }
             // Discard from the beginning of the incoming item queue up to how many items we have received.
@@ -255,6 +268,7 @@ namespace Archipelago.HollowKnight
             }
             catch (ArgumentOutOfRangeException ex)
             {
+                UIManager.instance.UIReturnToMainMenu();
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }

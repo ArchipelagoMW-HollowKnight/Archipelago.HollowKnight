@@ -7,5 +7,8 @@
         public string SlotName { get; set; }
         public string ServerPassword { get; set; }
         public int ItemIndex { get; set; }
+
+        public string RoomSeed { get; set; }
+        public int Seed { get; set; }
     }
 }
