@@ -1,5 +1,4 @@
-﻿using Archipelago.MultiClient.Net.Enums;
-using ItemChanger;
+﻿using ItemChanger;
 using ItemChanger.Tags;
 using ItemChanger.UIDefs;
 
