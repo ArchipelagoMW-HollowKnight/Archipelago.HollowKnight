@@ -178,5 +178,14 @@ namespace Archipelago.HollowKnight.SlotData
 
         [JsonProperty("StartingGeo")]
         public int StartingGeo { get; set; }
+
+        [JsonProperty("SplitMantisClaw")]
+        public bool SplitMantisClaw { get; set; }
+
+        [JsonProperty("SplitMothwingCloak")]
+        public bool SplitMothwingCloak { get; set; }
+
+        [JsonProperty("SplitCrystalHeart")]
+        public bool SplitCrystalHeart { get; set; }
     }
 }
