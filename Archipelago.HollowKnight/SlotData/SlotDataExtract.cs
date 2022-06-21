@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.SlotData
 {
@@ -17,6 +18,17 @@ namespace Archipelago.HollowKnight.SlotData
             var extractedObject = jarr?.ToObject<T>() ?? default;
             Archipelago.Instance.LogDebug($"Successfully read object from SlotData: {jarr}");
             return extractedObject;
+        }
+
+        public static Dictionary<string, Dictionary<string, int>> ExtractLocationCostsFromSlotData(object v)
+        {
+            Dictionary<string, Dictionary<string, int>> ret = new();
+            var jobj = ExtractObjectFromSlotData<Dictionary<string, JObject>>(v);
+            foreach (var key in jobj.Keys)
+            {
+                ret[key] = jobj[key].ToObject<Dictionary<string, int>>();
+            }
+            return ret;
         }
     }
 }
