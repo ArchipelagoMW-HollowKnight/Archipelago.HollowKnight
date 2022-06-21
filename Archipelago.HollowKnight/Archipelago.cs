@@ -36,8 +36,8 @@ namespace Archipelago.HollowKnight
 
         public int Slot { get => slot; }
 
-        internal static Sprite Sprite;
-        internal static Sprite SmallSprite;
+        public static Sprite Sprite;
+        public static Sprite SmallSprite;
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
