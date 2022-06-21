@@ -79,6 +79,37 @@ namespace Archipelago.HollowKnight
         {
             var session = Session;
             ItemChangerMod.CreateSettingsProfile();
+            // Add IC modules as needed
+            // FUTURE: If Entrance rando, disable palace midwarp and some logical blockers
+            // if (Entrance Rando Is Enabled) {
+            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.DisablePalaceMidWarp>();
+            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.RemoveInfectedBlockades>();
+            // }
+            if (SlotOptions.RandomizeElevatorPass)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
+            }
+            if (SlotOptions.RandomizeFocus)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.FocusSkill>();
+            }
+            if (SlotOptions.RandomizeSwim)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SwimSkill>();
+            }
+            if (SlotOptions.SplitMothwingCloak)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitCloak>();
+            }
+            if (SlotOptions.SplitMantisClaw)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitClaw>();
+            }
+            if (SlotOptions.SplitCrystalHeart)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
+            }
+
             if (SlotOptions.RandomCharmCosts != -1)
             {
                 RandomizeCharmCosts();
