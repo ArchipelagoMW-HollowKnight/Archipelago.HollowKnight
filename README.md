@@ -36,7 +36,7 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 6. The game will immediately drop you into the randomized game. So if you are waiting for a countdown then wait for it to lapse before hitting Start, or hit Start then pause the game once you're in it.
 
 # Contributing
-Contributions are welcome, all code is licensed under MIT license. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are taking on an issue please comment on the issue and assign yourself (if possible). If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
+Contributions are welcome, all code is licensed under the MIT License. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are taking on an issue please comment on the issue and assign yourself (if possible). If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
 
 There are a few guidelines/rules I personally follow and deeply encourage all contributors to follow:
 * All issues must be linked to the [Hollow Knight Archipelago](https://github.com/users/Ijwu/projects/1/views/1) project board.
@@ -53,4 +53,4 @@ Okay, if you read this far your eyes probably glazed over at the list above. It'
 ## Development Setup
 You will need to alter the `.csproj` file to point to your local HK installation. Then you will need to make sure to not commit that change or I'll ding you in a PR about it. Line 15 will do it: https://github.com/Ijwu/Archipelago.HollowKnight/blob/main/Archipelago.HollowKnight/Archipelago.HollowKnight.csproj#L15
 
-Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through Scarab.**
+Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through Scarab.** If Archipelago is installed through Scarab, uninstall or disable it before testing. Archipelago.HollowKnight will not load if both Scarab and development versions are installed at the same time.
