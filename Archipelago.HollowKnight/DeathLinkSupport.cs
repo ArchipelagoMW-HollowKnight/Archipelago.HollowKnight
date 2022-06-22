@@ -88,7 +88,7 @@ namespace Archipelago.HollowKnight
         public readonly static DeathLinkSupport Instance = new();
         private DeathLinkService service = null;
         public bool Enabled { get; private set; } = false;
-        private DeathLinkType Mode { get => Archipelago.Instance.SlotOptions.DeathLink; }
+        private DeathLinkType Mode => Archipelago.Instance.SlotOptions.DeathLink;
         private readonly System.Random random = new();  // This is only messaging, so does not need to be seeded.
 
         private DeathLinkStatus Status;

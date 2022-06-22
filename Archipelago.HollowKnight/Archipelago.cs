@@ -33,8 +33,8 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        public int Slot { get => slot; }
-        public string Player { get => session.Players.GetPlayerName(slot);  }
+        public int Slot => slot;
+        public string Player => session.Players.GetPlayerName(slot);
 
         public static Sprite Sprite;
         public static Sprite SmallSprite;
