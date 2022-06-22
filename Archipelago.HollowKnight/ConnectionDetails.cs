@@ -9,6 +9,6 @@
         public int ItemIndex { get; set; }
 
         public string RoomSeed { get; set; }
-        public int Seed { get; set; }
+        public long Seed { get; set; }
     }
 }

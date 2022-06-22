@@ -17,7 +17,6 @@ using ItemChanger.Items;
 using ItemChanger.Tags;
 using Modding;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Archipelago.HollowKnight
 {
@@ -235,7 +234,7 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
                 ApSettings.ItemIndex = 0;
-                ApSettings.Seed = Convert.ToInt32((long)loginResult.SlotData["seed"]);
+                ApSettings.Seed = (long)loginResult.SlotData["seed"];
                 ApSettings.RoomSeed = session.RoomState.Seed;
 
                 LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
@@ -247,7 +246,7 @@ namespace Archipelago.HollowKnight
             else
             {
                 LogDebug($"StartOrResumeGame: Local : Room: {ApSettings.RoomSeed}; Seed = {ApSettings.Seed}");
-                var seed = Convert.ToInt32((long)loginResult.SlotData["seed"]);
+                var seed = (long)loginResult.SlotData["seed"];
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
                 if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
                 {
