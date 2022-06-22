@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ItemChanger;
 using Archipelago.HollowKnight.IC;
 using Archipelago.MultiClient.Net.Packets;
+using Archipelago.MultiClient.Net.Exceptions;
 
 namespace Archipelago.HollowKnight
 {
@@ -52,11 +53,18 @@ namespace Archipelago.HollowKnight
                 Archipelago.Instance.LogError($"Hinting {hintedLocations.Count()} locations.");
 
                 // Mark as hinted immediately, but later set the actual hinted status to match the sendPacketAsync result so it doesn't stay hinted if the connection is down.
-                Archipelago.Instance.session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                try
                 {
-                    CreateAsHint = true,
-                    Locations = hintedLocations.ToArray(),
-                }, (result) => { foreach (ArchipelagoItemTag tag in hintedTags) { tag.Hinted = result; } });
+                    Archipelago.Instance.session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                    {
+                        CreateAsHint = true,
+                        Locations = hintedLocations.ToArray(),
+                    }, (result) => { foreach (ArchipelagoItemTag tag in hintedTags) { tag.Hinted = result; } });
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    Archipelago.Instance.ReportDisconnect();
+                }
             }
         }
     }
