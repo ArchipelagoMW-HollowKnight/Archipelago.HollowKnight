@@ -89,7 +89,6 @@ namespace Archipelago.HollowKnight
                     new SalubraCharmShopPlacementHandler(SalubraCharmCosts, Random)
                 };
             }
-            //LocationCosts = SlotDataExtract.ExtractLocationCostsFromSlotData(slotData["location_costs"]);
             Archipelago.Instance.LogDebug(LocationCosts);
         }
 
@@ -289,7 +288,8 @@ namespace Archipelago.HollowKnight
                 if (costs.Count == 1)
                 {
                     costTag.Cost = costs[0];
-                } else
+                }
+                else
                 {
                     costTag.Cost = new MultiCost(costs);
                 }
