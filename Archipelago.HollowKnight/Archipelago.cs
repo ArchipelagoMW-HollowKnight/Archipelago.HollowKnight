@@ -28,7 +28,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 0, 4, 0).ToString();
+        public override string GetVersion() => new Version(0, 1, 0, 0).ToString();
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
