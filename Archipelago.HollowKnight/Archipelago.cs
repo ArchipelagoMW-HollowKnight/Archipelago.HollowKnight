@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
-using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
@@ -34,10 +33,12 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        public int Slot { get => slot; }
+        public int Slot => slot;
+        public string Player => session.Players.GetPlayerName(slot);
 
         public static Sprite Sprite;
         public static Sprite SmallSprite;
+        public static Sprite DeathLinkSprite;
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
@@ -104,6 +105,7 @@ namespace Archipelago.HollowKnight
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
             Sprite = spriteManager.GetSprite("Icon");
             SmallSprite = spriteManager.GetSprite("IconSmall");
+            DeathLinkSprite = spriteManager.GetSprite("DeathLinkIcon");
             obtainStateFieldInfo = typeof(AbstractItem).GetField("obtainState", BindingFlags.NonPublic | BindingFlags.Instance);
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
@@ -176,7 +178,7 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_HeroUpdateHook()
         {
-            if(deferringLocationChecks)
+            if (deferringLocationChecks)
             {
                 StopDeferringLocationChecks();
             }
@@ -189,6 +191,7 @@ namespace Archipelago.HollowKnight
 
         public void EndGame()
         {
+            LogDebug("Ending Archipelago game");
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -204,6 +207,7 @@ namespace Archipelago.HollowKnight
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
+            ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start -= HeroController_Start;
 
             if (goal != null)
@@ -227,7 +231,9 @@ namespace Archipelago.HollowKnight
 
             ItemChanger.Events.OnItemChangerUnhook += EndGame;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start += HeroController_Start;
+
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
             if (randomize)
@@ -299,6 +305,17 @@ namespace Archipelago.HollowKnight
                 // Read slot data.
                 slot = success.Slot;
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
+                LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
+
+                // Enable Deathlink
+                if(SlotOptions.DeathLink != DeathLinkType.None)
+                {
+                    DeathLinkSupport.Instance.Enable();
+                }
+                else
+                {
+                    DeathLinkSupport.Instance.Disable();
+                }
                 return loginResult;
             } 
             else
@@ -306,6 +323,12 @@ namespace Archipelago.HollowKnight
                 LogError($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}");
                 throw new ArchipelagoConnectionException("Unexpected login result.");
             }
+        }
+
+        private System.Collections.IEnumerator HeroController_Respawn(On.HeroController.orig_Respawn orig, HeroController self)
+        {
+            On.HeroController.Respawn -= HeroController_Respawn;
+            return orig(self);
         }
 
         public void MarkLocationAsChecked(long locationID)
@@ -428,8 +451,27 @@ namespace Archipelago.HollowKnight
             StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
+        private void ModHooks_AfterPlayerDeadHook()
+        {
+            // Fixes up some bad shade placement by vanilla HK.
+            PlayerData pd = PlayerData.instance;
+            switch (pd.shadeScene)
+            {
+                case "Abyss_08":
+                    pd.shadePositionX = 90;
+                    pd.shadePositionY = 90;
+                    break;
+                case "Room_Colosseum_Spectate":
+                    pd.shadePositionX = 124;
+                    pd.shadePositionY = 10;
+                    break;
+                // noop on default
+            }
+        }
+
         public void DisconnectArchipelago()
         {
+            DeathLinkSupport.Instance.Disable();
             slot = 0;
 
             if (session?.Socket != null && session.Socket.Connected)

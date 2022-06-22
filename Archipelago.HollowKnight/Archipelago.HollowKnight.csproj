@@ -43,11 +43,13 @@
     <None Remove="Resources\Icon.png" />
     <None Remove="Resources\IconBig.png" />
     <None Remove="Resources\IconSmall.png" />
+    <None Remove="Resources\DeathLinkIcon.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Icon.png" />
     <EmbeddedResource Include="Resources\IconBig.png" />
     <EmbeddedResource Include="Resources\IconSmall.png" />
+    <EmbeddedResource Include="Resources\DeathLinkIcon.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Archipelago.MultiClient.Net" Version="3.0.1" />
