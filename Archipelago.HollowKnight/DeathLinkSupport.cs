@@ -81,6 +81,37 @@ namespace Archipelago.HollowKnight
                 }
             },
         };
+
+        private readonly static System.Random random = new();  // This is only messaging, so does not need to be seeded.
+
+        public static string GetDeathMessage(int cause, string player)
+        {
+            // Build candidate death messages.
+            List<string> messages;
+            bool knownCauseOfDeath = DeathLinkMessages.MessagesByType.TryGetValue(cause, out messages);
+
+            if (knownCauseOfDeath)
+            {
+                messages = new(messages);
+                messages.AddRange(DeathLinkMessages.DefaultMessages);
+            }
+            else
+            {
+                messages = DeathLinkMessages.UnknownMessages;
+            }
+
+            // Choose one at random
+            string message = messages[random.Next(0, messages.Count)].Replace("@", player);
+
+            // If it's an unknown death, tag in some debugging info
+            if (!knownCauseOfDeath)
+            {
+                Archipelago.Instance.LogWarn($"UNKNOWN cause of death {cause}");
+                message += $" (Type: {cause})";
+            }
+
+            return message;
+        }
     };
 
     public class DeathLinkSupport
@@ -89,7 +120,6 @@ namespace Archipelago.HollowKnight
         private DeathLinkService service = null;
         public bool Enabled { get; private set; } = false;
         private DeathLinkType Mode => Archipelago.Instance.SlotOptions.DeathLink;
-        private readonly System.Random random = new();  // This is only messaging, so does not need to be seeded.
 
         private DeathLinkStatus Status;
         private int outgoingDeathlinks;
@@ -129,7 +159,6 @@ namespace Archipelago.HollowKnight
             ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.TakeDamage += HeroController_TakeDamage;
             ItemChanger.Events.AddFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
-            // SetupDreamDeathFSMOverride(true);
         }
 
         public void Disable()
@@ -153,7 +182,6 @@ namespace Archipelago.HollowKnight
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.TakeDamage -= HeroController_TakeDamage;
             ItemChanger.Events.RemoveFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
-            // SetupDreamDeathFSMOverride(false);
         }
 
 
@@ -281,29 +309,7 @@ namespace Archipelago.HollowKnight
                 lastDamageType = 0;
             }
 
-            // Build candidate death messages.
-            List<string> messages = null;
-            bool knownCauseOfDeath = DeathLinkMessages.MessagesByType.TryGetValue(lastDamageType, out messages);
-
-            if(knownCauseOfDeath)
-            {
-                messages = new(messages);
-                messages.AddRange(DeathLinkMessages.DefaultMessages);
-            } else
-            {
-                messages = DeathLinkMessages.UnknownMessages;
-            }
-
-            // Choose one at random
-            string message = messages[random.Next(0, messages.Count)].Replace("@", Archipelago.Instance.Player);
-
-            // If it's an unknown death, tag in some debugging info
-            if (!knownCauseOfDeath)
-            {
-                Archipelago.Instance.LogWarn($"UNKNOWN cause of death {lastDamageType}");
-                message += $" (Type: {lastDamageType})";
-            }
-
+            string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.Player);
             // Increment outgoing deathlinks and send the death.
             outgoingDeathlinks += 1;
             service.SendDeathLink(new(Archipelago.Instance.Player, message));
