@@ -7,6 +7,7 @@ using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Items;
+using ItemChanger.Placements;
 using ItemChanger.Tags;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,8 @@ namespace Archipelago.HollowKnight
         /// Tracks created placements and their associated locations during randomization.
         /// </summary>
         public Dictionary<AbstractLocation, AbstractPlacement> placements = new();
+
+        public Dictionary<string, Dictionary<string, int>> LocationCosts = new();
         /// <summary>
         /// Seeded RNG for clientside randomization.
         /// </summary>
@@ -59,20 +62,34 @@ namespace Archipelago.HollowKnight
         public ArchipelagoRandomizer(Dictionary<string, object> slotData)
         {
             Random = new System.Random(Convert.ToInt32((long)slotData["seed"]));
-            GrubfatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Grub_costs"]);
-            SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Essence_costs"]);
-            EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Egg_costs"]);
-            SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Charm_costs"]);
             NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
 
-            placementHandlers = new List<IPlacementHandler>()
+            if (slotData.ContainsKey("location_costs"))
             {
-                new ShopPlacementHandler(Random),
-                new GrubfatherPlacementHandler(GrubfatherCosts),
-                new SeerPlacementHandler(SeerCosts),
-                new EggShopPlacementHandler(EggCosts),
-                new SalubraCharmShopPlacementHandler(SalubraCharmCosts, Random)
-            };
+                LocationCosts = SlotDataExtract.ExtractLocationCostsFromSlotData(slotData["location_costs"]);
+                GrubfatherCosts = null;
+                SeerCosts = null;
+                EggCosts = null;
+                SalubraCharmCosts = null;
+                placementHandlers = null;
+            }
+            else
+            {
+                LocationCosts = null;
+                GrubfatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Grub_costs"]);
+                SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Essence_costs"]);
+                EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Egg_costs"]);
+                SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Charm_costs"]);
+                placementHandlers = new List<IPlacementHandler>()
+                {
+                    new ShopPlacementHandler(Random),
+                    new GrubfatherPlacementHandler(GrubfatherCosts),
+                    new SeerPlacementHandler(SeerCosts),
+                    new EggShopPlacementHandler(EggCosts),
+                    new SalubraCharmShopPlacementHandler(SalubraCharmCosts, Random)
+                };
+            }
+            Archipelago.Instance.LogDebug(LocationCosts);
         }
 
         public void Randomize()
@@ -119,7 +136,7 @@ namespace Archipelago.HollowKnight
             {
                 MenuChanger.ThreadSupport.BeginInvoke(() =>
                 {
-                    foreach (var item in packet.Locations)
+                    foreach (var item in packet.Locations.Reverse())  // Quick to insert items in reverse order to fix shop sorting for now.
                     {
                         var locationName = session.Locations.GetLocationNameFromId(item.Location);
                         var itemName = session.Items.GetItemName(item.Item);
@@ -208,23 +225,79 @@ namespace Archipelago.HollowKnight
             itemTag = item.AddTag<ArchipelagoItemTag>();
             itemTag.ReadNetItem(netItem);
 
-            // Handle placement
-            bool handled = false;
-            foreach (var handler in placementHandlers)
+            if (LocationCosts == null)
             {
-                if (handler.CanHandlePlacement(originalLocation))
+                // Backwards compatible placement logic
+                // Handle placement
+                bool handled = false;
+                foreach (var handler in placementHandlers)
                 {
-                    handler.HandlePlacement(pmt, item, originalLocation);
-                    handled = true;
-                    break;
+                    if (handler.CanHandlePlacement(originalLocation))
+                    {
+                        handler.HandlePlacement(pmt, item, originalLocation);
+                        handled = true;
+                        break;
+                    }
                 }
-            }
-            if (!handled)
-            {
-                pmt.Add(item);
+                if (!handled)
+                {
+                    pmt.Add(item);
+                }
+                return;
             }
 
-            //ItemChangerMod.AddPlacements(pmt.Yield());
+            pmt.Add(item);
+            if (LocationCosts.ContainsKey(originalLocation))
+            {
+                // New-style placement logic with cost overrides
+                Cost cost;
+                List<Cost> costs = new();
+                foreach (KeyValuePair<string, int> entry in LocationCosts[originalLocation])
+                {
+                    switch (entry.Key)
+                    {
+                        case "GEO":
+                            costs.Add(Cost.NewGeoCost(entry.Value));
+                            break;
+                        case "ESSENCE":
+                            costs.Add(Cost.NewEssenceCost(entry.Value));
+                            break;
+                        case "GRUBS":
+                            costs.Add(Cost.NewGrubCost(entry.Value));
+                            break;
+                        case "CHARMS":
+                            costs.Add(new PDIntCost(
+                                entry.Value, nameof(PlayerData.charmsOwned),
+                                $"Acquire {entry.Value} total {((entry.Value == 1) ? "charm" : "charms")} to buy this item."
+                            ));
+                            break;
+                        case "RANCIDEGGS":
+                            costs.Add(new ItemChanger.Modules.CumulativeRancidEggCost(entry.Value));
+                            break;
+                        default:
+                            Archipelago.Instance.LogError($"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
+                            break;
+                    }
+                }
+                if (costs.Count == 0)
+                {
+                    Archipelago.Instance.LogWarn($"Found zero cost types when handling placement at location {originalLocation}!");
+                    return;
+                }
+                var costTag = item.AddTag<CostTag>();
+                if (costs.Count == 1)
+                {
+                    costTag.Cost = costs[0];
+                }
+                else
+                {
+                    costTag.Cost = new MultiCost(costs);
+                }
+                if(pmt is ISingleCostPlacement scp)
+                {
+                    scp.Cost = costTag.Cost;
+                }
+            }
         }
 
         private string StripShopSuffix(string location)
