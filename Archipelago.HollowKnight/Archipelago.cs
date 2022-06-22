@@ -482,7 +482,7 @@ namespace Archipelago.HollowKnight
             );
             ItemChanger.Internal.MessageController.Enqueue(
                 null,
-                "Reload your save to attempt to reconnecting."
+                "Reload your save to attempt to reconnect."
             );
         }
 
