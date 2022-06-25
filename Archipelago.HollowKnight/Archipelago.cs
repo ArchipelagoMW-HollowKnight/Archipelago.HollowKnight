@@ -97,6 +97,15 @@ namespace Archipelago.HollowKnight
         public static event Action OnArchipelagoGameStarted;
         public static event Action OnArchipelagoGameEnded;
 
+        // Shade position fixes
+        public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
+        {
+            { "Abyss_08", (90.0f, 90.0f) },  // Lifeblood Core room.  Even outside of deathlink, shades spawn out of bounds.
+            { "Room_Colosseum_Spectate", (124.0f, 10.0f) },  // Shade spawns inside inaccessible arena
+            { "Resting_Grounds_09", (7.4f, 10.0f) },  // Shade spawns underground.
+            { "Runes1_18", (11.5f, 23.0f) },  // Shade potentially spawns on the wrong side of an inaccessible gate.
+        };
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
@@ -451,21 +460,18 @@ namespace Archipelago.HollowKnight
             StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
+        /// <summary>
+        /// With DeathLink (and possibly with future trap implementations), dying in certain locations can produce inaccessible shades.  Fix that.
+        /// </summary>
+
         private void ModHooks_AfterPlayerDeadHook()
         {
-            // Fixes up some bad shade placement by vanilla HK.
+            // Fixes up some bad shade placements by vanilla HK.
             PlayerData pd = PlayerData.instance;
-            switch (pd.shadeScene)
+            if (ShadeSpawnPositionFixes.TryGetValue(pd.shadeScene, out (float x, float y) position))
             {
-                case "Abyss_08":
-                    pd.shadePositionX = 90;
-                    pd.shadePositionY = 90;
-                    break;
-                case "Room_Colosseum_Spectate":
-                    pd.shadePositionX = 124;
-                    pd.shadePositionY = 10;
-                    break;
-                // noop on default
+                pd.shadePositionX = position.x;
+                pd.shadePositionY = position.y;
             }
         }
 
