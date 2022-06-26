@@ -331,7 +331,7 @@ namespace Archipelago.HollowKnight
             return orig(self);
         }
 
-        public void MarkLocationAsChecked(long locationID)
+        public void MarkLocationAsChecked(long locationID, bool receiveItem = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
@@ -353,6 +353,11 @@ namespace Archipelago.HollowKnight
                 {
                     hadUnobtainedItems = true;
                     continue;
+                }
+                if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
+                {
+                    tag.ReceivedFromItemLink = true;
+                    item.GiveImmediate(RemoteGiveInfo);
                 }
                 if (item.WasEverObtained())
                 {
@@ -393,7 +398,7 @@ namespace Archipelago.HollowKnight
 
             if (netItem.Player == slot && netItem.Location > 0)
             {
-                MarkLocationAsChecked(netItem.Location);
+                MarkLocationAsChecked(netItem.Location, true);
                 return;
             }
             // If we're still here, this is an item from someone else.  We'll make up our own dummy placement and grant the item.
