@@ -132,6 +132,15 @@ namespace Archipelago.HollowKnight
                 RandomizeCharmCosts();
             }
 
+            // Initialize shop locations in case they end up with zero items placed.
+            AbstractLocation location;
+            foreach (string name in new string[] { "Sly", "Sly_(Key)", "Iselda", "Salubra", "Leg_Eater", "Grubfather", "Seer" })
+            {
+                location = Finder.GetLocation(name);
+                placements[location] = location.Wrap();
+            }
+
+            // Scout all locations
             void ScoutCallback(LocationInfoPacket packet)
             {
                 MenuChanger.ThreadSupport.BeginInvoke(() =>
@@ -268,7 +277,7 @@ namespace Archipelago.HollowKnight
                         case "CHARMS":
                             costs.Add(new PDIntCost(
                                 entry.Value, nameof(PlayerData.charmsOwned),
-                                $"Acquire {entry.Value} total {((entry.Value == 1) ? "charm" : "charms")} to buy this item."
+                                $"Acquire {entry.Value} total {((entry.Value == 1) ? "charm" : "charms")}"
                             ));
                             break;
                         case "RANCIDEGGS":
