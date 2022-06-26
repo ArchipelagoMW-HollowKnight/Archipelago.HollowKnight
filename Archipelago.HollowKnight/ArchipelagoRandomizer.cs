@@ -134,10 +134,18 @@ namespace Archipelago.HollowKnight
 
             // Initialize shop locations in case they end up with zero items placed.
             AbstractLocation location;
-            foreach (string name in new string[] { "Sly", "Sly_(Key)", "Iselda", "Salubra", "Leg_Eater", "Grubfather", "Seer" })
+            AbstractPlacement pmt;
+            foreach (
+                    string name in new string[] {
+                        LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra,
+                        LocationNames.Leg_Eater, LocationNames.Grubfather, LocationNames.Seer})
             {
                 location = Finder.GetLocation(name);
-                placements[location] = location.Wrap();
+                placements[location] = pmt = location.Wrap();
+                if(pmt is ShopPlacement shop)
+                {
+                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
+                }
             }
 
             // Scout all locations
