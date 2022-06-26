@@ -359,7 +359,7 @@ namespace Archipelago.HollowKnight
                     tag.ReceivedFromItemLink = true;
                     var itemForMe = Finder.GetItem(item.name);
                     itemForMe.Load();
-                    itemForMe.Give(pmt, RemoteGiveInfo);
+                    itemForMe.Give(pmt, SilentGiveInfo);
                 }
                 if (item.WasEverObtained())
                 {
