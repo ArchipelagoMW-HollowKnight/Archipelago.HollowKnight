@@ -357,7 +357,9 @@ namespace Archipelago.HollowKnight
                 if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
                 {
                     tag.ReceivedFromItemLink = true;
-                    item.GiveImmediate(RemoteGiveInfo);
+                    var itemForMe = Finder.GetItem(item.name);
+                    itemForMe.Load();
+                    itemForMe.Give(pmt, RemoteGiveInfo);
                 }
                 if (item.WasEverObtained())
                 {
