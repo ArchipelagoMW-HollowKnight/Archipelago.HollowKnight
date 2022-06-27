@@ -7,6 +7,7 @@ using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
@@ -145,10 +146,17 @@ namespace Archipelago.HollowKnight
             LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
             if (ArchipelagoEnabled)
             {
-                session.Socket.SendPacket(new StatusUpdatePacket()
+                try
                 {
-                    Status = ArchipelagoClientState.ClientGoal
-                });
+                    session.Socket.SendPacket(new StatusUpdatePacket()
+                    {
+                        Status = ArchipelagoClientState.ClientGoal
+                    });
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    ReportDisconnect();
+                }
             }
         }
 
@@ -288,6 +296,11 @@ namespace Archipelago.HollowKnight
             }
         }
 
+        private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        {
+            ReportDisconnect();
+        }
+
         private LoginResult ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
@@ -305,10 +318,11 @@ namespace Archipelago.HollowKnight
                 // Read slot data.
                 slot = success.Slot;
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
-                LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
+                session.Socket.SocketClosed += Socket_SocketClosed;
 
+                LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
                 // Enable Deathlink
-                if(SlotOptions.DeathLink != DeathLinkType.None)
+                if (SlotOptions.DeathLink != DeathLinkType.None)
                 {
                     DeathLinkSupport.Instance.Enable();
                 }
@@ -471,6 +485,10 @@ namespace Archipelago.HollowKnight
 
         public void DisconnectArchipelago()
         {
+            if (session?.Socket != null)
+            {
+                session.Socket.SocketClosed -= Socket_SocketClosed;
+            }
             DeathLinkSupport.Instance.Disable();
             slot = 0;
 
@@ -511,6 +529,19 @@ namespace Archipelago.HollowKnight
             }
         }
 
+        public void ReportDisconnect()
+        {
+            ItemChanger.Internal.MessageController.Enqueue(
+                null,
+                "Error: Lost connection to Archipelago server"
+            );
+            ItemChanger.Internal.MessageController.Enqueue(
+                null,
+                "Reload your save to attempt to reconnect."
+            );
+        }
+
+
         /// <summary>
         /// Checks a single location or adds it to the deferred list.
         /// </summary>
@@ -526,7 +557,14 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                session.Locations.CompleteLocationChecksAsync(null, locationID);
+                try
+                {
+                    session.Locations.CompleteLocationChecksAsync(null, locationID);
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    ReportDisconnect();
+                }
             }
         }
 
