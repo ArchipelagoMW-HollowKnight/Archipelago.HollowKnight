@@ -138,7 +138,7 @@ namespace Archipelago.HollowKnight.IC
             // If we've been previewed but never told AP that, tell it now
             if (!Hinted && pmt.Visited.HasFlag(VisitState.Previewed))
             {
-                PlacementUtils.CreateLocationHint(pmt);
+                Archipelago.Instance.PendingPlacementHints.Add(pmt);
             }
         }
 
@@ -160,7 +160,7 @@ namespace Archipelago.HollowKnight.IC
             if (!Hinted && obj.NewFlags.HasFlag(VisitState.Previewed))
             {
                 // We are now previewed, but we weren't before.
-                PlacementUtils.CreateLocationHint(obj.Placement);
+                Archipelago.Instance.PendingPlacementHints.Add(obj.Placement);
             }
         }
     }
