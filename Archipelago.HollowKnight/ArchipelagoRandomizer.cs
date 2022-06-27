@@ -138,13 +138,22 @@ namespace Archipelago.HollowKnight
             foreach (
                     string name in new string[] {
                         LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra,
-                        LocationNames.Leg_Eater, LocationNames.Grubfather, LocationNames.Seer})
+                        LocationNames.Leg_Eater, LocationNames.Grubfather, LocationNames.Seer}
+            )
             {
                 location = Finder.GetLocation(name);
                 placements[location] = pmt = location.Wrap();
                 if(pmt is ShopPlacement shop)
                 {
                     shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
+                }
+                else if(name == LocationNames.Grubfather)
+                {
+                    pmt.AddTag<DestroyGrubRewardTag>().destroyRewards = GrubfatherRewards.AllNonGeo;
+                }
+                else if (name == LocationNames.Seer)
+                {
+                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards = SeerRewards.All;
                 }
             }
 
@@ -285,7 +294,7 @@ namespace Archipelago.HollowKnight
                         case "CHARMS":
                             costs.Add(new PDIntCost(
                                 entry.Value, nameof(PlayerData.charmsOwned),
-                                $"Acquire {entry.Value} total {((entry.Value == 1) ? "charm" : "charms")}"
+                                $"Acquire {entry.Value} {((entry.Value == 1) ? "charm" : "charms")}"
                             ));
                             break;
                         case "RANCIDEGGS":
