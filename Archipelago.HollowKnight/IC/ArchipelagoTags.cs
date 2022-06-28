@@ -38,6 +38,11 @@ namespace Archipelago.HollowKnight.IC
         /// </summary>
         public bool Hinted { get; set; } = false;
 
+        /// <summary>
+        /// Set if we forcibly granted this item with GiveImmediate as part of an itemlink.
+        /// </summary>
+        public bool ReceivedFromItemLink { get; set; } = false;
+
         public ArchipelagoItemTag() : base()
         {
         }
