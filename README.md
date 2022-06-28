@@ -51,7 +51,7 @@ Okay, if you read this far your eyes probably glazed over at the list above. It'
 **If you're not going to do any of the above then I at least ask you to create an issue describing any work you intend to take on, at the minimum.** I can handle the rest.
 
 ## Development Setup
-You will need to alter the `Directory.Build.props` file to point to your local HK installation. Then you will need to make sure to not commit that change or I'll ding you in a PR about it. You can locally ignore a change in Git by running the command `git update-index --skip-worktree Directory.Build.props` from the root of the repository. Then your local repo will ignore changes to the file. (You may run into problems when checking out branches after doing this. If this occurs, just undo the change through `git update-index --no-skip-worktree Directory.Build.props` and then try again.)
+You will need to make a copy of the `Directory.Build.props.todo` file and rename the copy to `Directory.Build.props`. Then you'll want to alter the `Directory.Build.props` file you made to point to your local HK installation. It will be ignored by the .gitignore file as `Directory.Build.props`. Do not commit any changes to `Directory.Build.props.todo` to prevent leaking your paths to the world.
 
 Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through Scarab.** If Archipelago is installed through Scarab, uninstall or disable it before testing. Archipelago.HollowKnight will not load if both Scarab and development versions are installed at the same time.
 
