@@ -98,6 +98,9 @@ namespace Archipelago.HollowKnight
         public static event Action OnArchipelagoGameStarted;
         public static event Action OnArchipelagoGameEnded;
 
+        // Placements to attempt hinting
+        public HashSet<AbstractPlacement> PendingPlacementHints = new();
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
@@ -200,6 +203,7 @@ namespace Archipelago.HollowKnight
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
+            SendPlacementHints();
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -214,6 +218,7 @@ namespace Archipelago.HollowKnight
             ApSettings = new();
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
+            ItemChanger.Events.OnSceneChange -= Events_OnSceneChange;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start -= HeroController_Start;
@@ -238,10 +243,10 @@ namespace Archipelago.HollowKnight
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
 
             ItemChanger.Events.OnItemChangerUnhook += EndGame;
+            ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start += HeroController_Start;
-
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
             if (randomize)
@@ -294,6 +299,11 @@ namespace Archipelago.HollowKnight
             {
                 LogError($"Error invoking OnArchipelagoGameStarted:\n {ex}");
             }
+        }
+
+        private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
+        {
+            SendPlacementHints();
         }
 
         private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
@@ -565,6 +575,54 @@ namespace Archipelago.HollowKnight
                 {
                     ReportDisconnect();
                 }
+            }
+        }
+
+        public void SendPlacementHints()
+        {
+            if (!PendingPlacementHints.Any())
+            {
+                return;
+            }
+            HashSet<ArchipelagoItemTag> hintedTags = new();
+            HashSet<long> hintedLocationIDs = new();
+            ArchipelagoItemTag tag;
+
+            foreach (AbstractPlacement pmt in PendingPlacementHints)
+            {
+                foreach (AbstractItem item in pmt.Items)
+                {
+                    if (
+                        item.GetTag<ArchipelagoItemTag>(out tag)
+                        && !tag.Hinted
+                        && (tag.Flags & (ItemFlags.Advancement | ItemFlags.NeverExclude)) != ItemFlags.None
+                        && !item.WasEverObtained()
+                        && !item.HasTag<DisableItemPreviewTag>()
+                    )
+                    {
+                        hintedTags.Add(tag);
+                        hintedLocationIDs.Add(tag.Location);
+                    }
+                }
+            }
+            PendingPlacementHints.Clear();
+            if (!hintedLocationIDs.Any())
+            {
+                return;
+            }
+
+            LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
+            try
+            {
+                session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                {
+                    CreateAsHint = true,
+                    Locations = hintedLocationIDs.ToArray(),
+                }, (result) => { foreach (ArchipelagoItemTag tag in hintedTags) { tag.Hinted = result; } });
+            }
+            catch (ArchipelagoSocketClosedException)
+            {
+                ReportDisconnect();
             }
         }
 
