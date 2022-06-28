@@ -34,12 +34,12 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        public int Slot => slot;
-        public string Player => session.Players.GetPlayerName(slot);
+        public int Slot { get; private set; }
+        public string Player => session.Players.GetPlayerName(Slot);
 
-        public static Sprite Sprite;
-        public static Sprite SmallSprite;
-        public static Sprite DeathLinkSprite;
+        public static Sprite Sprite { get; private set; }
+        public static Sprite SmallSprite { get; private set; }
+        public static Sprite DeathLinkSprite { get; private set; }
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
@@ -50,7 +50,7 @@ namespace Archipelago.HollowKnight
         };
         internal ConnectionDetails ApSettings = new();
 
-        internal ArchipelagoSession session;
+        public ArchipelagoSession session { get; private set; }
 
         /// <summary>
         /// Allows lookup of a placement by its location ID number.  Used during syncing and shared-slot coop.
@@ -62,15 +62,14 @@ namespace Archipelago.HollowKnight
         /// </summary>
         private readonly HashSet<long> deferredLocationChecks = new();
 
-        public bool DeferringLocationChecks { get => deferringLocationChecks; }
-        private bool deferringLocationChecks = false;
+        public bool DeferringLocationChecks { get; private set; }
 
         private int pendingGeo = 0;
 
-        private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private Goal goal = null;
+        public Goal Goal { get; private set; } = null;
+        public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
 
         /// <summary>
         /// A preset GiveInfo structure that avoids creating geo and places messages in the corner.
@@ -189,7 +188,7 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_HeroUpdateHook()
         {
-            if (deferringLocationChecks)
+            if (DeferringLocationChecks)
             {
                 StopDeferringLocationChecks();
             }
@@ -223,10 +222,10 @@ namespace Archipelago.HollowKnight
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start -= HeroController_Start;
 
-            if (goal != null)
+            if (Goal != null)
             {
-                goal.Unselect();
-                goal = null;
+                Goal.Unselect();
+                Goal = null;
             }
         }
 
@@ -282,7 +281,7 @@ namespace Archipelago.HollowKnight
             }
             try
             {
-                goal = Goal.GetGoal(SlotOptions.Goal);
+                Goal = Goal.GetGoal(SlotOptions.Goal);
             }
             catch (ArgumentOutOfRangeException ex)
             {
@@ -290,7 +289,7 @@ namespace Archipelago.HollowKnight
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }
-            goal.Select();
+            Goal.Select();
 
             try
             {
@@ -326,7 +325,7 @@ namespace Archipelago.HollowKnight
             else if (loginResult is LoginSuccessful success)
             {
                 // Read slot data.
-                slot = success.Slot;
+                Slot = success.Slot;
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
                 session.Socket.SocketClosed += Socket_SocketClosed;
 
@@ -399,7 +398,7 @@ namespace Archipelago.HollowKnight
                 }
                 else
                 {
-                    item.Give(pmt, deferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
+                    item.Give(pmt, DeferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
                 }
             }
 
@@ -415,7 +414,7 @@ namespace Archipelago.HollowKnight
             var name = session.Items.GetItemName(netItem.Item);
             LogDebug($"Receiving item ID {netItem.Item}.  Name is {name}.  Slot is {netItem.Player}.  Location is {netItem.Location}.");
 
-            if (netItem.Player == slot && netItem.Location > 0)
+            if (netItem.Player == Slot && netItem.Location > 0)
             {
                 MarkLocationAsChecked(netItem.Location);
                 return;
@@ -500,7 +499,7 @@ namespace Archipelago.HollowKnight
                 session.Socket.SocketClosed -= Socket_SocketClosed;
             }
             DeathLinkSupport.Instance.Disable();
-            slot = 0;
+            Slot = 0;
 
             if (session?.Socket != null && session.Socket.Connected)
             {
@@ -520,7 +519,7 @@ namespace Archipelago.HollowKnight
         /// </remarks>
         public void DeferLocationChecks()
         {
-            deferringLocationChecks = true;
+            DeferringLocationChecks = true;
             LogDebug("Deferring location checks");
         }
 
@@ -530,7 +529,7 @@ namespace Archipelago.HollowKnight
         public void StopDeferringLocationChecks()
         {
             LogDebug("No longer deferring location checks");
-            deferringLocationChecks = false;
+            DeferringLocationChecks = false;
             if (deferredLocationChecks.Any())
             {
                 LogDebug($"Sending {deferredLocationChecks.Count} deferred location check(s).");
@@ -561,7 +560,7 @@ namespace Archipelago.HollowKnight
             {
                 throw new Exception("CheckLocation called with unspecified locationID.  This should never happen.");
             }
-            if(deferringLocationChecks)
+            if(DeferringLocationChecks)
             {
                 deferredLocationChecks.Add(locationID);
             }

@@ -20,4 +20,12 @@ namespace Archipelago.HollowKnight
         Vanilla = 2,
         Shade = 3
     }
+
+    public enum WhitePalaceOption
+    {
+        Exclude = 0,
+        KingFragment = 1,
+        NoPathOfPain = 2,
+        Include = 3
+    }
 }
