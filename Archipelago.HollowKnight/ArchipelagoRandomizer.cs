@@ -155,7 +155,7 @@ namespace Archipelago.HollowKnight
                 {
                     tag = item.AddTag<InteropTag>();
                     tag.Message = "RecentItems";
-                    tag.Properties["DisplayMessage"] = $"{item.UIDef.GetPostviewName()}\nsent to {recipientName}.";
+                    tag.Properties["DisplayMessage"] = $"{ArchipelagoUIDef.GetSentItemName(item)}\nsent to {recipientName}.";
                     item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
 
                     if (item is SoulItem soulItem)

@@ -331,7 +331,6 @@ namespace Archipelago.HollowKnight
 
         public void ReceiveItem(NetworkItem netItem)
         {
-            AbstractPlacement pmt;
             var name = session.Items.GetItemName(netItem.Item);
             LogDebug($"Receiving item ID {netItem.Item}.  Name is {name}.  Slot is {netItem.Player}.  Location is {netItem.Location}.");
 
@@ -365,27 +364,16 @@ namespace Archipelago.HollowKnight
             {
                 sender = session.Players.GetPlayerName(netItem.Player);
             }
-            var itemName = item.UIDef.GetPostviewName();
-            item.UIDef = ArchipelagoUIDef.CreateForReceivedItem(item, sender);
-            item.name = $"{itemName} from {sender}";
-            ArchipelagoLocation location = new(sender);
-            pmt = location.Wrap();
-            pmt.Add(item);
-            InteropTag tag;
-            tag = item.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplayName"] = itemName;
-            tag = pmt.AddTag<InteropTag>();
+            item.Load();
+            ArchipelagoPlacement pmt = new(sender);
+            InteropTag tag = pmt.AddTag<InteropTag>();
             tag.Message = "RecentItems";
             tag.Properties["DisplaySource"] = sender;
-            ItemChangerMod.AddPlacements(pmt.Yield());
-            if (netItem.Location == -2)
+            UIDef def = item.GetResolvedUIDef();
+            item.Give(pmt, SilentGiveInfo.Clone());
+            if (netItem.Location != -2)  // Don't message startinventory.
             {
-                pmt.GiveAll(SilentGiveInfo);
-            }
-            else
-            {
-                pmt.GiveAll(RemoteGiveInfo);
+                MessageController.Enqueue(def.GetSprite(), $"{def.GetPostviewName()} from {sender}");
             }
         }
 
