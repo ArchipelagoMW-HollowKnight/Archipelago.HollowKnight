@@ -45,7 +45,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Tracks created placements and their associated locations during randomization.
         /// </summary>
-        public Dictionary<AbstractLocation, AbstractPlacement> placements = new();
+        public Dictionary<string, AbstractPlacement> placements = new();
 
         public Dictionary<string, Dictionary<string, int>> LocationCosts = new();
         /// <summary>
@@ -142,7 +142,8 @@ namespace Archipelago.HollowKnight
             )
             {
                 location = Finder.GetLocation(name);
-                placements[location] = pmt = location.Wrap();
+                placements[name] = pmt = location.Wrap();
+                pmt.AddTag<ArchipelagoPlacementTag>();
                 if(pmt is ShopPlacement shop)
                 {
                     shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
@@ -153,7 +154,7 @@ namespace Archipelago.HollowKnight
                 }
                 else if (name == LocationNames.Seer)
                 {
-                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards = SeerRewards.All;
+                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards = SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension; ;
                 }
             }
 
@@ -162,7 +163,7 @@ namespace Archipelago.HollowKnight
             {
                 MenuChanger.ThreadSupport.BeginInvoke(() =>
                 {
-                    foreach (var item in packet.Locations.Reverse())  // Quick to insert items in reverse order to fix shop sorting for now.
+                    foreach (var item in packet.Locations)
                     {
                         var locationName = session.Locations.GetLocationNameFromId(item.Location);
                         var itemName = session.Items.GetItemName(item.Item);
@@ -175,7 +176,6 @@ namespace Archipelago.HollowKnight
 
             var locations = new List<long>(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
-        
         }
 
         private void RandomizeCharmCosts()
@@ -211,12 +211,12 @@ namespace Archipelago.HollowKnight
                 recipientName = Session.Players.GetPlayerName(netItem.Player);
             }
 
-            AbstractPlacement pmt = placements.GetOrDefault(loc);
+            AbstractPlacement pmt = placements.GetOrDefault(location);
             if (pmt == null)
             {
                 pmt = loc.Wrap();
                 pmt.AddTag<ArchipelagoPlacementTag>();
-                placements[loc] = pmt;
+                placements[location] = pmt;
             }
 
             AbstractItem item;
