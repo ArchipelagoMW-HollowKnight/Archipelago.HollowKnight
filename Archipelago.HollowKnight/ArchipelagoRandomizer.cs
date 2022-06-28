@@ -132,6 +132,32 @@ namespace Archipelago.HollowKnight
                 RandomizeCharmCosts();
             }
 
+            // Initialize shop locations in case they end up with zero items placed.
+            AbstractLocation location;
+            AbstractPlacement pmt;
+            foreach (
+                    string name in new string[] {
+                        LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra,
+                        LocationNames.Leg_Eater, LocationNames.Grubfather, LocationNames.Seer}
+            )
+            {
+                location = Finder.GetLocation(name);
+                placements[location] = pmt = location.Wrap();
+                if(pmt is ShopPlacement shop)
+                {
+                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
+                }
+                else if(name == LocationNames.Grubfather)
+                {
+                    pmt.AddTag<DestroyGrubRewardTag>().destroyRewards = GrubfatherRewards.AllNonGeo;
+                }
+                else if (name == LocationNames.Seer)
+                {
+                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards = SeerRewards.All;
+                }
+            }
+
+            // Scout all locations
             void ScoutCallback(LocationInfoPacket packet)
             {
                 MenuChanger.ThreadSupport.BeginInvoke(() =>
@@ -268,7 +294,7 @@ namespace Archipelago.HollowKnight
                         case "CHARMS":
                             costs.Add(new PDIntCost(
                                 entry.Value, nameof(PlayerData.charmsOwned),
-                                $"Acquire {entry.Value} total {((entry.Value == 1) ? "charm" : "charms")} to buy this item."
+                                $"Acquire {entry.Value} {((entry.Value == 1) ? "charm" : "charms")}"
                             ));
                             break;
                         case "RANCIDEGGS":
