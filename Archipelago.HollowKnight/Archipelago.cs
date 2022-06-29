@@ -277,6 +277,7 @@ namespace Archipelago.HollowKnight
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
                 if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
                 {
+                    DisconnectArchipelago();
                     UIManager.instance.UIReturnToMainMenu();
                     throw new ArchipelagoConnectionException("Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
                 }
