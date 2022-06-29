@@ -7,6 +7,7 @@ using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
@@ -33,10 +34,12 @@ namespace Archipelago.HollowKnight
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        public int Slot { get => slot; }
+        public int Slot { get; private set; }
+        public string Player => session.Players.GetPlayerName(Slot);
 
-        internal static Sprite Sprite;
-        internal static Sprite SmallSprite;
+        public static Sprite Sprite { get; private set; }
+        public static Sprite SmallSprite { get; private set; }
+        public static Sprite DeathLinkSprite { get; private set; }
         internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
@@ -47,7 +50,7 @@ namespace Archipelago.HollowKnight
         };
         internal ConnectionDetails ApSettings = new();
 
-        internal ArchipelagoSession session;
+        public ArchipelagoSession session { get; private set; }
 
         /// <summary>
         /// Allows lookup of a placement by its location ID number.  Used during syncing and shared-slot coop.
@@ -59,15 +62,14 @@ namespace Archipelago.HollowKnight
         /// </summary>
         private readonly HashSet<long> deferredLocationChecks = new();
 
-        public bool DeferringLocationChecks { get => deferringLocationChecks; }
-        private bool deferringLocationChecks = false;
+        public bool DeferringLocationChecks { get; private set; }
 
         private int pendingGeo = 0;
 
-        private int slot;
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
-        private Goal goal = null;
+        public Goal Goal { get; private set; } = null;
+        public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
 
         /// <summary>
         /// A preset GiveInfo structure that avoids creating geo and places messages in the corner.
@@ -91,6 +93,22 @@ namespace Archipelago.HollowKnight
             MessageType = MessageType.None
         };
 
+        // Events support
+        public static event Action OnArchipelagoGameStarted;
+        public static event Action OnArchipelagoGameEnded;
+
+        // Shade position fixes
+        public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
+        {
+            { "Abyss_08", (90.0f, 90.0f) },  // Lifeblood Core room.  Even outside of deathlink, shades spawn out of bounds.
+            { "Room_Colosseum_Spectate", (124.0f, 10.0f) },  // Shade spawns inside inaccessible arena
+            { "Resting_Grounds_09", (7.4f, 10.0f) },  // Shade spawns underground.
+            { "Runes1_18", (11.5f, 23.0f) },  // Shade potentially spawns on the wrong side of an inaccessible gate.
+        };
+
+        // Placements to attempt hinting
+        public HashSet<AbstractPlacement> PendingPlacementHints = new();
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
@@ -99,12 +117,12 @@ namespace Archipelago.HollowKnight
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
             Sprite = spriteManager.GetSprite("Icon");
             SmallSprite = spriteManager.GetSprite("IconSmall");
+            DeathLinkSprite = spriteManager.GetSprite("DeathLinkIcon");
             obtainStateFieldInfo = typeof(AbstractItem).GetField("obtainState", BindingFlags.NonPublic | BindingFlags.Instance);
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
             ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
-
             Log("Initialized");
         }
 
@@ -139,10 +157,17 @@ namespace Archipelago.HollowKnight
             LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
             if (ArchipelagoEnabled)
             {
-                session.Socket.SendPacket(new StatusUpdatePacket()
+                try
                 {
-                    Status = ArchipelagoClientState.ClientGoal
-                });
+                    session.Socket.SendPacket(new StatusUpdatePacket()
+                    {
+                        Status = ArchipelagoClientState.ClientGoal
+                    });
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    ReportDisconnect();
+                }
             }
         }
 
@@ -172,7 +197,7 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_HeroUpdateHook()
         {
-            if(deferringLocationChecks)
+            if (DeferringLocationChecks)
             {
                 StopDeferringLocationChecks();
             }
@@ -185,18 +210,31 @@ namespace Archipelago.HollowKnight
 
         public void EndGame()
         {
+            LogDebug("Ending Archipelago game");
+            SendPlacementHints();
+            try
+            {
+                OnArchipelagoGameEnded?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error invoking OnArchipelagoGameEnded:\n {ex}");
+            }
+
             DisconnectArchipelago();
             ArchipelagoEnabled = false;
             ApSettings = new();
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
+            ItemChanger.Events.OnSceneChange -= Events_OnSceneChange;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
+            ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start -= HeroController_Start;
 
-            if (goal != null)
+            if (Goal != null)
             {
-                goal.Unselect();
-                goal = null;
+                Goal.Unselect();
+                Goal = null;
             }
         }
 
@@ -213,7 +251,9 @@ namespace Archipelago.HollowKnight
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
 
             ItemChanger.Events.OnItemChangerUnhook += EndGame;
+            ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
             On.HeroController.Start += HeroController_Start;
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
@@ -221,6 +261,10 @@ namespace Archipelago.HollowKnight
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
                 ApSettings.ItemIndex = 0;
+                ApSettings.Seed = (long)loginResult.SlotData["seed"];
+                ApSettings.RoomSeed = session.RoomState.Seed;
+
+                LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
                 randomizer.Randomize();
@@ -228,6 +272,14 @@ namespace Archipelago.HollowKnight
             }
             else
             {
+                LogDebug($"StartOrResumeGame: Local : Room: {ApSettings.RoomSeed}; Seed = {ApSettings.Seed}");
+                var seed = (long)loginResult.SlotData["seed"];
+                LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
+                if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
+                {
+                    UIManager.instance.UIReturnToMainMenu();
+                    throw new ArchipelagoConnectionException("Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
+                }
                 pendingGeo = 0;
             }
             // Discard from the beginning of the incoming item queue up to how many items we have received.
@@ -238,14 +290,33 @@ namespace Archipelago.HollowKnight
             }
             try
             {
-                goal = Goal.GetGoal(SlotOptions.Goal);
+                Goal = Goal.GetGoal(SlotOptions.Goal);
             }
             catch (ArgumentOutOfRangeException ex)
             {
+                UIManager.instance.UIReturnToMainMenu();
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }
-            goal.Select();
+            Goal.Select();
+
+            try
+            {
+                OnArchipelagoGameStarted?.Invoke();
+            } catch (Exception ex)
+            {
+                LogError($"Error invoking OnArchipelagoGameStarted:\n {ex}");
+            }
+        }
+
+        private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
+        {
+            SendPlacementHints();
+        }
+
+        private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        {
+            ReportDisconnect();
         }
 
         private LoginResult ConnectToArchipelago()
@@ -263,8 +334,20 @@ namespace Archipelago.HollowKnight
             else if (loginResult is LoginSuccessful success)
             {
                 // Read slot data.
-                slot = success.Slot;
+                Slot = success.Slot;
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
+                session.Socket.SocketClosed += Socket_SocketClosed;
+
+                LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
+                // Enable Deathlink
+                if (SlotOptions.DeathLink != DeathLinkType.None)
+                {
+                    DeathLinkSupport.Instance.Enable();
+                }
+                else
+                {
+                    DeathLinkSupport.Instance.Disable();
+                }
                 return loginResult;
             } 
             else
@@ -274,7 +357,13 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void MarkLocationAsChecked(long locationID)
+        private System.Collections.IEnumerator HeroController_Respawn(On.HeroController.orig_Respawn orig, HeroController self)
+        {
+            On.HeroController.Respawn -= HeroController_Respawn;
+            return orig(self);
+        }
+
+        public void MarkLocationAsChecked(long locationID, bool receiveItem = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
@@ -297,6 +386,13 @@ namespace Archipelago.HollowKnight
                     hadUnobtainedItems = true;
                     continue;
                 }
+                if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
+                {
+                    tag.ReceivedFromItemLink = true;
+                    var itemForMe = Finder.GetItem(item.name);
+                    itemForMe.Load();
+                    itemForMe.Give(pmt, RemoteGiveInfo);
+                }
                 if (item.WasEverObtained())
                 {
                     continue;
@@ -318,7 +414,7 @@ namespace Archipelago.HollowKnight
                 }
                 else
                 {
-                    item.Give(pmt, deferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
+                    item.Give(pmt, DeferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
                 }
             }
 
@@ -330,13 +426,12 @@ namespace Archipelago.HollowKnight
 
         public void ReceiveItem(NetworkItem netItem)
         {
-            AbstractPlacement pmt;
             var name = session.Items.GetItemName(netItem.Item);
             LogDebug($"Receiving item ID {netItem.Item}.  Name is {name}.  Slot is {netItem.Player}.  Location is {netItem.Location}.");
 
-            if (netItem.Player == slot && netItem.Location > 0)
+            if (netItem.Player == Slot && netItem.Location > 0)
             {
-                MarkLocationAsChecked(netItem.Location);
+                MarkLocationAsChecked(netItem.Location, true);
                 return;
             }
             // If we're still here, this is an item from someone else.  We'll make up our own dummy placement and grant the item.
@@ -364,27 +459,16 @@ namespace Archipelago.HollowKnight
             {
                 sender = session.Players.GetPlayerName(netItem.Player);
             }
-            var itemName = item.UIDef.GetPostviewName();
-            item.UIDef = ArchipelagoUIDef.CreateForReceivedItem(item, sender);
-            item.name = $"{itemName} from {sender}";
-            ArchipelagoLocation location = new(sender);
-            pmt = location.Wrap();
-            pmt.Add(item);
-            InteropTag tag;
-            tag = item.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplayName"] = itemName;
-            tag = pmt.AddTag<InteropTag>();
+            item.Load();
+            ArchipelagoPlacement pmt = new(sender);
+            InteropTag tag = pmt.AddTag<InteropTag>();
             tag.Message = "RecentItems";
             tag.Properties["DisplaySource"] = sender;
-            ItemChangerMod.AddPlacements(pmt.Yield());
-            if (netItem.Location == -2)
+            UIDef def = item.GetResolvedUIDef();
+            item.Give(pmt, SilentGiveInfo.Clone());
+            if (netItem.Location != -2)  // Don't message startinventory.
             {
-                pmt.GiveAll(SilentGiveInfo);
-            }
-            else
-            {
-                pmt.GiveAll(RemoteGiveInfo);
+                MessageController.Enqueue(def.GetSprite(), $"{def.GetPostviewName()} from {sender}");
             }
         }
 
@@ -394,9 +478,29 @@ namespace Archipelago.HollowKnight
             StartOrResumeGame(false);  // No-op if AP disabled.
         }
 
+        /// <summary>
+        /// With DeathLink (and possibly with future trap implementations), dying in certain locations can produce inaccessible shades.  Fix that.
+        /// </summary>
+
+        private void ModHooks_AfterPlayerDeadHook()
+        {
+            // Fixes up some bad shade placements by vanilla HK.
+            PlayerData pd = PlayerData.instance;
+            if (ShadeSpawnPositionFixes.TryGetValue(pd.shadeScene, out (float x, float y) position))
+            {
+                pd.shadePositionX = position.x;
+                pd.shadePositionY = position.y;
+            }
+        }
+
         public void DisconnectArchipelago()
         {
-            slot = 0;
+            if (session?.Socket != null)
+            {
+                session.Socket.SocketClosed -= Socket_SocketClosed;
+            }
+            DeathLinkSupport.Instance.Disable();
+            Slot = 0;
 
             if (session?.Socket != null && session.Socket.Connected)
             {
@@ -416,7 +520,7 @@ namespace Archipelago.HollowKnight
         /// </remarks>
         public void DeferLocationChecks()
         {
-            deferringLocationChecks = true;
+            DeferringLocationChecks = true;
             LogDebug("Deferring location checks");
         }
 
@@ -426,7 +530,7 @@ namespace Archipelago.HollowKnight
         public void StopDeferringLocationChecks()
         {
             LogDebug("No longer deferring location checks");
-            deferringLocationChecks = false;
+            DeferringLocationChecks = false;
             if (deferredLocationChecks.Any())
             {
                 LogDebug($"Sending {deferredLocationChecks.Count} deferred location check(s).");
@@ -434,6 +538,19 @@ namespace Archipelago.HollowKnight
                 deferredLocationChecks.Clear();
             }
         }
+
+        public void ReportDisconnect()
+        {
+            ItemChanger.Internal.MessageController.Enqueue(
+                null,
+                "Error: Lost connection to Archipelago server"
+            );
+            ItemChanger.Internal.MessageController.Enqueue(
+                null,
+                "Reload your save to attempt to reconnect."
+            );
+        }
+
 
         /// <summary>
         /// Checks a single location or adds it to the deferred list.
@@ -444,13 +561,68 @@ namespace Archipelago.HollowKnight
             {
                 throw new Exception("CheckLocation called with unspecified locationID.  This should never happen.");
             }
-            if(deferringLocationChecks)
+            if(DeferringLocationChecks)
             {
                 deferredLocationChecks.Add(locationID);
             }
             else
             {
-                session.Locations.CompleteLocationChecksAsync(null, locationID);
+                try
+                {
+                    session.Locations.CompleteLocationChecksAsync(null, locationID);
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    ReportDisconnect();
+                }
+            }
+        }
+
+        public void SendPlacementHints()
+        {
+            if (!PendingPlacementHints.Any())
+            {
+                return;
+            }
+            HashSet<ArchipelagoItemTag> hintedTags = new();
+            HashSet<long> hintedLocationIDs = new();
+            ArchipelagoItemTag tag;
+
+            foreach (AbstractPlacement pmt in PendingPlacementHints)
+            {
+                foreach (AbstractItem item in pmt.Items)
+                {
+                    if (
+                        item.GetTag<ArchipelagoItemTag>(out tag)
+                        && !tag.Hinted
+                        && (tag.Flags & (ItemFlags.Advancement | ItemFlags.NeverExclude)) != ItemFlags.None
+                        && !item.WasEverObtained()
+                        && !item.HasTag<DisableItemPreviewTag>()
+                    )
+                    {
+                        hintedTags.Add(tag);
+                        hintedLocationIDs.Add(tag.Location);
+                    }
+                }
+            }
+            PendingPlacementHints.Clear();
+            if (!hintedLocationIDs.Any())
+            {
+                return;
+            }
+
+            LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
+            try
+            {
+                session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                {
+                    CreateAsHint = true,
+                    Locations = hintedLocationIDs.ToArray(),
+                }, (result) => { foreach (ArchipelagoItemTag tag in hintedTags) { tag.Hinted = result; } });
+            }
+            catch (ArchipelagoSocketClosedException)
+            {
+                ReportDisconnect();
             }
         }
 
