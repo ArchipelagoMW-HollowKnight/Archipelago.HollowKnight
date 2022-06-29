@@ -249,12 +249,7 @@ namespace Archipelago.HollowKnight
                 return;
             }
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
-
-            ItemChanger.Events.OnItemChangerUnhook += EndGame;
-            ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
-            ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
-            On.HeroController.Start += HeroController_Start;
+            
             LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
             DeferLocationChecks();
             if (randomize)
@@ -282,12 +277,23 @@ namespace Archipelago.HollowKnight
                 }
                 pendingGeo = 0;
             }
+
+            // Hooks happen after we've definitively connected to an Archipelago slot correctly.
+            // Doing this before checking for the correct slot/seed/room will cause problems if
+            // the client connects to the wrong session with a matching slot.
+            ItemChanger.Events.OnItemChangerUnhook += EndGame;
+            ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
+            ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
+            On.HeroController.Start += HeroController_Start;
+
             // Discard from the beginning of the incoming item queue up to how many items we have received.
             for (int i = 0; i < ApSettings.ItemIndex; ++i)
             {
                 NetworkItem netItem = session.Items.DequeueItem();
                 LogDebug($"Fast-forwarding past an already-acquired {session.Items.GetItemName(netItem.Item)}");
             }
+
             try
             {
                 Goal = Goal.GetGoal(SlotOptions.Goal);
@@ -298,6 +304,7 @@ namespace Archipelago.HollowKnight
                 LogError($"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
                 throw ex;
             }
+
             Goal.Select();
 
             try
