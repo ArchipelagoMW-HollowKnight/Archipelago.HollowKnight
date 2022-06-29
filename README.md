@@ -35,6 +35,12 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 5. Hit **Start** to begin the game. The game will stall for a few seconds while it does all item placements.
 6. The game will immediately drop you into the randomized game. So if you are waiting for a countdown then wait for it to lapse before hitting Start, or hit Start then pause the game once you're in it.
 
+# Known Issues
+
+- Deathlink may occasionally enter a state where incoming Deathlinks will not affect you.  To fix this if it happens, either die intentionally or save and reload your game.
+- Starting inventory is displayed twice in RecentItems
+- Archipelago icons stop showing when reloading a save.  This is cosmetic and does not affect gameplay.
+
 # Contributing
 Contributions are welcome, all code is licensed under MIT license. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are taking on an issue please comment on the issue and assign yourself (if possible). If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
 
