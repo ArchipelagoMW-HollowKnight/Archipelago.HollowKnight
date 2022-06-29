@@ -19,6 +19,13 @@ namespace Archipelago.HollowKnight
             "@ took damage equal to or more than their current HP.",
             "@ made a fatal mistake.",
             "@ threw some shade at @.",
+            "@ decided to set up a Shade Skip.",  // A System of Vibrant Colors (edited)
+            "Hopefully @ didn't have a fragile charm equipped.", // Koatlus
+            "A true servant gives all for the Kingdom.  Let @ relieve you of your life.", // Koatlus
+            "Through @'s sacrifice, you are now dead.", // Koatlus
+            "The truce remains.  Our vigil holds.  @ must respawn.", // Koatlus
+            "Hopefully @ didn't have a fragile charm equipped.", // Koatlus
+
         };
 
         public readonly static List<string> UnknownMessages = new()
@@ -40,8 +47,10 @@ namespace Archipelago.HollowKnight
                     "@ should have considered equipping Dreamshield.",
                     "@ must have never fought that enemy before.",
                     "@ did not make it to phase 2.",
+                    "@ dashed in the wrong direction.",  // Murphmario
+                    "@ tried to talk it out.",  // SnowOfAllTrades
+                    "@ made masterful use of their vulnerability frames.",
                 }
-
             },
             {
                 2,  // Deaths from spikes
@@ -52,7 +61,10 @@ namespace Archipelago.HollowKnight
                     "@ didn't see that saw.",
                     "@ fought the spikes and the spikes won.",
                     "@ sought roses but found only thorns.",
-                    "@ was pricked to death.",
+                    "@ was pricked to death.",  // A System of Vibrant Colors
+                    "@ dashed in the wrong direction.",  // Murphmario
+                    "@ found their own Path of Pain.",  // Fatman
+                    "@ has strayed from the White King's roads.",  // Koatlus
                 }
             },
             {
@@ -65,6 +77,7 @@ namespace Archipelago.HollowKnight
                     "@ wishes they could swim.",
                     "@ used the wrong kind of dive.",
                     "@ got into a fight with a pool of liquid and lost.",
+                    "@ forgot how to swim",  // squidy
                 }
             },
             {
@@ -335,7 +348,7 @@ namespace Archipelago.HollowKnight
             string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.Player);
             // Increment outgoing deathlinks and send the death.
             outgoingDeathlinks += 1;
-            ap.LogDebug($"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.");
+            ap.LogDebug($"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.  \"{message}\"");
             service.SendDeathLink(new(Archipelago.Instance.Player, message));
         }
 
