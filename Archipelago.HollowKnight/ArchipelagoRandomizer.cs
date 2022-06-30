@@ -1,4 +1,7 @@
-﻿using Archipelago.HollowKnight.IC;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -9,9 +12,6 @@ using ItemChanger.Extensions;
 using ItemChanger.Items;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Archipelago.HollowKnight
 {
@@ -111,12 +111,12 @@ namespace Archipelago.HollowKnight
             // Initialize shop locations in case they end up with zero items placed.
             AbstractLocation location;
             AbstractPlacement pmt;
-            
-            var shops = new string[] 
-            { 
+
+            var shops = new string[]
+            {
                 LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda,
                 LocationNames.Salubra, LocationNames.Leg_Eater, LocationNames.Grubfather,
-                LocationNames.Seer 
+                LocationNames.Seer
             };
             foreach (string name in shops)
             {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
@@ -139,7 +138,8 @@ namespace Archipelago.HollowKnight
             if (ArchipelagoEnabled)
             {
                 DeferLocationChecks();
-                while (ReceiveNextItem()) ;  // Receive items until the queue is empty.
+                // Receive items until the queue is empty.
+                while (ReceiveNextItem()) { }
 
                 foreach (long location in session.Locations.AllLocationsChecked)
                 {

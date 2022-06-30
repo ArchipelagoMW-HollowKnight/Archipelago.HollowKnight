@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ItemChanger;
+﻿using System.Collections.Generic;
 using Archipelago.HollowKnight.IC;
-using Archipelago.MultiClient.Net.Packets;
-using Archipelago.MultiClient.Net.Exceptions;
+using ItemChanger;
 
 namespace Archipelago.HollowKnight
 {

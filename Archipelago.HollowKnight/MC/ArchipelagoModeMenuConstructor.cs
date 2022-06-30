@@ -16,7 +16,7 @@ namespace Archipelago.HollowKnight.MC
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
             var perpetua = CanvasUtil.GetFont("Perpetua");
-            
+
             ApPage = new MenuPage("Archipelago Settings", modeMenu);
             var settingsType = typeof(ConnectionDetails);
             var settings = Archipelago.Instance.MenuSettings;
@@ -27,7 +27,7 @@ namespace Archipelago.HollowKnight.MC
             urlRect.sizeDelta = new Vector2(1500f, 63.2f);
             urlField.InputField.textComponent.font = perpetua;
             urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
-            
+
 
             var portField = new NumericEntryField<int>(ApPage, "Server Port: ");
             portField.SetClamp(0, 65535);
@@ -40,7 +40,7 @@ namespace Archipelago.HollowKnight.MC
             var nameRect = nameField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
             nameRect.sizeDelta = new Vector2(1500f, 63.2f);
             nameField.Bind(settings, settingsType.GetProperty("SlotName"));
-            
+
 
             var passwordField = new EntryField<string>(ApPage, "Password: ");
             passwordField.InputField.characterLimit = 500;
@@ -48,7 +48,7 @@ namespace Archipelago.HollowKnight.MC
             var passwordRect = passwordField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
             passwordRect.sizeDelta = new Vector2(1500f, 63.2f);
             passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
-            
+
 
             var startButton = new BigButton(ApPage, "Start", "Will stall after clicking.");
             startButton.OnClick += StartNewGame;
@@ -77,7 +77,7 @@ namespace Archipelago.HollowKnight.MC
         private void StartNewGame()
         {
             Archipelago.Instance.ArchipelagoEnabled = true;
-            Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with {};  // Clone MenuSettings into ApSettings
+            Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with { };  // Clone MenuSettings into ApSettings
             try
             {
                 // Archipelago.Instance.ConnectAndRandomize();
@@ -95,7 +95,7 @@ namespace Archipelago.HollowKnight.MC
                 Archipelago.Instance.LogError(ex);
                 Archipelago.Instance.DisconnectArchipelago();
             }
-            
+
         }
 
         public override void OnExitMainMenu()

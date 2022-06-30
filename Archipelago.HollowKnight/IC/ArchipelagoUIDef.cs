@@ -41,7 +41,7 @@ namespace Archipelago.HollowKnight.IC
         internal ArchipelagoUIDef(UIDef source) : base()
         {
             if (source is MsgUIDef msgDef)
-            { 
+            {
                 shopDesc = msgDef.shopDesc.Clone();
                 sprite = msgDef.sprite.Clone();
             }

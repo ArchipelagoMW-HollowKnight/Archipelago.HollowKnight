@@ -1,13 +1,7 @@
-﻿using Archipelago.MultiClient.Net.Models;
+﻿using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Archipelago.MultiClient.Net.Enums;
-using Archipelago.HollowKnight;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -48,7 +42,7 @@ namespace Archipelago.HollowKnight.IC
         }
 
         public void ReadNetItem(NetworkItem networkItem)
-        { 
+        {
             Location = networkItem.Location;
             Player = networkItem.Player;
             Flags = networkItem.Flags;
@@ -62,7 +56,7 @@ namespace Archipelago.HollowKnight.IC
             item.ModifyItem += ModifyItem;
             item.AfterGive += AfterGive;
 
-            if(item.WasEverObtained())
+            if (item.WasEverObtained())
             {
                 Archipelago.Instance.CheckLocation(Location);
             }
@@ -86,11 +80,12 @@ namespace Archipelago.HollowKnight.IC
                 }
             }
             // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
-            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot) {
+            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot)
+            {
                 var tags = obj.Item.GetTags<InteropTag>();
                 foreach (var tag in tags)
-                { 
-                    if(tag.Message == "RecentItems")
+                {
+                    if (tag.Message == "RecentItems")
                     {
                         tag.Properties["IgnoreItem"] = true;
                         return;
