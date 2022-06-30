@@ -39,7 +39,6 @@ namespace Archipelago.HollowKnight
         public static Sprite Sprite { get; private set; }
         public static Sprite SmallSprite { get; private set; }
         public static Sprite DeathLinkSprite { get; private set; }
-        internal static FieldInfo obtainStateFieldInfo;
 
         internal SpriteManager spriteManager;
         internal ConnectionDetails MenuSettings = new()
@@ -64,7 +63,6 @@ namespace Archipelago.HollowKnight
         public bool DeferringLocationChecks { get; private set; }
 
         private int pendingGeo = 0;
-
         private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
         private DateTime lastUpdate = DateTime.MinValue;
         public Goal Goal { get; private set; } = null;
@@ -117,7 +115,6 @@ namespace Archipelago.HollowKnight
             Sprite = spriteManager.GetSprite("Icon");
             SmallSprite = spriteManager.GetSprite("IconSmall");
             DeathLinkSprite = spriteManager.GetSprite("DeathLinkIcon");
-            obtainStateFieldInfo = typeof(AbstractItem).GetField("obtainState", BindingFlags.NonPublic | BindingFlags.Instance);
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
@@ -130,7 +127,7 @@ namespace Archipelago.HollowKnight
             orig(self);
             SynchronizeCheckedLocations();
             StopDeferringLocationChecks();
-            if(pendingGeo > 0)
+            if (pendingGeo > 0)
             {
                 self.AddGeo(pendingGeo);
                 pendingGeo = 0;
@@ -142,9 +139,9 @@ namespace Archipelago.HollowKnight
             if (ArchipelagoEnabled)
             {
                 DeferLocationChecks();
-                while (ReceiveNextItem());  // Receive items until the queue is empty.
+                while (ReceiveNextItem()) ;  // Receive items until the queue is empty.
 
-                foreach(long location in session.Locations.AllLocationsChecked)
+                foreach (long location in session.Locations.AllLocationsChecked)
                 {
                     MarkLocationAsChecked(location);
                 }
@@ -248,7 +245,7 @@ namespace Archipelago.HollowKnight
                 return;
             }
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
-            
+
             LoginSuccessful loginResult = ConnectToArchipelago();
             DeferLocationChecks();
             if (randomize)
@@ -310,7 +307,8 @@ namespace Archipelago.HollowKnight
             try
             {
                 OnArchipelagoGameStarted?.Invoke();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 LogError($"Error invoking OnArchipelagoGameStarted:\n {ex}");
             }
@@ -360,7 +358,7 @@ namespace Archipelago.HollowKnight
                     DeathLinkSupport.Instance.Disable();
                 }
                 return success;
-            } 
+            }
             else
             {
                 LogError($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}");
@@ -570,11 +568,11 @@ namespace Archipelago.HollowKnight
         /// </summary>
         public void CheckLocation(long locationID)
         {
-            if(locationID == 0)
+            if (locationID == 0)
             {
                 throw new Exception("CheckLocation called with unspecified locationID.  This should never happen.");
             }
-            if(DeferringLocationChecks)
+            if (DeferringLocationChecks)
             {
                 deferredLocationChecks.Add(locationID);
             }
@@ -629,13 +627,13 @@ namespace Archipelago.HollowKnight
                 {
                     CreateAsHint = true,
                     Locations = hintedLocationIDs.ToArray(),
-                }, 
+                },
                 (result) =>
-                { 
-                    foreach (ArchipelagoItemTag tag in hintedTags) 
-                    { 
-                        tag.Hinted = result; 
-                    } 
+                {
+                    foreach (ArchipelagoItemTag tag in hintedTags)
+                    {
+                        tag.Hinted = result;
+                    }
                 });
             }
             catch (ArchipelagoSocketClosedException)
@@ -653,7 +651,7 @@ namespace Archipelago.HollowKnight
         /// <param name="details"></param>
         public void OnLoadLocal(ConnectionDetails details)
         {
-            if(details.SlotName == null || details.SlotName == "")  // Apparently, this is called even before a save is loaded.  Catch this.
+            if (details.SlotName == null || details.SlotName == "")  // Apparently, this is called even before a save is loaded.  Catch this.
             {
                 return;
             }
@@ -666,7 +664,7 @@ namespace Archipelago.HollowKnight
         /// <returns></returns>
         public ConnectionDetails OnSaveLocal()
         {
-            if(!ArchipelagoEnabled)
+            if (!ArchipelagoEnabled)
             {
                 return default;
             }
