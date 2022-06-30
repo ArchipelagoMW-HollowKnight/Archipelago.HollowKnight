@@ -11,7 +11,6 @@ using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
-using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
@@ -330,7 +329,11 @@ namespace Archipelago.HollowKnight
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
 
-            var loginResult = session.TryConnectAndLogin("Hollow Knight", ApSettings.SlotName, ArchipelagoProtocolVersion, ItemsHandlingFlags.AllItems, password: ApSettings.ServerPassword);
+            var loginResult = session.TryConnectAndLogin("Hollow Knight",
+                                                         ApSettings.SlotName,
+                                                         ArchipelagoProtocolVersion,
+                                                         ItemsHandlingFlags.AllItems,
+                                                         password: ApSettings.ServerPassword);
 
             if (loginResult is LoginFailure failure)
             {
@@ -364,12 +367,6 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        private System.Collections.IEnumerator HeroController_Respawn(On.HeroController.orig_Respawn orig, HeroController self)
-        {
-            On.HeroController.Respawn -= HeroController_Respawn;
-            return orig(self);
-        }
-
         public void MarkLocationAsChecked(long locationID, bool receiveItem = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
@@ -393,6 +390,7 @@ namespace Archipelago.HollowKnight
                     hadUnobtainedItems = true;
                     continue;
                 }
+
                 if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
                 {
                     tag.ReceivedFromItemLink = true;
@@ -400,10 +398,12 @@ namespace Archipelago.HollowKnight
                     itemForMe.Load();
                     itemForMe.Give(pmt, RemoteGiveInfo);
                 }
+
                 if (item.WasEverObtained())
                 {
                     continue;
                 }
+
                 if (tag.Location != locationID)
                 {
                     hadUnobtainedItems = true;
@@ -425,7 +425,7 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            if(hadNewlyObtainedItems && !hadUnobtainedItems)
+            if (hadNewlyObtainedItems && !hadUnobtainedItems)
             {
                 pmt.AddVisitFlag(VisitState.Opened | VisitState.Dropped | VisitState.Accepted | VisitState.ObtainedAnyItem);
             }
@@ -441,6 +441,7 @@ namespace Archipelago.HollowKnight
                 MarkLocationAsChecked(netItem.Location, true);
                 return;
             }
+
             // If we're still here, this is an item from someone else.  We'll make up our own dummy placement and grant the item.
             AbstractItem item;
             item = Finder.GetItem(name);
@@ -449,6 +450,8 @@ namespace Archipelago.HollowKnight
                 LogDebug($"Could not find an item named '{name}'.  This means that item {netItem.Item} was not received.");
                 return;
             }
+            item.Load();
+
             string sender;
             if (netItem.Location == -1)
             {
@@ -466,13 +469,15 @@ namespace Archipelago.HollowKnight
             {
                 sender = session.Players.GetPlayerName(netItem.Player);
             }
-            item.Load();
+
             ArchipelagoPlacement pmt = new(sender);
             InteropTag tag = pmt.AddTag<InteropTag>();
             tag.Message = "RecentItems";
             tag.Properties["DisplaySource"] = sender;
+
             UIDef def = item.GetResolvedUIDef();
             item.Give(pmt, SilentGiveInfo.Clone());
+
             if (netItem.Location != -2)  // Don't message startinventory.
             {
                 MessageController.Enqueue(def.GetSprite(), $"{def.GetPostviewName()} from {sender}");
@@ -599,13 +604,11 @@ namespace Archipelago.HollowKnight
             {
                 foreach (AbstractItem item in pmt.Items)
                 {
-                    if (
-                        item.GetTag<ArchipelagoItemTag>(out tag)
+                    if (item.GetTag<ArchipelagoItemTag>(out tag)
                         && !tag.Hinted
-                        && (tag.Flags & (ItemFlags.Advancement | ItemFlags.NeverExclude)) != ItemFlags.None
+                        && (tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
                         && !item.WasEverObtained()
-                        && !item.HasTag<DisableItemPreviewTag>()
-                    )
+                        && !item.HasTag<DisableItemPreviewTag>())
                     {
                         hintedTags.Add(tag);
                         hintedLocationIDs.Add(tag.Location);
@@ -625,7 +628,14 @@ namespace Archipelago.HollowKnight
                 {
                     CreateAsHint = true,
                     Locations = hintedLocationIDs.ToArray(),
-                }, (result) => { foreach (ArchipelagoItemTag tag in hintedTags) { tag.Hinted = result; } });
+                }, 
+                (result) =>
+                { 
+                    foreach (ArchipelagoItemTag tag in hintedTags) 
+                    { 
+                        tag.Hinted = result; 
+                    } 
+                });
             }
             catch (ArchipelagoSocketClosedException)
             {
