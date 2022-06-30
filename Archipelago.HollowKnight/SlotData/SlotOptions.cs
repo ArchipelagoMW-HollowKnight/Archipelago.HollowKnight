@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Archipelago.HollowKnight;
 
 namespace Archipelago.HollowKnight.SlotData
 {

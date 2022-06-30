@@ -1,4 +1,7 @@
-﻿using Archipelago.HollowKnight.IC;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -9,11 +12,6 @@ using ItemChanger.Extensions;
 using ItemChanger.Items;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
 {
@@ -61,7 +59,7 @@ namespace Archipelago.HollowKnight
 
         public ArchipelagoRandomizer(Dictionary<string, object> slotData)
         {
-            Random = new System.Random(Convert.ToInt32((long)slotData["seed"]));
+            Random = new Random(Convert.ToInt32((long)slotData["seed"]));
             NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
 
             if (slotData.ContainsKey("location_costs"))
@@ -102,30 +100,8 @@ namespace Archipelago.HollowKnight
             //     ItemChangerMod.Modules.Add<ItemChanger.Modules.DisablePalaceMidWarp>();
             //     ItemChangerMod.Modules.Add<ItemChanger.Modules.RemoveInfectedBlockades>();
             // }
-            if (SlotOptions.RandomizeElevatorPass)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
-            }
-            if (SlotOptions.RandomizeFocus)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.FocusSkill>();
-            }
-            if (SlotOptions.RandomizeSwim)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SwimSkill>();
-            }
-            if (SlotOptions.SplitMothwingCloak)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitCloak>();
-            }
-            if (SlotOptions.SplitMantisClaw)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitClaw>();
-            }
-            if (SlotOptions.SplitCrystalHeart)
-            {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
-            }
+
+            AddItemChangerModules();
 
             if (SlotOptions.RandomCharmCosts != -1)
             {
@@ -135,20 +111,25 @@ namespace Archipelago.HollowKnight
             // Initialize shop locations in case they end up with zero items placed.
             AbstractLocation location;
             AbstractPlacement pmt;
-            foreach (
-                    string name in new string[] {
-                        LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda, LocationNames.Salubra,
-                        LocationNames.Leg_Eater, LocationNames.Grubfather, LocationNames.Seer}
-            )
+
+            var shops = new string[]
+            {
+                LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda,
+                LocationNames.Salubra, LocationNames.Leg_Eater, LocationNames.Grubfather,
+                LocationNames.Seer
+            };
+            foreach (string name in shops)
             {
                 location = Finder.GetLocation(name);
                 placements[name] = pmt = location.Wrap();
+
                 pmt.AddTag<ArchipelagoPlacementTag>();
-                if(pmt is ShopPlacement shop)
+
+                if (pmt is ShopPlacement shop)
                 {
                     shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
                 }
-                else if(name == LocationNames.Grubfather)
+                else if (name == LocationNames.Grubfather)
                 {
                     pmt.AddTag<DestroyGrubRewardTag>().destroyRewards = GrubfatherRewards.AllNonGeo;
                 }
@@ -176,6 +157,34 @@ namespace Archipelago.HollowKnight
 
             var locations = new List<long>(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
+        }
+
+        private void AddItemChangerModules()
+        {
+            if (SlotOptions.RandomizeElevatorPass)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
+            }
+            if (SlotOptions.RandomizeFocus)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.FocusSkill>();
+            }
+            if (SlotOptions.RandomizeSwim)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SwimSkill>();
+            }
+            if (SlotOptions.SplitMothwingCloak)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitCloak>();
+            }
+            if (SlotOptions.SplitMantisClaw)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitClaw>();
+            }
+            if (SlotOptions.SplitCrystalHeart)
+            {
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
+            }
         }
 
         private void RandomizeCharmCosts()
@@ -276,7 +285,6 @@ namespace Archipelago.HollowKnight
             if (LocationCosts.ContainsKey(originalLocation))
             {
                 // New-style placement logic with cost overrides
-                Cost cost;
                 List<Cost> costs = new();
                 foreach (KeyValuePair<string, int> entry in LocationCosts[originalLocation])
                 {
@@ -301,15 +309,17 @@ namespace Archipelago.HollowKnight
                             costs.Add(new ItemChanger.Modules.CumulativeRancidEggCost(entry.Value));
                             break;
                         default:
-                            Archipelago.Instance.LogError($"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
+                            Archipelago.Instance.LogWarn($"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
                             break;
                     }
                 }
+
                 if (costs.Count == 0)
                 {
                     Archipelago.Instance.LogWarn($"Found zero cost types when handling placement at location {originalLocation}!");
                     return;
                 }
+
                 var costTag = item.AddTag<CostTag>();
                 if (costs.Count == 1)
                 {
@@ -319,7 +329,8 @@ namespace Archipelago.HollowKnight
                 {
                     costTag.Cost = new MultiCost(costs);
                 }
-                if(pmt is ISingleCostPlacement scp)
+
+                if (pmt is ISingleCostPlacement scp)
                 {
                     scp.Cost = costTag.Cost;
                 }
