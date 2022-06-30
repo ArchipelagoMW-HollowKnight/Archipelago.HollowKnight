@@ -1,16 +1,16 @@
-﻿using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using HutongGames.PlayMaker;
 using ItemChanger;
 using Modding;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Archipelago.HollowKnight
 {
     public static class DeathLinkMessages
     {
-        public readonly static List<string> DefaultMessages = new()
+        public static readonly List<string> DefaultMessages = new()
         {
             "@ died.",
             "@ has perished.",
@@ -28,14 +28,14 @@ namespace Archipelago.HollowKnight
 
         };
 
-        public readonly static List<string> UnknownMessages = new()
+        public static readonly List<string> UnknownMessages = new()
         {
             "@ has died in a manner most unusual.",
             "@ found a way to break the game, and the game broke @ back.",
             "@ has lost The Game",
         };
 
-        public readonly static Dictionary<int, List<string>> MessagesByType = new()
+        public static readonly Dictionary<int, List<string>> MessagesByType = new()
         {
             {
                 1,  // Deaths from enemy damage 
@@ -95,7 +95,7 @@ namespace Archipelago.HollowKnight
             },
         };
 
-        private readonly static Random random = new();  // This is only messaging, so does not need to be seeded.
+        private static readonly Random random = new();  // This is only messaging, so does not need to be seeded.
 
         public static string GetDeathMessage(int cause, string player)
         {
@@ -129,12 +129,12 @@ namespace Archipelago.HollowKnight
 
     public class DeathLinkSupport
     {
-        public readonly static DeathLinkSupport Instance = new();
-        private DeathLinkService service = null;
+        public static readonly DeathLinkSupport Instance = new();
         public bool Enabled { get; private set; } = false;
-        private DeathLinkType Mode => Archipelago.Instance.SlotOptions.DeathLink;
 
-        private DeathLinkStatus Status;
+        private DeathLinkService service = null;
+        private DeathLinkType mode => Archipelago.Instance.SlotOptions.DeathLink;
+        private DeathLinkStatus status;
         private int outgoingDeathlinks;
         private int lastDamageType;
         private DateTime lastDamageTime;
@@ -150,7 +150,7 @@ namespace Archipelago.HollowKnight
             lastDamageType = 0;
             lastDamageTime = DateTime.MinValue;
             outgoingDeathlinks = 0;
-            Status = DeathLinkStatus.None;
+            status = DeathLinkStatus.None;
         }
         public void Enable()
         {
@@ -163,7 +163,7 @@ namespace Archipelago.HollowKnight
             Enabled = true;
             Reset();
 
-            ap.LogDebug($"Enabling DeathLink support, type: {Mode}");
+            ap.LogDebug($"Enabling DeathLink support, type: {mode}");
             service = ap.session.CreateDeathLinkServiceAndEnable();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
@@ -173,8 +173,7 @@ namespace Archipelago.HollowKnight
 
         public void Disable()
         {
-            var ap = Archipelago.Instance;
-            ap.LogDebug("Disabling DeathLink support.");
+            Archipelago.Instance.LogDebug("Disabling DeathLink support.");
             if (!Enabled)
             {
                 return;
@@ -233,8 +232,8 @@ namespace Archipelago.HollowKnight
             // We patch this for most of our logic, as well as a short-circuit past all of the FSM logic for shade creation, charm breakage, etc.
             fsmState = PrependFSMAction(fsm, "Map Zone", () =>
             {
-                ap.LogDebug($"FsmEdit Pre: Status={Status}  Mode={Mode}.  Resetting status to None.");
-                amnesty = (Status == DeathLinkStatus.Dying);
+                ap.LogDebug($"FsmEdit Pre: Status={status}  Mode={mode}.  Resetting status to None.");
+                amnesty = (status == DeathLinkStatus.Dying);
 
                 if (!amnesty)
                 {
@@ -247,8 +246,8 @@ namespace Archipelago.HollowKnight
                 }
 
                 amnesty = !(
-                        Mode == DeathLinkType.Vanilla
-                        || (Mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
+                        mode == DeathLinkType.Vanilla
+                        || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
                 );
 
                 if (!amnesty)
@@ -257,7 +256,8 @@ namespace Archipelago.HollowKnight
                     return;
                 }
             });
-            AppendFSMAction(fsmState, () => {
+            AppendFSMAction(fsmState, () =>
+            {
                 if (amnesty)
                 {
                     ap.LogDebug($"FsmEdit Post: Amnesty activated, triggering events");
@@ -265,7 +265,12 @@ namespace Archipelago.HollowKnight
                 }
             });
 
-            Action clearDeathLink = () => { amnesty = false; Status = DeathLinkStatus.None; };
+
+            void clearDeathLink()
+            {
+                amnesty = false;
+                status = DeathLinkStatus.None;
+            }
 
             // Near the end of dream deaths, clear DeathLinkStatus
             AppendFSMAction(fsm, "WP Check", clearDeathLink);
@@ -304,13 +309,13 @@ namespace Archipelago.HollowKnight
         {
             string scene = GameManager.instance.sceneName;
             Archipelago.Instance.LogDebug($"So, somebody else has chosen... death.  Current scene: {scene}");
-            Status = DeathLinkStatus.Dying;
+            status = DeathLinkStatus.Dying;
             HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other, 9999, 0);
         }
 
         private void ModHooks_HeroUpdateHook()
         {
-            if (Status == DeathLinkStatus.Pending && CanMurderPlayer())
+            if (status == DeathLinkStatus.Pending && CanMurderPlayer())
             {
                 MurderPlayer();
             }
@@ -327,7 +332,7 @@ namespace Archipelago.HollowKnight
         {
             var ap = Archipelago.Instance;
             // Don't send death links if we're currently in the process of dying to another deathlink.
-            if (Status == DeathLinkStatus.Dying)
+            if (status == DeathLinkStatus.Dying)
             {
                 ap.LogDebug("SendDeathLink(): Not sending a deathlink because we're in the process of dying to one");
                 return;
@@ -349,32 +354,36 @@ namespace Archipelago.HollowKnight
             // Increment outgoing deathlinks and send the death.
             outgoingDeathlinks += 1;
             ap.LogDebug($"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.  \"{message}\"");
-            service.SendDeathLink(new(Archipelago.Instance.Player, message));
+            service.SendDeathLink(new DeathLink(Archipelago.Instance.Player, message));
         }
 
 
         private void OnDeathLinkReceived(DeathLink deathLink)
         {
-            Archipelago.Instance.LogDebug($"OnDeathLinkReceived(): Receiving deathlink.  Status={Status}; outgoingDeathLinks = {outgoingDeathlinks}.");
+            Archipelago.Instance.LogDebug($"OnDeathLinkReceived(): Receiving deathlink.  Status={status}; outgoingDeathLinks = {outgoingDeathlinks}.");
             if (outgoingDeathlinks > 0)
             {
                 outgoingDeathlinks--;
                 return;
             }
-            if (Status == DeathLinkStatus.None)
+
+            if (status == DeathLinkStatus.None)
             {
-                Status = DeathLinkStatus.Pending;
+                status = DeathLinkStatus.Pending;
             }
+
             string cause = deathLink.Cause;
             if (cause == null || cause == "")
             {
                 cause = $"{deathLink.Source} died.";
             }
+
             new ItemChanger.UIDefs.MsgUIDef()
             {
                 name = new BoxedString(cause),
                 sprite = new BoxedSprite(Archipelago.DeathLinkSprite)
             }.SendMessage(MessageType.Corner, null);
+
             lastDamageType = 0;
         }
     }
