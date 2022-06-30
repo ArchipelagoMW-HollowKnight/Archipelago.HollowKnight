@@ -250,7 +250,7 @@ namespace Archipelago.HollowKnight
             }
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
             
-            LoginSuccessful loginResult = ConnectToArchipelago() as LoginSuccessful;
+            LoginSuccessful loginResult = ConnectToArchipelago();
             DeferLocationChecks();
             if (randomize)
             {
@@ -326,7 +326,7 @@ namespace Archipelago.HollowKnight
             ReportDisconnect();
         }
 
-        private LoginResult ConnectToArchipelago()
+        private LoginSuccessful ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
 
@@ -355,7 +355,7 @@ namespace Archipelago.HollowKnight
                 {
                     DeathLinkSupport.Instance.Disable();
                 }
-                return loginResult;
+                return success;
             } 
             else
             {
