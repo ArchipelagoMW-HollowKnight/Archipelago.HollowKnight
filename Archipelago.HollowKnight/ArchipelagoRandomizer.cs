@@ -147,7 +147,7 @@ namespace Archipelago.HollowKnight
                     foreach (var item in packet.Locations)
                     {
                         var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                        var itemName = session.Items.GetItemName(item.Item);
+                        var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
 
                         PlaceItem(locationName, itemName, item);
                     }
