@@ -210,18 +210,24 @@ namespace Archipelago.HollowKnight
             // But we can have multiple placements at the same location, so do this workaround.  (Rando4 does something similar per its README)
             if (SlotOptions.RandomizeLoreTablets)
             {
-                if (location == "Focus" || location == "World_Sense")
+                switch (location)
                 {
-                    location = $"Lore_Tablet-{location}";
+                    case LocationNames.Focus:
+                        location = LocationNames.Lore_Tablet_Kings_Pass_Focus;
+                        break;
+                    case LocationNames.World_Sense:
+                        location = LocationNames.Lore_Tablet_World_Sense;
+                        break;
+                    // no default
                 }
             }
-            else if (location == "Lore_Tablet-World_Sense")
+            else if (location == LocationNames.Lore_Tablet_World_Sense)
             {
-                location = "World_Sense";
+                location = LocationNames.World_Sense;
             }
-            else if (SlotOptions.RandomizeFocus && location == "Lore_Tablet-Focus")
+            else if (SlotOptions.RandomizeFocus && location == LocationNames.Lore_Tablet_Kings_Pass_Focus)
             {
-                location = "Focus";
+                location = LocationNames.Focus;
             }
 
             AbstractLocation loc = Finder.GetLocation(location);
