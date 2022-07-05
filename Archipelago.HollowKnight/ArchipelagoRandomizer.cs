@@ -206,6 +206,29 @@ namespace Archipelago.HollowKnight
 
             var originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
+            // IC does not like placements at these locations if there's also a location at the lore tablet, it renders the lore tablet inoperable.
+            // But we can have multiple placements at the same location, so do this workaround.  (Rando4 does something similar per its README)
+            if (SlotOptions.RandomizeLoreTablets)
+            {
+                switch (location)
+                {
+                    case LocationNames.Focus:
+                        location = LocationNames.Lore_Tablet_Kings_Pass_Focus;
+                        break;
+                    case LocationNames.World_Sense:
+                        location = LocationNames.Lore_Tablet_World_Sense;
+                        break;
+                    // no default
+                }
+            }
+            else if (location == LocationNames.Lore_Tablet_World_Sense)
+            {
+                location = LocationNames.World_Sense;
+            }
+            else if (SlotOptions.RandomizeFocus && location == LocationNames.Lore_Tablet_Kings_Pass_Focus)
+            {
+                location = LocationNames.Focus;
+            }
 
             AbstractLocation loc = Finder.GetLocation(location);
             if (loc == null)
