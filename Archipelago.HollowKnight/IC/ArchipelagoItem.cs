@@ -52,5 +52,14 @@ namespace Archipelago.HollowKnight.IC
                 sprite = new BoxedSprite(Archipelago.SmallSprite)
             };
         }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            if(UIDef is ArchipelagoUIDef def)
+            {
+                def.sprite = new BoxedSprite(Archipelago.SmallSprite);
+            }
+        }
     }
 }
