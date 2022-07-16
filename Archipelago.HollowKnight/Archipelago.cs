@@ -27,7 +27,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 1, 0, 0).ToString();
+        public override string GetVersion() => new Version(0, 1, 0, 1).ToString();
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
@@ -268,9 +268,18 @@ namespace Archipelago.HollowKnight
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
                 if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
                 {
-                    DisconnectArchipelago();
-                    UIManager.instance.UIReturnToMainMenu();
-                    throw new ArchipelagoConnectionException("Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
+                    if (ApSettings.RoomSeed == null)
+                    {
+                        LogWarn("Are you upgrading from a previous version?  Seed data did not exist in save.  It does now.");
+                        ApSettings.Seed = seed;
+                        ApSettings.RoomSeed = session.RoomState.Seed;
+                    }
+                    else
+                    {
+                        DisconnectArchipelago();
+                        UIManager.instance.UIReturnToMainMenu();
+                        throw new ArchipelagoConnectionException("Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
+                    }
                 }
                 pendingGeo = 0;
             }
