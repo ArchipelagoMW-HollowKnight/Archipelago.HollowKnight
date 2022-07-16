@@ -5,6 +5,17 @@ namespace Archipelago.HollowKnight.IC
 {
     internal class ArchipelagoUIDef : MsgUIDef
     {
+        public static string GetSentItemName(AbstractItem item)
+        {
+            return item.name switch
+            {
+                ItemNames.Grub => "A grub!",
+                ItemNames.Grimmkin_Flame => "Grimmkin Flame",
+                ItemNames.Rancid_Egg => "Rancid Egg",
+                _ => item.UIDef.GetPostviewName(),
+            };
+        }
+
         public static ArchipelagoUIDef CreateForReceivedItem(AbstractItem item, string sender)
         {
             return CreateForReceivedItem(item.GetResolvedUIDef(), sender);
@@ -18,13 +29,8 @@ namespace Archipelago.HollowKnight.IC
         }
         public static ArchipelagoUIDef CreateForSentItem(AbstractItem item, string recipient)
         {
-            return CreateForSentItem(item.UIDef, recipient);
-        }
-
-        public static ArchipelagoUIDef CreateForSentItem(UIDef source, string recipient)
-        {
-            ArchipelagoUIDef result = new ArchipelagoUIDef(source);
-            result.name = new BoxedString($"{recipient}'s {source.GetPostviewName()}");
+            ArchipelagoUIDef result = new(item.UIDef);
+            result.name = new BoxedString($"{recipient}'s {GetSentItemName(item)}");
             return result;
         }
 
@@ -35,7 +41,7 @@ namespace Archipelago.HollowKnight.IC
         internal ArchipelagoUIDef(UIDef source) : base()
         {
             if (source is MsgUIDef msgDef)
-            { 
+            {
                 shopDesc = msgDef.shopDesc.Clone();
                 sprite = msgDef.sprite.Clone();
             }

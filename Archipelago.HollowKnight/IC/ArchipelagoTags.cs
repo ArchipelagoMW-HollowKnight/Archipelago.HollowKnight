@@ -1,13 +1,7 @@
-﻿using Archipelago.MultiClient.Net.Models;
+﻿using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Archipelago.MultiClient.Net.Enums;
-using Archipelago.HollowKnight;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -29,19 +23,29 @@ namespace Archipelago.HollowKnight.IC
         /// </summary>
         public int Player { get; set; }
         /// <summary>
-        /// Set 
-        /// 
+        /// Network item flags, exposed for benefit of the mapmod
+        /// </summary>
+        public ItemFlags Flags { get; set; }
+
+        /// <summary>
+        /// Set if this area is hinted.
         /// </summary>
         public bool Hinted { get; set; } = false;
+
+        /// <summary>
+        /// Set if we forcibly granted this item with GiveImmediate as part of an itemlink.
+        /// </summary>
+        public bool ReceivedFromItemLink { get; set; } = false;
 
         public ArchipelagoItemTag() : base()
         {
         }
 
         public void ReadNetItem(NetworkItem networkItem)
-        { 
+        {
             Location = networkItem.Location;
             Player = networkItem.Player;
+            Flags = networkItem.Flags;
         }
 
         public override void Load(object parent)
@@ -52,7 +56,7 @@ namespace Archipelago.HollowKnight.IC
             item.ModifyItem += ModifyItem;
             item.AfterGive += AfterGive;
 
-            if(item.WasEverObtained())
+            if (item.WasEverObtained())
             {
                 Archipelago.Instance.CheckLocation(Location);
             }
@@ -76,11 +80,12 @@ namespace Archipelago.HollowKnight.IC
                 }
             }
             // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
-            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot) {
+            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot)
+            {
                 var tags = obj.Item.GetTags<InteropTag>();
                 foreach (var tag in tags)
-                { 
-                    if(tag.Message == "RecentItems")
+                {
+                    if (tag.Message == "RecentItems")
                     {
                         tag.Properties["IgnoreItem"] = true;
                         return;
@@ -133,7 +138,7 @@ namespace Archipelago.HollowKnight.IC
             // If we've been previewed but never told AP that, tell it now
             if (!Hinted && pmt.Visited.HasFlag(VisitState.Previewed))
             {
-                PlacementUtils.CreateLocationHint(pmt);
+                Archipelago.Instance.PendingPlacementHints.Add(pmt);
             }
         }
 
@@ -155,7 +160,7 @@ namespace Archipelago.HollowKnight.IC
             if (!Hinted && obj.NewFlags.HasFlag(VisitState.Previewed))
             {
                 // We are now previewed, but we weren't before.
-                PlacementUtils.CreateLocationHint(obj.Placement);
+                Archipelago.Instance.PendingPlacementHints.Add(obj.Placement);
             }
         }
     }

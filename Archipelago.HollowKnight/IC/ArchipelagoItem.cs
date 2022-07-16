@@ -1,6 +1,5 @@
-﻿using ItemChanger;
-using ItemChanger.Tags;
-using ItemChanger.UIDefs;
+﻿using Archipelago.MultiClient.Net.Enums;
+using ItemChanger;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -52,6 +51,15 @@ namespace Archipelago.HollowKnight.IC
                 shopDesc = new BoxedString(desc),
                 sprite = new BoxedSprite(Archipelago.SmallSprite)
             };
+        }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+            if(UIDef is ArchipelagoUIDef def)
+            {
+                def.sprite = new BoxedSprite(Archipelago.SmallSprite);
+            }
         }
     }
 }

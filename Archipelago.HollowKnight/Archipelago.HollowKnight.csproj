@@ -5,16 +5,16 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>HollowKnight.Archipelago</AssemblyTitle>
     <Product>HollowKnight.Archipelago</Product>
-    <Description></Description>
+    <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright></Copyright>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
-    <!-- Change this to the path of your modded HK installation -->
-    <HollowKnightRefs>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</HollowKnightRefs>
-    <!-- Change this to the path where you want the ready-to-upload exports to be -->
-    <ExportDir>..\..\Exports</ExportDir>
+    <Company>Hussein Farran, Daniel Grace</Company>
+    <RepositoryUrl>https://github.com/Ijwu/Archipelago.HollowKnight</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <Target Name="CopyMod" AfterTargets="PostBuildEvent">
     <RemoveDir Directories="$(ExportDir)/$(TargetName)/" />
@@ -43,14 +43,16 @@
     <None Remove="Resources\Icon.png" />
     <None Remove="Resources\IconBig.png" />
     <None Remove="Resources\IconSmall.png" />
+    <None Remove="Resources\DeathLinkIcon.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Icon.png" />
     <EmbeddedResource Include="Resources\IconBig.png" />
     <EmbeddedResource Include="Resources\IconSmall.png" />
+    <EmbeddedResource Include="Resources\DeathLinkIcon.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="3.0.1" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
@@ -91,9 +93,6 @@
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>$(HollowKnightRefs)/PlayMaker.dll</HintPath>
-    </Reference>
-    <Reference Include="RecentItemsDisplay">
-      <HintPath>$(HollowKnightRefs)/Mods/RecentItemsDisplay/RecentItemsDisplay.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition">
       <HintPath>$(HollowKnightRefs)/System.ComponentModel.Composition.dll</HintPath>

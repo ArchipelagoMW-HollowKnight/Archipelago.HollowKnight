@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Archipelago.HollowKnight;
 
 namespace Archipelago.HollowKnight.SlotData
 {
@@ -172,7 +171,24 @@ namespace Archipelago.HollowKnight.SlotData
         [JsonConverter(typeof(StringEnumConverter))]
         public GoalsLookup Goal { get; set; }
 
+        // Even though this is encoded as an int, it doesn't import properly without doing this.
+        [JsonConverter(typeof(StringEnumConverter))]
+        public DeathLinkType DeathLink { get; set; }
+
+        // Even though this is encoded as an int, it doesn't import properly without doing this.
+        [JsonConverter(typeof(StringEnumConverter))]
+        public WhitePalaceOption WhitePalace { get; set; }
+
         [JsonProperty("StartingGeo")]
         public int StartingGeo { get; set; }
+
+        [JsonProperty("SplitMantisClaw")]
+        public bool SplitMantisClaw { get; set; }
+
+        [JsonProperty("SplitMothwingCloak")]
+        public bool SplitMothwingCloak { get; set; }
+
+        [JsonProperty("SplitCrystalHeart")]
+        public bool SplitCrystalHeart { get; set; }
     }
 }
