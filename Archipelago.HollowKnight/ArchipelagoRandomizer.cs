@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
@@ -90,7 +91,7 @@ namespace Archipelago.HollowKnight
             Archipelago.Instance.LogDebug(LocationCosts);
         }
 
-        public void Randomize()
+        public async Task Randomize()
         {
             var session = Session;
             ItemChangerMod.CreateSettingsProfile();
@@ -156,7 +157,12 @@ namespace Archipelago.HollowKnight
             }
 
             var locations = new List<long>(session.Locations.AllLocations);
-            session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
+            await session.Locations.ScoutLocationsAsync(locations.ToArray())
+                             .ContinueWith(task =>
+                             {
+                                 var packet = task.Result;
+                                 ScoutCallback(packet);
+                             });
         }
 
         private void AddItemChangerModules()

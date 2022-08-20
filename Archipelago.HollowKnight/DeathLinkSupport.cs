@@ -152,6 +152,7 @@ namespace Archipelago.HollowKnight
             outgoingDeathlinks = 0;
             status = DeathLinkStatus.None;
         }
+
         public void Enable()
         {
             var ap = Archipelago.Instance;
@@ -164,7 +165,8 @@ namespace Archipelago.HollowKnight
             Reset();
 
             ap.LogDebug($"Enabling DeathLink support, type: {mode}");
-            service = ap.session.CreateDeathLinkServiceAndEnable();
+            service = ap.session.CreateDeathLinkService();
+            service.EnableDeathLink();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             On.HeroController.TakeDamage += HeroController_TakeDamage;

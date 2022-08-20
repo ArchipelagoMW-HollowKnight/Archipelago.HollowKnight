@@ -58,13 +58,13 @@ namespace Archipelago.HollowKnight.IC
 
             if (item.WasEverObtained())
             {
-                Archipelago.Instance.CheckLocation(Location);
+                Archipelago.Instance.CheckLocation(Location).Wait();
             }
         }
 
         private void AfterGive(ReadOnlyGiveEventArgs obj)
         {
-            Archipelago.Instance.CheckLocation(Location);
+            Archipelago.Instance.CheckLocation(Location).Wait();
         }
 
         private void ModifyItem(GiveEventArgs obj)

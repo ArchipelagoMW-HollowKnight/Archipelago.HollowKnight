@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
@@ -15,11 +16,16 @@ using ItemChanger.Items;
 using ItemChanger.Tags;
 using Modding;
 using UnityEngine;
+using static UnityEngine.Networking.UnityWebRequest;
 
 namespace Archipelago.HollowKnight
 {
     public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
     {
+        // Events support
+        public static event Action OnArchipelagoGameStarted;
+        public static event Action OnArchipelagoGameEnded;
+
         /// <summary>
         /// Archipelago Protocol Version
         /// </summary>
@@ -29,6 +35,7 @@ namespace Archipelago.HollowKnight
         /// </summary>
         public override string GetVersion() => new Version(0, 1, 0, 1).ToString();
         public static Archipelago Instance;
+        public ArchipelagoSession session { get; private set; }
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
@@ -38,6 +45,21 @@ namespace Archipelago.HollowKnight
         public static Sprite Sprite { get; private set; }
         public static Sprite SmallSprite { get; private set; }
         public static Sprite DeathLinkSprite { get; private set; }
+        public bool DeferringLocationChecks { get; private set; }
+        public Goal Goal { get; private set; } = null;
+        public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
+        
+        // Shade position fixes
+        public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
+        {
+            { "Abyss_08", (90.0f, 90.0f) },  // Lifeblood Core room.  Even outside of deathlink, shades spawn out of bounds.
+            { "Room_Colosseum_Spectate", (124.0f, 10.0f) },  // Shade spawns inside inaccessible arena
+            { "Resting_Grounds_09", (7.4f, 10.0f) },  // Shade spawns underground.
+            { "Runes1_18", (11.5f, 23.0f) },  // Shade potentially spawns on the wrong side of an inaccessible gate.
+        };
+
+        // Placements to attempt hinting
+        public HashSet<AbstractPlacement> PendingPlacementHints = new();
 
         internal SpriteManager spriteManager;
         internal ConnectionDetails MenuSettings = new()
@@ -47,25 +69,10 @@ namespace Archipelago.HollowKnight
         };
         internal ConnectionDetails ApSettings = new();
 
-        public ArchipelagoSession session { get; private set; }
-
         /// <summary>
         /// Allows lookup of a placement by its location ID number.  Used during syncing and shared-slot coop.
         /// </summary>
         internal readonly Dictionary<long, AbstractPlacement> placementsByLocationID = new();
-
-        /// <summary>
-        /// List of pending locations.
-        /// </summary>
-        private readonly HashSet<long> deferredLocationChecks = new();
-
-        public bool DeferringLocationChecks { get; private set; }
-
-        private int pendingGeo = 0;
-        private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
-        private DateTime lastUpdate = DateTime.MinValue;
-        public Goal Goal { get; private set; } = null;
-        public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
 
         /// <summary>
         /// A preset GiveInfo structure that avoids creating geo and places messages in the corner.
@@ -89,21 +96,13 @@ namespace Archipelago.HollowKnight
             MessageType = MessageType.None
         };
 
-        // Events support
-        public static event Action OnArchipelagoGameStarted;
-        public static event Action OnArchipelagoGameEnded;
-
-        // Shade position fixes
-        public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
-        {
-            { "Abyss_08", (90.0f, 90.0f) },  // Lifeblood Core room.  Even outside of deathlink, shades spawn out of bounds.
-            { "Room_Colosseum_Spectate", (124.0f, 10.0f) },  // Shade spawns inside inaccessible arena
-            { "Resting_Grounds_09", (7.4f, 10.0f) },  // Shade spawns underground.
-            { "Runes1_18", (11.5f, 23.0f) },  // Shade potentially spawns on the wrong side of an inaccessible gate.
-        };
-
-        // Placements to attempt hinting
-        public HashSet<AbstractPlacement> PendingPlacementHints = new();
+        /// <summary>
+        /// List of pending locations.
+        /// </summary>
+        private readonly HashSet<long> deferredLocationChecks = new();
+        private int pendingGeo = 0;
+        private TimeSpan timeBetweenReceiveItem = TimeSpan.FromMilliseconds(500);
+        private DateTime lastUpdate = DateTime.MinValue;
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -258,7 +257,7 @@ namespace Archipelago.HollowKnight
                 LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
-                randomizer.Randomize();
+                randomizer.Randomize().Wait();
                 pendingGeo = SlotOptions.StartingGeo;
             }
             else
@@ -328,7 +327,7 @@ namespace Archipelago.HollowKnight
             SendPlacementHints();
         }
 
-        private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        private void Socket_SocketClosed(string reason)
         {
             ReportDisconnect();
         }
@@ -339,8 +338,8 @@ namespace Archipelago.HollowKnight
 
             var loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          ApSettings.SlotName,
-                                                         ArchipelagoProtocolVersion,
                                                          ItemsHandlingFlags.AllItems,
+                                                         ArchipelagoProtocolVersion,
                                                          password: ApSettings.ServerPassword);
 
             if (loginResult is LoginFailure failure)
@@ -575,7 +574,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Checks a single location or adds it to the deferred list.
         /// </summary>
-        public void CheckLocation(long locationID)
+        public async Task CheckLocation(long locationID)
         {
             if (locationID == 0)
             {
@@ -589,7 +588,7 @@ namespace Archipelago.HollowKnight
             {
                 try
                 {
-                    session.Locations.CompleteLocationChecksAsync(null, locationID);
+                    await session.Locations.CompleteLocationChecksAsync(locationID);
                 }
                 catch (ArchipelagoSocketClosedException)
                 {
@@ -632,18 +631,17 @@ namespace Archipelago.HollowKnight
             LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
             try
             {
-                session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                var sendTask = session.Socket.SendPacketAsync(new LocationScoutsPacket()
                 {
                     CreateAsHint = true,
                     Locations = hintedLocationIDs.ToArray(),
-                },
-                (result) =>
-                {
-                    foreach (ArchipelagoItemTag tag in hintedTags)
-                    {
-                        tag.Hinted = result;
-                    }
                 });
+                sendTask.Wait();
+                var result = !sendTask.IsFaulted;
+                foreach (ArchipelagoItemTag hintedTag in hintedTags)
+                {
+                    hintedTag.Hinted = result;
+                }
             }
             catch (ArchipelagoSocketClosedException)
             {
