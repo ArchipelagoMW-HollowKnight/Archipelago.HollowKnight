@@ -257,7 +257,7 @@ namespace Archipelago.HollowKnight
                 LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
                 var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
-                randomizer.Randomize().Wait();
+                randomizer.Randomize();
                 pendingGeo = SlotOptions.StartingGeo;
             }
             else
@@ -574,7 +574,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Checks a single location or adds it to the deferred list.
         /// </summary>
-        public async Task CheckLocation(long locationID)
+        public void CheckLocation(long locationID)
         {
             if (locationID == 0)
             {
@@ -588,7 +588,7 @@ namespace Archipelago.HollowKnight
             {
                 try
                 {
-                    await session.Locations.CompleteLocationChecksAsync(locationID);
+                    session.Locations.CompleteLocationChecks(locationID);
                 }
                 catch (ArchipelagoSocketClosedException)
                 {

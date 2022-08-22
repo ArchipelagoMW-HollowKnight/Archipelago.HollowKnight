@@ -91,7 +91,7 @@ namespace Archipelago.HollowKnight
             Archipelago.Instance.LogDebug(LocationCosts);
         }
 
-        public async Task Randomize()
+        public void Randomize()
         {
             var session = Session;
             ItemChangerMod.CreateSettingsProfile();
@@ -157,12 +157,12 @@ namespace Archipelago.HollowKnight
             }
 
             var locations = new List<long>(session.Locations.AllLocations);
-            await session.Locations.ScoutLocationsAsync(locations.ToArray())
+            session.Locations.ScoutLocationsAsync(locations.ToArray())
                              .ContinueWith(task =>
                              {
                                  var packet = task.Result;
                                  ScoutCallback(packet);
-                             });
+                             }).Wait();
         }
 
         private void AddItemChangerModules()
