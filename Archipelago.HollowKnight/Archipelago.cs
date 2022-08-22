@@ -33,7 +33,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 1, 0, 1).ToString();
+        public override string GetVersion() => new Version(0, 1, 0, 2).ToString();
         public static Archipelago Instance;
         public ArchipelagoSession session { get; private set; }
         public SlotOptions SlotOptions { get; set; }
