@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
@@ -92,6 +94,7 @@ namespace Archipelago.HollowKnight
 
         public void Randomize()
         {
+            Instance.LogDebug($"Starting Randomize.");
             var session = Session;
             ItemChangerMod.CreateSettingsProfile();
             // Add IC modules as needed
@@ -102,6 +105,8 @@ namespace Archipelago.HollowKnight
             // }
 
             AddItemChangerModules();
+
+            Instance.LogDebug($"Item Changer Modules Added");
 
             if (SlotOptions.RandomCharmCosts != -1)
             {
@@ -139,24 +144,29 @@ namespace Archipelago.HollowKnight
                 }
             }
 
+            Instance.LogDebug($"About to scout locations");
+
             // Scout all locations
-            void ScoutCallback(LocationInfoPacket packet)
-            {
-                MenuChanger.ThreadSupport.BeginInvoke(() =>
-                {
-                    foreach (var item in packet.Locations)
-                    {
-                        var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                        var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
-
-                        PlaceItem(locationName, itemName, item);
-                    }
-                    ItemChangerMod.AddPlacements(placements.Values);
-                });
-            }
-
             var locations = new List<long>(session.Locations.AllLocations);
-            session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
+            Task<LocationInfoPacket> packetTask = session.Locations.ScoutLocationsAsync(locations.ToArray());
+
+            LocationInfoPacket packet = packetTask.Result;
+
+            Instance.LogDebug($"locations scouted, invoking menu thread support");
+
+            MenuChanger.ThreadSupport.BeginInvoke(() =>
+            {
+                foreach (var item in packet.Locations)
+                {
+                    var locationName = session.Locations.GetLocationNameFromId(item.Location);
+                    var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
+
+                    PlaceItem(locationName, itemName, item);
+                }
+                ItemChangerMod.AddPlacements(placements.Values);
+            });
+
+            Instance.LogDebug($"Completed randomization");
         }
 
         private void AddItemChangerModules()

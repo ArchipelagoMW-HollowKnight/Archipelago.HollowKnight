@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
@@ -21,13 +22,9 @@ namespace Archipelago.HollowKnight
     public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
     {
         /// <summary>
-        /// Archipelago Protocol Version
-        /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 3);
-        /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 1, 0, 0).ToString();
+        public override string GetVersion() => new Version(0, 1, 0, 1).ToString();
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
@@ -207,7 +204,7 @@ namespace Archipelago.HollowKnight
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
-            SendPlacementHints();
+            SendPlacementHintsAsync().Wait();
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -316,10 +313,10 @@ namespace Archipelago.HollowKnight
 
         private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
         {
-            SendPlacementHints();
+            SendPlacementHintsAsync().Wait();
         }
 
-        private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        private void Socket_SocketClosed(string reason)
         {
             ReportDisconnect();
         }
@@ -330,7 +327,6 @@ namespace Archipelago.HollowKnight
 
             var loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          ApSettings.SlotName,
-                                                         ArchipelagoProtocolVersion,
                                                          ItemsHandlingFlags.AllItems,
                                                          password: ApSettings.ServerPassword);
 
@@ -580,7 +576,7 @@ namespace Archipelago.HollowKnight
             {
                 try
                 {
-                    session.Locations.CompleteLocationChecksAsync(null, locationID);
+                    session.Locations.CompleteLocationChecksAsync(locationID);
                 }
                 catch (ArchipelagoSocketClosedException)
                 {
@@ -589,7 +585,7 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void SendPlacementHints()
+        public async Task SendPlacementHintsAsync()
         {
             if (!PendingPlacementHints.Any())
             {
@@ -597,12 +593,12 @@ namespace Archipelago.HollowKnight
             }
             HashSet<ArchipelagoItemTag> hintedTags = new();
             HashSet<long> hintedLocationIDs = new();
-            ArchipelagoItemTag tag;
 
             foreach (AbstractPlacement pmt in PendingPlacementHints)
             {
                 foreach (AbstractItem item in pmt.Items)
                 {
+                    ArchipelagoItemTag tag;
                     if (item.GetTag<ArchipelagoItemTag>(out tag)
                         && !tag.Hinted
                         && (tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
@@ -623,18 +619,18 @@ namespace Archipelago.HollowKnight
             LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
             try
             {
-                session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                var locationScoutPacket = new LocationScoutsPacket()
                 {
                     CreateAsHint = true,
                     Locations = hintedLocationIDs.ToArray(),
-                },
-                (result) =>
+                };
+                
+                await session.Socket.SendPacketAsync(locationScoutPacket);
+
+                foreach (ArchipelagoItemTag tag in hintedTags)
                 {
-                    foreach (ArchipelagoItemTag tag in hintedTags)
-                    {
-                        tag.Hinted = result;
-                    }
-                });
+                    tag.Hinted = true;
+                }
             }
             catch (ArchipelagoSocketClosedException)
             {
