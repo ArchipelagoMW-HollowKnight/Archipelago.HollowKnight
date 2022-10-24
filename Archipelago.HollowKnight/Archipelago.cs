@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
@@ -205,7 +204,7 @@ namespace Archipelago.HollowKnight
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
-            SendPlacementHints().Wait();
+            SendPlacementHints();
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -314,7 +313,7 @@ namespace Archipelago.HollowKnight
 
         private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
         {
-            SendPlacementHints().Wait();
+            SendPlacementHints();
         }
 
         private void Socket_SocketClosed(string reason)

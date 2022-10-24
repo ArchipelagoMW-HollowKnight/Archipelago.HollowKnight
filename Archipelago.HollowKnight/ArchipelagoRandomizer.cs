@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
@@ -94,7 +93,6 @@ namespace Archipelago.HollowKnight
 
         public void Randomize()
         {
-            Instance.LogDebug($"Starting Randomize.");
             var session = Session;
             ItemChangerMod.CreateSettingsProfile();
             // Add IC modules as needed
@@ -105,8 +103,6 @@ namespace Archipelago.HollowKnight
             // }
 
             AddItemChangerModules();
-
-            Instance.LogDebug($"Item Changer Modules Added");
 
             if (SlotOptions.RandomCharmCosts != -1)
             {
@@ -144,15 +140,11 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            Instance.LogDebug($"About to scout locations");
-
             // Scout all locations
             var locations = new List<long>(session.Locations.AllLocations);
             Task<LocationInfoPacket> packetTask = session.Locations.ScoutLocationsAsync(locations.ToArray());
 
             LocationInfoPacket packet = packetTask.Result;
-
-            Instance.LogDebug($"locations scouted, invoking menu thread support");
 
             MenuChanger.ThreadSupport.BeginInvoke(() =>
             {
@@ -165,8 +157,6 @@ namespace Archipelago.HollowKnight
                 }
                 ItemChangerMod.AddPlacements(placements.Values);
             });
-
-            Instance.LogDebug($"Completed randomization");
         }
 
         private void AddItemChangerModules()
