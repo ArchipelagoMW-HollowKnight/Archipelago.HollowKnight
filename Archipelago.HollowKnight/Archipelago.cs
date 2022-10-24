@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
@@ -204,7 +205,7 @@ namespace Archipelago.HollowKnight
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
-            SendPlacementHintsAsync().Wait();
+            SendPlacementHints().Wait();
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -313,7 +314,7 @@ namespace Archipelago.HollowKnight
 
         private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
         {
-            SendPlacementHintsAsync().Wait();
+            SendPlacementHints().Wait();
         }
 
         private void Socket_SocketClosed(string reason)
@@ -574,18 +575,22 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                try
+                // Use Task.Run to cause unity to not run this on the main thread, causing a slight network hitch in the game
+                _ = Task.Run(() =>
                 {
-                    session.Locations.CompleteLocationChecksAsync(locationID);
-                }
-                catch (ArchipelagoSocketClosedException)
-                {
-                    ReportDisconnect();
-                }
+                    try
+                    {
+                        session.Locations.CompleteLocationChecks(locationID);
+                    }
+                    catch (ArchipelagoSocketClosedException)
+                    {
+                        ReportDisconnect();
+                    }
+                });
             }
         }
 
-        public async Task SendPlacementHintsAsync()
+        public void SendPlacementHints()
         {
             if (!PendingPlacementHints.Any())
             {
@@ -625,11 +630,14 @@ namespace Archipelago.HollowKnight
                     Locations = hintedLocationIDs.ToArray(),
                 };
                 
-                await session.Socket.SendPacketAsync(locationScoutPacket);
+                var sendTask = session.Socket.SendPacketAsync(locationScoutPacket);
+
+                sendTask.Wait();
+                var result = !sendTask.IsFaulted;
 
                 foreach (ArchipelagoItemTag tag in hintedTags)
                 {
-                    tag.Hinted = true;
+                    tag.Hinted = result;
                 }
             }
             catch (ArchipelagoSocketClosedException)
