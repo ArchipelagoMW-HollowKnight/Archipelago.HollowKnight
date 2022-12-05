@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
@@ -13,9 +14,10 @@ using ItemChanger;
 using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
+using ItemChanger.UIDefs;
 using Modding;
+using Steamworks;
 using UnityEngine;
-
 namespace Archipelago.HollowKnight
 {
     public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
@@ -23,11 +25,11 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Archipelago Protocol Version
         /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 3);
+        private readonly System.Version ArchipelagoProtocolVersion = new(0, 3, 3);
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 1, 0, 0).ToString();
+        public override string GetVersion() => new System.Version(0, 1, 0, 1).ToString();
         public static Archipelago Instance;
         public SlotOptions SlotOptions { get; set; }
         public bool ArchipelagoEnabled { get; set; }
@@ -319,9 +321,9 @@ namespace Archipelago.HollowKnight
             SendPlacementHints();
         }
 
-        private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        private void Socket_SocketClosed(string reason)
         {
-            ReportDisconnect();
+            ReportDisconnect(reason);
         }
 
         private LoginSuccessful ConnectToArchipelago()
@@ -330,8 +332,8 @@ namespace Archipelago.HollowKnight
 
             var loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          ApSettings.SlotName,
-                                                         ArchipelagoProtocolVersion,
                                                          ItemsHandlingFlags.AllItems,
+                                                         version: ArchipelagoProtocolVersion,
                                                          password: ApSettings.ServerPassword);
 
             if (loginResult is LoginFailure failure)
@@ -550,11 +552,16 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void ReportDisconnect()
+        public void ReportDisconnect(string reason = null)
         {
+            var msg = "Error: Lost connection to Archipelago server";
+            if(reason != null)
+            {
+                msg += $" ({reason})";
+            }
             ItemChanger.Internal.MessageController.Enqueue(
                 null,
-                "Error: Lost connection to Archipelago server"
+                msg
             );
             ItemChanger.Internal.MessageController.Enqueue(
                 null,
@@ -578,14 +585,17 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                try
+                Task.Run(() =>
                 {
-                    session.Locations.CompleteLocationChecksAsync(null, locationID);
-                }
-                catch (ArchipelagoSocketClosedException)
-                {
-                    ReportDisconnect();
-                }
+                    try
+                    {
+                        session.Locations.CompleteLocationChecksAsync(locationID);
+                    }
+                    catch (ArchipelagoSocketClosedException)
+                    {
+                        ReportDisconnect();
+                    }
+                }).ConfigureAwait(false);
             }
         }
 
@@ -597,13 +607,12 @@ namespace Archipelago.HollowKnight
             }
             HashSet<ArchipelagoItemTag> hintedTags = new();
             HashSet<long> hintedLocationIDs = new();
-            ArchipelagoItemTag tag;
 
             foreach (AbstractPlacement pmt in PendingPlacementHints)
             {
                 foreach (AbstractItem item in pmt.Items)
                 {
-                    if (item.GetTag<ArchipelagoItemTag>(out tag)
+                    if (item.GetTag<ArchipelagoItemTag>(out ArchipelagoItemTag tag)
                         && !tag.Hinted
                         && (tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
                         && !item.WasEverObtained()
@@ -621,20 +630,22 @@ namespace Archipelago.HollowKnight
             }
 
             LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
+            // We could run this in a task, but it running multiple times concurrently might be problematic...
+            // and hints are only sent during screen transitions anyways, so lag doesn't adversely affect the player much.
+            // So run this on the main thread.
             try
             {
-                session.Socket.SendPacketAsync(new LocationScoutsPacket()
+                var task = session.Locations.ScoutLocationsAsync(
+                    createAsHint: true,
+                    ids: hintedLocationIDs.ToArray()
+                );
+                task.Wait();
+                var success = (task.Status == TaskStatus.RanToCompletion);
+
+                foreach (ArchipelagoItemTag tag in hintedTags)
                 {
-                    CreateAsHint = true,
-                    Locations = hintedLocationIDs.ToArray(),
-                },
-                (result) =>
-                {
-                    foreach (ArchipelagoItemTag tag in hintedTags)
-                    {
-                        tag.Hinted = result;
-                    }
-                });
+                    tag.Hinted |= success;
+                }
             }
             catch (ArchipelagoSocketClosedException)
             {

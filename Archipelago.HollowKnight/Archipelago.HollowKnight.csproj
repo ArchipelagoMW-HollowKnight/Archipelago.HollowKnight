@@ -7,8 +7,8 @@
     <Product>HollowKnight.Archipelago</Product>
     <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright></Copyright>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.1.0</AssemblyVersion>
+    <FileVersion>0.1.1.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
     <Company>Hussein Farran, Daniel Grace</Company>
@@ -52,7 +52,7 @@
     <EmbeddedResource Include="Resources\DeathLinkIcon.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="3.1.0" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="4.1.2" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">

@@ -139,24 +139,14 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            // Scout all locations
-            void ScoutCallback(LocationInfoPacket packet)
-            {
-                MenuChanger.ThreadSupport.BeginInvoke(() =>
-                {
-                    foreach (var item in packet.Locations)
-                    {
-                        var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                        var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
-
-                        PlaceItem(locationName, itemName, item);
-                    }
-                    ItemChangerMod.AddPlacements(placements.Values);
-                });
-            }
-
             var locations = new List<long>(session.Locations.AllLocations);
-            session.Locations.ScoutLocationsAsync(ScoutCallback, locations.ToArray());
+            foreach (var item in session.Locations.ScoutLocationsAsync(locations.ToArray()).Result.Locations)
+            {
+                var locationName = session.Locations.GetLocationNameFromId(item.Location);
+                var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
+                PlaceItem(locationName, itemName, item);
+            }
+            ItemChangerMod.AddPlacements(placements.Values);
         }
 
         private void AddItemChangerModules()
@@ -305,7 +295,7 @@ namespace Archipelago.HollowKnight
             }
 
             pmt.Add(item);
-            if (LocationCosts.ContainsKey(originalLocation))
+            if (originalLocation != ItemChanger.LocationNames.Vessel_Fragment_Basin && LocationCosts.ContainsKey(originalLocation))
             {
                 // New-style placement logic with cost overrides
                 List<Cost> costs = new();

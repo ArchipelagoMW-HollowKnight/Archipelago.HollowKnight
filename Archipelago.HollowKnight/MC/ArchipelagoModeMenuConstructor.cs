@@ -80,7 +80,6 @@ namespace Archipelago.HollowKnight.MC
             Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with { };  // Clone MenuSettings into ApSettings
             try
             {
-                // Archipelago.Instance.ConnectAndRandomize();
                 Archipelago.Instance.StartOrResumeGame(true);
                 MenuChangerMod.HideAllMenuPages();
                 UIManager.instance.StartNewGame();
