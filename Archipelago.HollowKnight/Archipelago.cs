@@ -14,9 +14,7 @@ using ItemChanger;
 using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
-using ItemChanger.UIDefs;
 using Modding;
-using Steamworks;
 using UnityEngine;
 namespace Archipelago.HollowKnight
 {
