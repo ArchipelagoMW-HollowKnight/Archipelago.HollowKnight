@@ -15,6 +15,7 @@
         <RepositoryUrl>https://github.com/Ijwu/Archipelago.HollowKnight</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<TargetName>Archipelago</TargetName>
     </PropertyGroup>
     <Target Name="CopyMod" AfterTargets="PostBuildEvent">
         <RemoveDir Directories="$(ExportDir)/$(TargetName)/"/>
