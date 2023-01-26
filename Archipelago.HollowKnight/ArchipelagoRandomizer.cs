@@ -25,28 +25,34 @@ namespace Archipelago.HollowKnight
         /// Costs of Grubfather shop items (in Grubs) as stored in slot data.
         /// </summary>
         public Dictionary<string, int> GrubfatherCosts { get; private set; }
+
         /// <summary>
         /// Costs of Seer shop items (in Essence) as stored in slot data.
         /// </summary>
         public Dictionary<string, int> SeerCosts { get; private set; }
+
         /// <summary>
         /// Costs of Egg Shop items (in Rancid Eggs) as stored in slot data.
         /// </summary>
         public Dictionary<string, int> EggCosts { get; private set; }
+
         /// <summary>
         /// Costs of Salubra shop items (in required charms) as stored in slot data.
         /// </summary>
         public Dictionary<string, int> SalubraCharmCosts { get; private set; }
+
         /// <summary>
         /// Randomized charm notch costs as stored in slot data.
         /// </summary>
         public List<int> NotchCosts { get; private set; }
+
         /// <summary>
         /// Tracks created placements and their associated locations during randomization.
         /// </summary>
         public Dictionary<string, AbstractPlacement> placements = new();
 
         public Dictionary<string, Dictionary<string, int>> LocationCosts = new();
+
         /// <summary>
         /// Seeded RNG for clientside randomization.
         /// </summary>
@@ -60,7 +66,7 @@ namespace Archipelago.HollowKnight
 
         public ArchipelagoRandomizer(Dictionary<string, object> slotData)
         {
-            Random = new Random(Convert.ToInt32((long)slotData["seed"]));
+            Random = new Random(Convert.ToInt32((long) slotData["seed"]));
             NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
 
             if (slotData.ContainsKey("location_costs"))
@@ -75,10 +81,13 @@ namespace Archipelago.HollowKnight
             else
             {
                 LocationCosts = null;
-                GrubfatherCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Grub_costs"]);
-                SeerCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Essence_costs"]);
+                GrubfatherCosts =
+                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Grub_costs"]);
+                SeerCosts =
+                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Essence_costs"]);
                 EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Egg_costs"]);
-                SalubraCharmCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Charm_costs"]);
+                SalubraCharmCosts =
+                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Charm_costs"]);
                 placementHandlers = new List<IPlacementHandler>()
                 {
                     new ShopPlacementHandler(Random),
@@ -88,6 +97,7 @@ namespace Archipelago.HollowKnight
                     new SalubraCharmShopPlacementHandler(SalubraCharmCosts, Random)
                 };
             }
+
             Archipelago.Instance.LogDebug(LocationCosts);
         }
 
@@ -128,7 +138,8 @@ namespace Archipelago.HollowKnight
 
                 if (pmt is ShopPlacement shop)
                 {
-                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers | DefaultShopItems.LegEaterRepair;
+                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers |
+                                            DefaultShopItems.LegEaterRepair;
                 }
                 else if (name == LocationNames.Grubfather)
                 {
@@ -136,7 +147,9 @@ namespace Archipelago.HollowKnight
                 }
                 else if (name == LocationNames.Seer)
                 {
-                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards = SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension; ;
+                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards =
+                        SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension;
+                    ;
                 }
             }
 
@@ -152,6 +165,7 @@ namespace Archipelago.HollowKnight
 
                         PlaceItem(locationName, itemName, item);
                     }
+
                     ItemChangerMod.AddPlacements(placements.Values);
                 });
             }
@@ -171,22 +185,27 @@ namespace Archipelago.HollowKnight
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
             }
+
             if (SlotOptions.RandomizeFocus)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.FocusSkill>();
             }
+
             if (SlotOptions.RandomizeSwim)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.SwimSkill>();
             }
+
             if (SlotOptions.SplitMothwingCloak)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitCloak>();
             }
+
             if (SlotOptions.SplitMantisClaw)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitClaw>();
             }
+
             if (SlotOptions.SplitCrystalHeart)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
@@ -262,12 +281,13 @@ namespace Archipelago.HollowKnight
             if (Finder.ItemNames.Contains(name))
             {
                 // Items from Hollow Knight.
-                item = Finder.GetItem(name);  // This is already a clone per what I can tell from IC source
+                item = Finder.GetItem(name); // This is already a clone per what I can tell from IC source
                 if (recipientName != null)
                 {
                     tag = item.AddTag<InteropTag>();
                     tag.Message = "RecentItems";
-                    tag.Properties["DisplayMessage"] = $"{ArchipelagoUIDef.GetSentItemName(item)}\nsent to {recipientName}.";
+                    tag.Properties["DisplayMessage"] =
+                        $"{ArchipelagoUIDef.GetSentItemName(item)}\nsent to {recipientName}.";
                     item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
 
                     if (item is SoulItem soulItem)
@@ -284,6 +304,7 @@ namespace Archipelago.HollowKnight
                 tag.Message = "RecentItems";
                 tag.Properties["DisplayMessage"] = $"{name}\nsent to {recipientName}.";
             }
+
             // Create a tag containing all AP-relevant information on the item.
             ArchipelagoItemTag itemTag;
             itemTag = item.AddTag<ArchipelagoItemTag>();
@@ -303,10 +324,12 @@ namespace Archipelago.HollowKnight
                         break;
                     }
                 }
+
                 if (!handled)
                 {
                     pmt.Add(item);
                 }
+
                 return;
             }
 
@@ -338,14 +361,16 @@ namespace Archipelago.HollowKnight
                             costs.Add(new ItemChanger.Modules.CumulativeRancidEggCost(entry.Value));
                             break;
                         default:
-                            Archipelago.Instance.LogWarn($"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
+                            Archipelago.Instance.LogWarn(
+                                $"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
                             break;
                     }
                 }
 
                 if (costs.Count == 0)
                 {
-                    Archipelago.Instance.LogWarn($"Found zero cost types when handling placement at location {originalLocation}!");
+                    Archipelago.Instance.LogWarn(
+                        $"Found zero cost types when handling placement at location {originalLocation}!");
                     return;
                 }
 
@@ -386,6 +411,7 @@ namespace Archipelago.HollowKnight
                     return location.Substring(0, name.Length);
                 }
             }
+
             return location;
         }
     }
