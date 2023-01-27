@@ -15,24 +15,26 @@
         <RepositoryUrl>https://github.com/Ijwu/Archipelago.HollowKnight</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<ModName>Archipelago</ModName>
     </PropertyGroup>
+	
     <Target Name="CopyMod" AfterTargets="PostBuildEvent">
-        <RemoveDir Directories="$(ExportDir)/$(TargetName)/"/>
-        <MakeDir Directories="$(ExportDir)/$(TargetName)/"/>
-        <MakeDir Directories="$(ExportDir)/$(TargetName)/zip/"/>
-        <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(TargetName)/')" Directories="$(HollowKnightRefs)/Mods/$(TargetName)/"/>
-        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/"/>
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/"/>
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(TargetName)/"/>
-        <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(TargetName)/zip/"/>
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(TargetName)/zip/"/>
-        <ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip"/>
-        <RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/"/>
+        <RemoveDir Directories="$(ExportDir)/$(ModName)/"/>
+        <MakeDir Directories="$(ExportDir)/$(ModName)/"/>
+        <MakeDir Directories="$(ExportDir)/$(ModName)/zip/"/>
+        <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(ModName)/')" Directories="$(HollowKnightRefs)/Mods/$(ModName)/"/>
+        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/"/>
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(ModName)/"/>
+        <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(ModName)/zip/"/>
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(ModName)/zip/"/>
+        <ZipDirectory SourceDirectory="$(ExportDir)/$(ModName)/zip/" DestinationFile="$(ExportDir)/$(ModName)/$(ModName).zip"/>
+        <RemoveDir Directories="$(ExportDir)/$(ModName)/zip/"/>
 
-        <GetFileHash Files="$(ExportDir)/$(TargetName)/$(TargetName).zip" Algorithm="SHA256">
+        <GetFileHash Files="$(ExportDir)/$(ModName)/$(ModName).zip" Algorithm="SHA256">
             <Output TaskParameter="Items" ItemName="FilesWithHashes"/>
         </GetFileHash>
-        <WriteLinesToFile File="$(ExportDir)/$(TargetName)/SHA.txt" Lines="@(FilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8"/>
+        <WriteLinesToFile File="$(ExportDir)/$(ModName)/SHA.txt" Lines="@(FilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8"/>
     </Target>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <!-- Uncomment this to enabled strong name key signing for releases -->
