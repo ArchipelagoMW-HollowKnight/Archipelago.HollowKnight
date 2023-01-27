@@ -19,13 +19,12 @@ namespace Archipelago.HollowKnight
             "@ took damage equal to or more than their current HP.",
             "@ made a fatal mistake.",
             "@ threw some shade at @.",
-            "@ decided to set up a Shade Skip.",  // A System of Vibrant Colors (edited)
+            "@ decided to set up a Shade Skip.", // A System of Vibrant Colors (edited)
             "Hopefully @ didn't have a fragile charm equipped.", // Koatlus
             "A true servant gives all for the Kingdom.  Let @ relieve you of your life.", // Koatlus
             "Through @'s sacrifice, you are now dead.", // Koatlus
             "The truce remains.  Our vigil holds.  @ must respawn.", // Koatlus
             "Hopefully @ didn't have a fragile charm equipped.", // Koatlus
-
         };
 
         public static readonly List<string> UnknownMessages = new()
@@ -38,8 +37,9 @@ namespace Archipelago.HollowKnight
         public static readonly Dictionary<int, List<string>> MessagesByType = new()
         {
             {
-                1,  // Deaths from enemy damage 
-                new List<string> {
+                1, // Deaths from enemy damage 
+                new List<string>
+                {
                     "@ has discovered that there are bugs in Hallownest.",
                     "@ should have dodged.",
                     "@ should have jumped.",
@@ -47,29 +47,31 @@ namespace Archipelago.HollowKnight
                     "@ should have considered equipping Dreamshield.",
                     "@ must have never fought that enemy before.",
                     "@ did not make it to phase 2.",
-                    "@ dashed in the wrong direction.",  // Murphmario
-                    "@ tried to talk it out.",  // SnowOfAllTrades
+                    "@ dashed in the wrong direction.", // Murphmario
+                    "@ tried to talk it out.", // SnowOfAllTrades
                     "@ made masterful use of their vulnerability frames.",
                 }
             },
             {
-                2,  // Deaths from spikes
-                new List<string> {
+                2, // Deaths from spikes
+                new List<string>
+                {
                     "@ was in the wrong place.",
                     "@ mistimed their jump.",
                     "@ didn't see the sharp things.",
                     "@ didn't see that saw.",
                     "@ fought the spikes and the spikes won.",
                     "@ sought roses but found only thorns.",
-                    "@ was pricked to death.",  // A System of Vibrant Colors
-                    "@ dashed in the wrong direction.",  // Murphmario
-                    "@ found their own Path of Pain.",  // Fatman
-                    "@ has strayed from the White King's roads.",  // Koatlus
+                    "@ was pricked to death.", // A System of Vibrant Colors
+                    "@ dashed in the wrong direction.", // Murphmario
+                    "@ found their own Path of Pain.", // Fatman
+                    "@ has strayed from the White King's roads.", // Koatlus
                 }
             },
             {
-                3,  // Deaths from acid
-                new List<string> {
+                3, // Deaths from acid
+                new List<string>
+                {
                     "@ was in the wrong place.",
                     "@ mistimed their jump.",
                     "@ forgot their floaties.",
@@ -77,12 +79,13 @@ namespace Archipelago.HollowKnight
                     "@ wishes they could swim.",
                     "@ used the wrong kind of dive.",
                     "@ got into a fight with a pool of liquid and lost.",
-                    "@ forgot how to swim",  // squidy
+                    "@ forgot how to swim", // squidy
                 }
             },
             {
-                999,  // Deaths in the dream realm
-                new List<string> {
+                999, // Deaths in the dream realm
+                new List<string>
+                {
                     "@ dozed off for good.",
                     "@ was caught sleeping on the job.",
                     "@ sought dreams but found only nightmares.",
@@ -95,7 +98,7 @@ namespace Archipelago.HollowKnight
             },
         };
 
-        private static readonly Random random = new();  // This is only messaging, so does not need to be seeded.
+        private static readonly Random random = new(); // This is only messaging, so does not need to be seeded.
 
         public static string GetDeathMessage(int cause, string player)
         {
@@ -152,6 +155,7 @@ namespace Archipelago.HollowKnight
             outgoingDeathlinks = 0;
             status = DeathLinkStatus.None;
         }
+
         public void Enable()
         {
             var ap = Archipelago.Instance;
@@ -160,11 +164,13 @@ namespace Archipelago.HollowKnight
                 ap.LogWarn("Tried to enable already-enabled DeathlinkSupport; disabling first.");
                 Disable();
             }
+
             Enabled = true;
             Reset();
 
             ap.LogDebug($"Enabling DeathLink support, type: {mode}");
-            service = ap.session.CreateDeathLinkServiceAndEnable();
+            service = ap.session.CreateDeathLinkService();
+            service.EnableDeathLink();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             On.HeroController.TakeDamage += HeroController_TakeDamage;
@@ -178,6 +184,7 @@ namespace Archipelago.HollowKnight
             {
                 return;
             }
+
             Reset();
 
             if (service != null)
@@ -185,6 +192,7 @@ namespace Archipelago.HollowKnight
                 service.OnDeathLinkReceived -= OnDeathLinkReceived;
                 service = null;
             }
+
             Enabled = false;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
             On.HeroController.TakeDamage -= HeroController_TakeDamage;
@@ -200,7 +208,8 @@ namespace Archipelago.HollowKnight
 
         private FsmState PrependFSMAction(FsmState state, Action action)
         {
-            state.Actions = state.Actions.Prepend<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action)).ToArray();
+            state.Actions = state.Actions.Prepend<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action))
+                .ToArray();
             return state;
         }
 
@@ -211,7 +220,8 @@ namespace Archipelago.HollowKnight
 
         private FsmState AppendFSMAction(FsmState state, Action action)
         {
-            state.Actions = state.Actions.Append<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action)).ToArray();
+            state.Actions = state.Actions.Append<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action))
+                .ToArray();
             return state;
         }
 
@@ -221,9 +231,10 @@ namespace Archipelago.HollowKnight
             {
                 return;
             }
+
             hasEditedFsm = true;
             var ap = Archipelago.Instance;
-            bool amnesty = false;  // Set True if death penalties should be prevented.
+            bool amnesty = false; // Set True if death penalties should be prevented.
 
             Fsm fsm = obj.Fsm;
             FsmState fsmState;
@@ -246,8 +257,8 @@ namespace Archipelago.HollowKnight
                 }
 
                 amnesty = !(
-                        mode == DeathLinkType.Vanilla
-                        || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
+                    mode == DeathLinkType.Vanilla
+                    || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
                 );
 
                 if (!amnesty)
@@ -290,6 +301,7 @@ namespace Archipelago.HollowKnight
                     amnesty = false;
                     return;
                 }
+
                 GameManager.instance.StartSoulLimiter();
                 fsm.BroadcastEvent("SOUL LIMITER UP");
             });
@@ -302,7 +314,8 @@ namespace Archipelago.HollowKnight
         public bool CanMurderPlayer()
         {
             HeroController hc = HeroController.instance;
-            return hc.acceptingInput && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE && PlayerData.instance.health > 0;
+            return hc.acceptingInput && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE &&
+                   PlayerData.instance.health > 0;
         }
 
         public void MurderPlayer()
@@ -310,7 +323,8 @@ namespace Archipelago.HollowKnight
             string scene = GameManager.instance.sceneName;
             Archipelago.Instance.LogDebug($"So, somebody else has chosen... death.  Current scene: {scene}");
             status = DeathLinkStatus.Dying;
-            HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other, 9999, 0);
+            HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other,
+                9999, 0);
         }
 
         private void ModHooks_HeroUpdateHook()
@@ -321,7 +335,8 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        private void HeroController_TakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self, UnityEngine.GameObject go, GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
+        private void HeroController_TakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self,
+            UnityEngine.GameObject go, GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
         {
             orig(self, go, damageSide, damageAmount, hazardType);
             lastDamageTime = DateTime.UtcNow;
@@ -337,6 +352,7 @@ namespace Archipelago.HollowKnight
                 ap.LogDebug("SendDeathLink(): Not sending a deathlink because we're in the process of dying to one");
                 return;
             }
+
             if (service == null || !Enabled)
             {
                 ap.LogDebug("SendDeathLink(): Not sending a deathlink because not enabled.");
@@ -353,14 +369,16 @@ namespace Archipelago.HollowKnight
             string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.Player);
             // Increment outgoing deathlinks and send the death.
             outgoingDeathlinks += 1;
-            ap.LogDebug($"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.  \"{message}\"");
+            ap.LogDebug(
+                $"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.  \"{message}\"");
             service.SendDeathLink(new DeathLink(Archipelago.Instance.Player, message));
         }
 
 
         private void OnDeathLinkReceived(DeathLink deathLink)
         {
-            Archipelago.Instance.LogDebug($"OnDeathLinkReceived(): Receiving deathlink.  Status={status}; outgoingDeathLinks = {outgoingDeathlinks}.");
+            Archipelago.Instance.LogDebug(
+                $"OnDeathLinkReceived(): Receiving deathlink.  Status={status}; outgoingDeathLinks = {outgoingDeathlinks}.");
             if (outgoingDeathlinks > 0)
             {
                 outgoingDeathlinks--;
