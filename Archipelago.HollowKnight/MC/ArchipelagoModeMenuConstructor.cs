@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using MenuChanger;
 using MenuChanger.Extensions;
 using MenuChanger.MenuElements;
@@ -55,6 +56,8 @@ namespace Archipelago.HollowKnight.MC
         private void AttachResumePage()
         {
             MenuPage resumePage = new("Archipelago Resume");
+            
+
             ConnectionDetails settings = Archipelago.Instance.ApSettings;
 
             EntryField<string> urlField = CreateUrlField(resumePage, settings);
@@ -64,8 +67,14 @@ namespace Archipelago.HollowKnight.MC
             SmallButton resumeButton = new(resumePage, "Resume");
             MenuLabel errorLabel = new(resumePage, "");
 
+            void BindInputFields()
+            {
+                urlField.Bind(Archipelago.Instance.ApSettings, _settingsType);
+            }
+
             resumeButton.OnClick += () => StartOrResumeGame(false, errorLabel);
 
+            resumePage.BeforeShow += BindInputFields;
             resumePage.AddToNavigationControl(resumeButton);
 
             IMenuElement[] elements = new IMenuElement[]
