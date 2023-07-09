@@ -12,49 +12,52 @@
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <LangVersion>latest</LangVersion>
         <Company>Hussein Farran, Daniel Grace, a tiny bit of KonoTyran and Dragonglove</Company>
-        <RepositoryUrl>https://github.com/Ijwu/Archipelago.HollowKnight</RepositoryUrl>
+        <RepositoryUrl>https://github.com/ArchipelagoMW-HollowKnight/Archipelago.HollowKnight</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<ModName>Archipelago</ModName>
+        <ModName>Archipelago</ModName>
+        <HollowKnightRefs>../API</HollowKnightRefs>
+        <ExportDir>bin/Publish</ExportDir>
     </PropertyGroup>
-	
+
+    <!--
+        Create this file somewhere in the project directory. It should contain a property group with HollowKnightRefs pointing to your Managed folder.
+        If you use Visual Studio, the HK Modding extension has a template for this file which will autodetect your installation.
+    -->
+    <Import Project="LocalOverrides.targets" Condition="Exists('LocalOverrides.targets')" />
+    
     <Target Name="CopyMod" AfterTargets="PostBuildEvent">
-        <RemoveDir Directories="$(ExportDir)/$(ModName)/"/>
-        <MakeDir Directories="$(ExportDir)/$(ModName)/"/>
-        <MakeDir Directories="$(ExportDir)/$(ModName)/zip/"/>
-        <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(ModName)/')" Directories="$(HollowKnightRefs)/Mods/$(ModName)/"/>
-        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/"/>
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/"/>
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(ModName)/"/>
-        <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(ModName)/zip/"/>
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll;$(OutputPath)/websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(ModName)/zip/"/>
-        <ZipDirectory SourceDirectory="$(ExportDir)/$(ModName)/zip/" DestinationFile="$(ExportDir)/$(ModName)/$(ModName).zip"/>
-        <RemoveDir Directories="$(ExportDir)/$(ModName)/zip/"/>
+        <RemoveDir Directories="$(ExportDir)/$(ModName)/" />
+        <MakeDir Directories="$(ExportDir)/$(ModName)/" />
+        <MakeDir Directories="$(ExportDir)/$(ModName)/zip/" />
+        <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(ModName)/')" Directories="$(HollowKnightRefs)/Mods/$(ModName)/" />
+        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(ModName)/" />
+        <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(ModName)/zip/" />
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll" DestinationFolder="$(ExportDir)/$(ModName)/zip/" />
+        <ZipDirectory SourceDirectory="$(ExportDir)/$(ModName)/zip/" DestinationFile="$(ExportDir)/$(ModName)/$(ModName).zip" />
+        <RemoveDir Directories="$(ExportDir)/$(ModName)/zip/" />
 
         <GetFileHash Files="$(ExportDir)/$(ModName)/$(ModName).zip" Algorithm="SHA256">
-            <Output TaskParameter="Items" ItemName="FilesWithHashes"/>
+            <Output TaskParameter="Items" ItemName="FilesWithHashes" />
         </GetFileHash>
-        <WriteLinesToFile File="$(ExportDir)/$(ModName)/SHA.txt" Lines="@(FilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8"/>
+        <WriteLinesToFile File="$(ExportDir)/$(ModName)/SHA.txt" Lines="@(FilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8" />
     </Target>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <!-- Uncomment this to enabled strong name key signing for releases -->
-        <!--<SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>sgKey.snk</AssemblyOriginatorKeyFile>-->
-    </PropertyGroup>
     <ItemGroup>
-        <None Remove="Resources\Icon.png"/>
-        <None Remove="Resources\IconBig.png"/>
-        <None Remove="Resources\IconSmall.png"/>
-        <None Remove="Resources\DeathLinkIcon.png"/>
+        <None Remove="Resources\Icon.png" />
+        <None Remove="Resources\IconBig.png" />
+        <None Remove="Resources\IconSmall.png" />
+        <None Remove="Resources\DeathLinkIcon.png" />
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="Resources\Icon.png"/>
-        <EmbeddedResource Include="Resources\IconBig.png"/>
-        <EmbeddedResource Include="Resources\IconSmall.png"/>
-        <EmbeddedResource Include="Resources\DeathLinkIcon.png"/>
+        <EmbeddedResource Include="Resources\Icon.png" />
+        <EmbeddedResource Include="Resources\IconBig.png" />
+        <EmbeddedResource Include="Resources\IconSmall.png" />
+        <EmbeddedResource Include="Resources\DeathLinkIcon.png" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Archipelago.MultiClient.Net" Version="4.2.2"/>
+        <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.5" />
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp">
@@ -111,9 +114,9 @@
         <Reference Include="System.Globalization.Extensions">
             <HintPath>$(HollowKnightRefs)/System.Globalization.Extensions.dll</HintPath>
         </Reference>
-        <Reference Include="System.IO.Compression"/>
-        <Reference Include="System.Net.Http"/>
-        <Reference Include="System.Runtime.Serialization.Xml"/>
+        <Reference Include="System.IO.Compression" />
+        <Reference Include="System.Net.Http" />
+        <Reference Include="System.Runtime.Serialization.Xml" />
         <Reference Include="System.Transactions">
             <HintPath>$(HollowKnightRefs)/System.Transactions.dll</HintPath>
         </Reference>

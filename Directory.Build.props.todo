@@ -1,8 +1,0 @@
-<Project>
-	<PropertyGroup>
-		<!-- Change this to the path of your modded HK installation -->
-		<HollowKnightRefs></HollowKnightRefs>
-		<!-- Change this to the path where you want the ready-to-upload exports to be -->
-		<ExportDir></ExportDir>
-	</PropertyGroup>
-</Project>
