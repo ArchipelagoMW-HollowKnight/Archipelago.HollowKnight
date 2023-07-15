@@ -7,17 +7,17 @@
         <Product>HollowKnight.Archipelago</Product>
         <Description>The Archipelago Multiworld client for Hollow Knight</Description>
         <Copyright></Copyright>
-        <AssemblyVersion>0.1.1.2</AssemblyVersion>
-        <FileVersion>0.1.1.2</FileVersion>
+        <Version>0.2.0</Version>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <LangVersion>latest</LangVersion>
-        <Company>Hussein Farran, Daniel Grace, a tiny bit of KonoTyran and Dragonglove</Company>
+        <Company>The Archipelago Community</Company>
         <RepositoryUrl>https://github.com/ArchipelagoMW-HollowKnight/Archipelago.HollowKnight</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <ModName>Archipelago</ModName>
         <HollowKnightRefs>../API</HollowKnightRefs>
         <ExportDir>bin/Publish</ExportDir>
+        <Authors>Hussein Farran, Daniel Grace, BadMagic, KonoTyran, Dragonglove</Authors>
     </PropertyGroup>
 
     <!--
@@ -58,6 +58,10 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.5" />
+        <PackageReference Include="PolySharp" Version="1.13.2">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp">
