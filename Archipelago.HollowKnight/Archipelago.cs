@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Archipelago.HollowKnight.IC;
+﻿using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -15,8 +11,12 @@ using ItemChanger.Internal;
 using ItemChanger.Items;
 using ItemChanger.Tags;
 using Modding;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using UnityEngine;
-using static UnityEngine.Networking.UnityWebRequest;
 
 namespace Archipelago.HollowKnight
 {
@@ -27,14 +27,24 @@ namespace Archipelago.HollowKnight
         public static event Action OnArchipelagoGameEnded;
 
         /// <summary>
-        /// Archipelago Protocol Version
+        /// Minimum Archipelago Protocol Version
         /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new Version(0, 3, 3);
+        private readonly Version ArchipelagoProtocolVersion = new(0, 3, 3);
 
         /// <summary>
         /// Mod version as reported to the modding API
         /// </summary>
-        public override string GetVersion() => new Version(0, 1, 1, 2).ToString();
+        public override string GetVersion()
+        {
+            Version assemblyVersion = GetType().Assembly.GetName().Version;
+            string version = $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}";
+#if DEBUG
+            using SHA1 sha = SHA1.Create();
+            using FileStream str = File.OpenRead(GetType().Assembly.Location);
+            version += "-prerelease+" + Convert.ToBase64String(sha.ComputeHash(str))[..6];
+#endif
+            return version;
+        }
         public static Archipelago Instance;
         public ArchipelagoSession session { get; private set; }
         public SlotOptions SlotOptions { get; set; }
