@@ -40,25 +40,19 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 - Deathlink may occasionally enter a state where incoming Deathlinks will not affect you.  To fix this if it happens, either die intentionally or save and reload your game.
 - Starting inventory is displayed twice in RecentItems
 - Archipelago icons stop showing when reloading a save.  This is cosmetic and does not affect gameplay.
-- Most non-shop locations that cost Geo (like Stags and Cornifer locations) do not charge a cost in Archipelago 0.3.3.  This is fixed in development and should be fixed in the next Archipelago release.
 
 # Contributing
-Contributions are welcome, all code is licensed under the MIT License. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are taking on an issue please comment on the issue and assign yourself (if possible). If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
+Contributions are welcome, all code is licensed under the MIT License. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are interesting in taking on an issue please comment on the issue to have it assigned to you. If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
 
-There are a few guidelines/rules I personally follow and deeply encourage all contributors to follow:
-* All issues must be linked to the [Hollow Knight Archipelago](https://github.com/users/Ijwu/projects/1/views/1) project board.
-* All issues must be linked to a release milestone.
+Contribution guidelines:
 * All issues should be labeled appropriately.
-* All issues should be in the correct Kanban column to describe their current status.
-* If an issue is in `In Progress` status then it must have someone assigned to it.
-* Pull Requests must have a linked issue which they close out.
-
-Okay, if you read this far your eyes probably glazed over at the list above. It's... uh, just not very hard to track your work. Just refer to the list everytime you interact with the repository and go through the guidelines in order. It becomes second nature very quickly.
-
-**If you're not going to do any of the above then I at least ask you to create an issue describing any work you intend to take on, at the minimum.** I can handle the rest.
+* All in-progress issues should have someone assigned to them.
+* Pull Requests must have at least (and preferably exactly) one linked issue which they close out.
+* Please match the style of surrounding code. 
+  * The only exception to this guideline is that we are in the progress of phasing out the usage of `var`. Please use explicit typing instead.
 
 ## Development Setup
-You will need to make a copy of the `Directory.Build.props.todo` file and rename the copy to `Directory.Build.props`. Then you'll want to alter the `Directory.Build.props` file you made to point to your local HK installation. It will be ignored by the .gitignore file as `Directory.Build.props`. Do not commit any changes to `Directory.Build.props.todo` to prevent leaking your paths to the world.
+Follow the instructions in the csproj file to create a LocalOverrides.targets file with your Hollow Knight installation path. If you use the Hollow Knight Modding Visual Studio extension (recommended), there is an item template to create this file for you automatically.
 
 Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through Scarab.** If Archipelago is installed through Scarab, uninstall or disable it before testing. Archipelago.HollowKnight will not load if both Scarab and development versions are installed at the same time.
 
