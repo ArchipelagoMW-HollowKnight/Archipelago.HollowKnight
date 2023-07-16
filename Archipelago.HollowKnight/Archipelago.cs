@@ -397,7 +397,6 @@ namespace Archipelago.HollowKnight
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
             AbstractPlacement pmt;
-            ArchipelagoItemTag tag;
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
@@ -410,7 +409,7 @@ namespace Archipelago.HollowKnight
 
             foreach (AbstractItem item in pmt.Items)
             {
-                if (!item.GetTag<ArchipelagoItemTag>(out tag))
+                if (!item.GetTag(out ArchipelagoItemTag tag))
                 {
                     hadUnobtainedItems = true;
                     continue;
@@ -500,9 +499,11 @@ namespace Archipelago.HollowKnight
             }
 
             ArchipelagoPlacement pmt = new(sender);
-            InteropTag tag = pmt.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplaySource"] = sender;
+            InteropTag recentItemsTag = pmt.AddTag<InteropTag>();
+            recentItemsTag.Message = "RecentItems";
+            recentItemsTag.Properties["DisplaySource"] = sender;
+            CompletionWeightTag remoteCompletionWeightTag = pmt.AddTag<CompletionWeightTag>();
+            remoteCompletionWeightTag.Weight = 0;
 
             UIDef def = item.GetResolvedUIDef();
             item.Give(pmt, SilentGiveInfo.Clone());

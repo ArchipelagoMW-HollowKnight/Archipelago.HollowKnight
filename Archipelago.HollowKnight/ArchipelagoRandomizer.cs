@@ -6,6 +6,7 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
+using ItemChanger.Modules;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
 using System;
@@ -184,6 +185,8 @@ namespace Archipelago.HollowKnight
 
         private void AddItemChangerModules()
         {
+            ItemChangerMod.Modules.Add<CompletionPercentOverride>();
+
             if (SlotOptions.RandomizeElevatorPass)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();

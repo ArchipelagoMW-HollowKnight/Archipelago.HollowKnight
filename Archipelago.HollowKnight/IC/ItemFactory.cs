@@ -11,6 +11,7 @@ namespace Archipelago.HollowKnight.IC
             AbstractItem item = Finder.GetItem(itemName);
             if (item == null)
             {
+                Archipelago.Instance.LogError($"Could not find local item with name {itemName}");
                 throw new NullReferenceException($"Could not find local item with name {itemName}");
             }
 
