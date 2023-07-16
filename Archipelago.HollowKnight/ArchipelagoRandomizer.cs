@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Archipelago.HollowKnight.IC;
+﻿using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.Placements;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -10,9 +6,10 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
-using ItemChanger.Items;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
+using System;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight
 {
@@ -58,6 +55,11 @@ namespace Archipelago.HollowKnight
         /// </summary>
         public readonly Random Random;
 
+        /// <summary>
+        /// Factory for IC item creation
+        /// </summary>
+        public readonly ItemFactory itemFactory;
+
         private SlotOptions SlotOptions => Archipelago.Instance.SlotOptions;
         private ArchipelagoSession Session => Archipelago.Instance.session;
         private Archipelago Instance => Archipelago.Instance;
@@ -67,6 +69,7 @@ namespace Archipelago.HollowKnight
         public ArchipelagoRandomizer(Dictionary<string, object> slotData)
         {
             Random = new Random(Convert.ToInt32((long) slotData["seed"]));
+            itemFactory = new ItemFactory();
             NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
 
             if (slotData.ContainsKey("location_costs"))
@@ -262,8 +265,9 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
+            bool isMyItem = netItem.Player == slot;
             string recipientName = null;
-            if (netItem.Player != slot)
+            if (!isMyItem)
             {
                 recipientName = Session.Players.GetPlayerName(netItem.Player);
             }
@@ -277,38 +281,14 @@ namespace Archipelago.HollowKnight
             }
 
             AbstractItem item;
-            InteropTag tag;
-            if (Finder.ItemNames.Contains(name))
+            if (isMyItem)
             {
-                // Items from Hollow Knight.
-                item = Finder.GetItem(name); // This is already a clone per what I can tell from IC source
-                if (recipientName != null)
-                {
-                    tag = item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["DisplayMessage"] =
-                        $"{ArchipelagoUIDef.GetSentItemName(item)}\nsent to {recipientName}.";
-                    item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
-
-                    if (item is SoulItem soulItem)
-                    {
-                        soulItem.soul = 0;
-                    }
-                }
+                item = itemFactory.CreateMyItem(name, netItem);
             }
             else
             {
-                // Items from other games.
-                item = new ArchipelagoItem(name, recipientName, netItem.Flags);
-                tag = item.AddTag<InteropTag>();
-                tag.Message = "RecentItems";
-                tag.Properties["DisplayMessage"] = $"{name}\nsent to {recipientName}.";
+                item = itemFactory.CreateRemoteItem(recipientName, name, netItem);
             }
-
-            // Create a tag containing all AP-relevant information on the item.
-            ArchipelagoItemTag itemTag;
-            itemTag = item.AddTag<ArchipelagoItemTag>();
-            itemTag.ReadNetItem(netItem);
 
             if (LocationCosts == null)
             {

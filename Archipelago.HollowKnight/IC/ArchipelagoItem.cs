@@ -5,12 +5,17 @@ namespace Archipelago.HollowKnight.IC
 {
     public class ArchipelagoDummyItem : AbstractItem
     {
+        public string PreferredContainerType { get; set; } = Container.Unknown;
+
+        public override string GetPreferredContainer() => PreferredContainerType;
+
         public ArchipelagoDummyItem()
         { }
         public ArchipelagoDummyItem(AbstractItem source)
         {
             this.name = source.name;
             this.UIDef = source.UIDef.Clone();
+            PreferredContainerType = source.GetPreferredContainer();
         }
 
         public override void GiveImmediate(GiveInfo info)
@@ -19,9 +24,9 @@ namespace Archipelago.HollowKnight.IC
         }
     }
 
-    public class ArchipelagoItem : ArchipelagoDummyItem
+    public class ArchipelagoItem : AbstractItem
     {
-        public ArchipelagoItem(string name, string recipientName = null, ItemFlags itemFlags = 0) : base()
+        public ArchipelagoItem(string name, string recipientName = null, ItemFlags itemFlags = 0)
         {
             string desc;
             if (itemFlags.HasFlag(ItemFlags.Advancement))
@@ -40,26 +45,18 @@ namespace Archipelago.HollowKnight.IC
             {
                 desc += " Seems kinda suspicious though. It might be full of bees.";
             }
-            //if(recipientName != null)
-            //{
-            //    name = $"{recipientName}'s {name}";
-            //}
             this.name = name;
             UIDef = new ArchipelagoUIDef()
             {
                 name = new BoxedString($"{recipientName}'s {name}"),
                 shopDesc = new BoxedString(desc),
-                sprite = new BoxedSprite(Archipelago.SmallSprite)
+                sprite = new ArchipelagoSprite { key = "IconSmall" }
             };
         }
 
-        protected override void OnLoad()
+        public override void GiveImmediate(GiveInfo info)
         {
-            base.OnLoad();
-            if(UIDef is ArchipelagoUIDef def)
-            {
-                def.sprite = new BoxedSprite(Archipelago.SmallSprite);
-            }
+            // intentional no-op
         }
     }
 }

@@ -53,9 +53,6 @@ namespace Archipelago.HollowKnight
         public int Slot { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
 
-        public static Sprite Sprite { get; private set; }
-        public static Sprite SmallSprite { get; private set; }
-        public static Sprite DeathLinkSprite { get; private set; }
         public bool DeferringLocationChecks { get; private set; }
         public Goal Goal { get; private set; } = null;
         public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
@@ -123,9 +120,6 @@ namespace Archipelago.HollowKnight
             Log("Initializing");
             Instance = this;
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
-            Sprite = spriteManager.GetSprite("Icon");
-            SmallSprite = spriteManager.GetSprite("IconSmall");
-            DeathLinkSprite = spriteManager.GetSprite("DeathLinkIcon");
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 

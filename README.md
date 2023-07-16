@@ -25,7 +25,6 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 
 - Deathlink may occasionally enter a state where incoming Deathlinks will not affect you.  To fix this if it happens, either die intentionally or save and reload your game.
 - Starting inventory is displayed twice in RecentItems
-- Archipelago icons stop showing when reloading a save.  This is cosmetic and does not affect gameplay.
 
 # Contributing
 Contributions are welcome, all code is licensed under the MIT License. Please track your work within the repository if you are taking on a feature. This is done via GitHub Issues. If you are interesting in taking on an issue please comment on the issue to have it assigned to you. If you are looking to contribute something that isn't in the issues list then please submit an issue to describe what work you intend to take on.
