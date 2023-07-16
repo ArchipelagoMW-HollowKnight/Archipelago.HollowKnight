@@ -18,6 +18,20 @@ namespace Archipelago.HollowKnight.IC
             PreferredContainerType = source.GetPreferredContainer();
         }
 
+        public override bool GiveEarly(string containerType)
+        {
+            // any container (e.g. a grub or soul totem) that would not normally fling a shiny
+            // in vanilla should not go out of its way to do so for this
+            return containerType switch
+            {
+                Container.Unknown
+                or Container.Shiny
+                or Container.Chest
+                  => false,
+                _ => true
+            };
+        }
+
         public override void GiveImmediate(GiveInfo info)
         {
             // Intentional no-op
