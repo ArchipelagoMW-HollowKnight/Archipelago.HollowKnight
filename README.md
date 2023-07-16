@@ -3,29 +3,15 @@
 A mod which enables Hollow Knight to act as an Archipelago client, enabling multiworld and randomization driven by the [Archipelago multigame multiworld system](https://archipelago.gg).
 
 ## Installing Archipelago.HollowKnight
-### Installing with Scarab
-1. Download Scarab from the [Scarab releases page](https://github.com/fifty-six/Scarab/releases).
-2. Extract Scarab and run it.
-	* If it does not detect your HK install directory, lead Scarab to the correct directory.
-	* Also, don’t pirate the game. >:(
+### Installing with Scarab+
+1. [Download Scarab+](https://themulhima.github.io/Scarab?download).
+2. Place Scarab+ in a folder other than your Downloads folder and run it
+  * If it does not detect your HK install directory, lead Scarab to the correct directory.
+  * Also, don’t pirate the game. >:(
 3. Install and enable Archipelago.
+  * There are several mods that are needed to for Archipelago to run. They are installed automatically.
+  * Archipelago Map Mod is an in-game tracker for Archipelago. It is optional, but if you choose to install it, make sure that RandoMapMod and MapChanger are disabled or uninstalled if you came from the standalone randomizer.
 4. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
-
-### Installing Manually
-1. Download Scarab from the [Scarab releases page](https://github.com/fifty-six/Scarab/releases).
-2. Extract Scarab and run it.
-	* If it does not detect your HK install directory, lead Scarab to the correct directory.
-	* Also, don’t pirate the game. >:(
-3. Install and enable ItemChanger.
-4. Install and enable MenuChanger.
-5. Install and enable Benchwarp.
-6. Install and enable RecentItemsDisplay.
-7. (Optional) Install and enable QoL.
-8. Download Archipelago.HollowKnight from the [Archipelago.HollowKnight releases page]().
-9. Click the “Open Mods” button near the bottom left of the Scarab UI.
-10. In the resulting folder, extract the Archipelago.HollowKnight.zip file you Downloaded.
-	* There should now be a new folder called Archipelago.HollowKnight which contains the mod files.
-11. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
 
 ## Joining an Archipelago Session
 1. Start the game after installing all necessary mods.
@@ -48,6 +34,7 @@ Contribution guidelines:
 * All issues should be labeled appropriately.
 * All in-progress issues should have someone assigned to them.
 * Pull Requests must have at least (and preferably exactly) one linked issue which they close out.
+* Please use feature branches, especially if working in this repository (not a fork).
 * Please match the style of surrounding code. 
   * The only exception to this guideline is that we are in the progress of phasing out the usage of `var`. Please use explicit typing instead.
 
