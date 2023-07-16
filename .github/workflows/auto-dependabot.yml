@@ -17,12 +17,12 @@ jobs:
       - name: Approve PR
         if: contains(['version-update:semver-patch', 'version-update:semver-minor'], steps.metadata.outputs.update-type)
         run: gh pr review --approve "$PR_URL"
-        with:
+        env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Auto merge
         if: contains(['version-update:semver-patch', 'version-update:semver-minor'], steps.metadata.outputs.update-type)
         run: gh pr merge --rebase --auto "$PR_URL"
-        with:
+        env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
