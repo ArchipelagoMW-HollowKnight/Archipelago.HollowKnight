@@ -6,11 +6,11 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 ### Installing with Scarab+
 1. [Download Scarab+](https://themulhima.github.io/Scarab?download).
 2. Place Scarab+ in a folder other than your Downloads folder and run it
-  * If it does not detect your HK install directory, lead Scarab to the correct directory.
-  * Also, don’t pirate the game. >:(
+   * If it does not detect your HK install directory, lead Scarab to the correct directory.
+   * Also, don’t pirate the game. >:(
 3. Install and enable Archipelago.
-  * There are several mods that are needed to for Archipelago to run. They are installed automatically.
-  * Archipelago Map Mod is an in-game tracker for Archipelago. It is optional, but if you choose to install it, make sure that RandoMapMod and MapChanger are disabled or uninstalled if you came from the standalone randomizer.
+   * There are several mods that are needed to for Archipelago to run. They are installed automatically.
+    * Archipelago Map Mod is an in-game tracker for Archipelago. It is optional, but if you choose to install it, make sure that RandoMapMod and MapChanger are disabled or uninstalled if you came from the standalone randomizer.
 4. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
 
 ## Joining an Archipelago Session
@@ -36,7 +36,7 @@ Contribution guidelines:
 * Pull Requests must have at least (and preferably exactly) one linked issue which they close out.
 * Please use feature branches, especially if working in this repository (not a fork).
 * Please match the style of surrounding code. 
-  * The only exception to this guideline is that we are in the progress of phasing out the usage of `var`. Please use explicit typing instead.
+    * The only exception to this guideline is that we are in the progress of phasing out the usage of `var`. Please use explicit typing instead.
 
 ## Development Setup
 Follow the instructions in the csproj file to create a LocalOverrides.targets file with your Hollow Knight installation path. If you use the Hollow Knight Modding Visual Studio extension (recommended), there is an item template to create this file for you automatically.
