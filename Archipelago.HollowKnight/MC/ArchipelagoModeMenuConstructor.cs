@@ -1,9 +1,9 @@
-﻿using System;
-using MenuChanger;
+﻿using MenuChanger;
 using MenuChanger.Extensions;
 using MenuChanger.MenuElements;
 using MenuChanger.MenuPanels;
 using Modding;
+using System;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight.MC
@@ -104,7 +104,7 @@ namespace Archipelago.HollowKnight.MC
 
         public override bool TryGetModeButton(MenuPage modeMenu, out BigButton button)
         {
-            button = new BigButton(modeMenu, Archipelago.Sprite, "Archipelago");
+            button = new BigButton(modeMenu, Archipelago.Instance.spriteManager.GetSprite("IconBig"), "Archipelago");
             button.AddHideAndShowEvent(modeMenu, ApPage);
             return true;
         }

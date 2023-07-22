@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Archipelago.HollowKnight.IC;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using HutongGames.PlayMaker;
 using ItemChanger;
 using Modding;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Archipelago.HollowKnight
 {
@@ -399,7 +400,7 @@ namespace Archipelago.HollowKnight
             new ItemChanger.UIDefs.MsgUIDef()
             {
                 name = new BoxedString(cause),
-                sprite = new BoxedSprite(Archipelago.DeathLinkSprite)
+                sprite = new ArchipelagoSprite { key = "DeathLinkIcon" }
             }.SendMessage(MessageType.Corner, null);
 
             lastDamageType = 0;

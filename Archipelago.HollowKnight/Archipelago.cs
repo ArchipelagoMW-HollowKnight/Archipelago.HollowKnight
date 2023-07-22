@@ -53,9 +53,6 @@ namespace Archipelago.HollowKnight
         public int Slot { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
 
-        public static Sprite Sprite { get; private set; }
-        public static Sprite SmallSprite { get; private set; }
-        public static Sprite DeathLinkSprite { get; private set; }
         public bool DeferringLocationChecks { get; private set; }
         public Goal Goal { get; private set; } = null;
         public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
@@ -123,9 +120,6 @@ namespace Archipelago.HollowKnight
             Log("Initializing");
             Instance = this;
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
-            Sprite = spriteManager.GetSprite("Icon");
-            SmallSprite = spriteManager.GetSprite("IconSmall");
-            DeathLinkSprite = spriteManager.GetSprite("DeathLinkIcon");
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
 
@@ -403,7 +397,6 @@ namespace Archipelago.HollowKnight
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
             AbstractPlacement pmt;
-            ArchipelagoItemTag tag;
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
@@ -416,7 +409,7 @@ namespace Archipelago.HollowKnight
 
             foreach (AbstractItem item in pmt.Items)
             {
-                if (!item.GetTag<ArchipelagoItemTag>(out tag))
+                if (!item.GetTag(out ArchipelagoItemTag tag))
                 {
                     hadUnobtainedItems = true;
                     continue;
@@ -506,9 +499,11 @@ namespace Archipelago.HollowKnight
             }
 
             ArchipelagoPlacement pmt = new(sender);
-            InteropTag tag = pmt.AddTag<InteropTag>();
-            tag.Message = "RecentItems";
-            tag.Properties["DisplaySource"] = sender;
+            InteropTag recentItemsTag = pmt.AddTag<InteropTag>();
+            recentItemsTag.Message = "RecentItems";
+            recentItemsTag.Properties["DisplaySource"] = sender;
+            CompletionWeightTag remoteCompletionWeightTag = pmt.AddTag<CompletionWeightTag>();
+            remoteCompletionWeightTag.Weight = 0;
 
             UIDef def = item.GetResolvedUIDef();
             item.Give(pmt, SilentGiveInfo.Clone());

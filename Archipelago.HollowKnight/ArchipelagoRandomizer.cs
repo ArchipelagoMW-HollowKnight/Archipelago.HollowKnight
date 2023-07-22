@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Archipelago.HollowKnight.IC;
-using Archipelago.HollowKnight.Placements;
+﻿using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
-using ItemChanger.Items;
+using ItemChanger.Modules;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
+using System;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight
 {
@@ -21,26 +18,6 @@ namespace Archipelago.HollowKnight
     /// </summary>
     internal class ArchipelagoRandomizer
     {
-        /// <summary>
-        /// Costs of Grubfather shop items (in Grubs) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> GrubfatherCosts { get; private set; }
-
-        /// <summary>
-        /// Costs of Seer shop items (in Essence) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> SeerCosts { get; private set; }
-
-        /// <summary>
-        /// Costs of Egg Shop items (in Rancid Eggs) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> EggCosts { get; private set; }
-
-        /// <summary>
-        /// Costs of Salubra shop items (in required charms) as stored in slot data.
-        /// </summary>
-        public Dictionary<string, int> SalubraCharmCosts { get; private set; }
-
         /// <summary>
         /// Randomized charm notch costs as stored in slot data.
         /// </summary>
@@ -51,54 +28,31 @@ namespace Archipelago.HollowKnight
         /// </summary>
         public Dictionary<string, AbstractPlacement> placements = new();
 
-        public Dictionary<string, Dictionary<string, int>> LocationCosts = new();
-
         /// <summary>
         /// Seeded RNG for clientside randomization.
         /// </summary>
         public readonly Random Random;
 
+        /// <summary>
+        /// Factory for IC item creation
+        /// </summary>
+        public readonly ItemFactory itemFactory;
+
+        /// <summary>
+        /// Factory for IC cost creation
+        /// </summary>
+        public readonly CostFactory costFactory;
+
         private SlotOptions SlotOptions => Archipelago.Instance.SlotOptions;
         private ArchipelagoSession Session => Archipelago.Instance.session;
         private Archipelago Instance => Archipelago.Instance;
 
-        private List<IPlacementHandler> placementHandlers;
-
         public ArchipelagoRandomizer(Dictionary<string, object> slotData)
         {
             Random = new Random(Convert.ToInt32((long) slotData["seed"]));
+            itemFactory = new ItemFactory();
+            costFactory = new CostFactory(SlotDataExtract.ExtractLocationCostsFromSlotData(slotData["location_costs"]));
             NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
-
-            if (slotData.ContainsKey("location_costs"))
-            {
-                LocationCosts = SlotDataExtract.ExtractLocationCostsFromSlotData(slotData["location_costs"]);
-                GrubfatherCosts = null;
-                SeerCosts = null;
-                EggCosts = null;
-                SalubraCharmCosts = null;
-                placementHandlers = null;
-            }
-            else
-            {
-                LocationCosts = null;
-                GrubfatherCosts =
-                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Grub_costs"]);
-                SeerCosts =
-                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Essence_costs"]);
-                EggCosts = SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Egg_costs"]);
-                SalubraCharmCosts =
-                    SlotDataExtract.ExtractObjectFromSlotData<Dictionary<string, int>>(slotData["Charm_costs"]);
-                placementHandlers = new List<IPlacementHandler>()
-                {
-                    new ShopPlacementHandler(Random),
-                    new GrubfatherPlacementHandler(GrubfatherCosts),
-                    new SeerPlacementHandler(SeerCosts),
-                    new EggShopPlacementHandler(EggCosts),
-                    new SalubraCharmShopPlacementHandler(SalubraCharmCosts, Random)
-                };
-            }
-
-            Archipelago.Instance.LogDebug(LocationCosts);
         }
 
         public void Randomize()
@@ -181,6 +135,8 @@ namespace Archipelago.HollowKnight
 
         private void AddItemChangerModules()
         {
+            ItemChangerMod.Modules.Add<CompletionPercentOverride>();
+
             if (SlotOptions.RandomizeElevatorPass)
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
@@ -262,8 +218,9 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
+            bool isMyItem = netItem.Player == slot;
             string recipientName = null;
-            if (netItem.Player != slot)
+            if (!isMyItem)
             {
                 recipientName = Session.Players.GetPlayerName(netItem.Player);
             }
@@ -277,118 +234,17 @@ namespace Archipelago.HollowKnight
             }
 
             AbstractItem item;
-            InteropTag tag;
-            if (Finder.ItemNames.Contains(name))
+            if (isMyItem)
             {
-                // Items from Hollow Knight.
-                item = Finder.GetItem(name); // This is already a clone per what I can tell from IC source
-                if (recipientName != null)
-                {
-                    tag = item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["DisplayMessage"] =
-                        $"{ArchipelagoUIDef.GetSentItemName(item)}\nsent to {recipientName}.";
-                    item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, recipientName);
-
-                    if (item is SoulItem soulItem)
-                    {
-                        soulItem.soul = 0;
-                    }
-                }
+                item = itemFactory.CreateMyItem(name, netItem);
             }
             else
             {
-                // Items from other games.
-                item = new ArchipelagoItem(name, recipientName, netItem.Flags);
-                tag = item.AddTag<InteropTag>();
-                tag.Message = "RecentItems";
-                tag.Properties["DisplayMessage"] = $"{name}\nsent to {recipientName}.";
-            }
-
-            // Create a tag containing all AP-relevant information on the item.
-            ArchipelagoItemTag itemTag;
-            itemTag = item.AddTag<ArchipelagoItemTag>();
-            itemTag.ReadNetItem(netItem);
-
-            if (LocationCosts == null)
-            {
-                // Backwards compatible placement logic
-                // Handle placement
-                bool handled = false;
-                foreach (var handler in placementHandlers)
-                {
-                    if (handler.CanHandlePlacement(originalLocation))
-                    {
-                        handler.HandlePlacement(pmt, item, originalLocation);
-                        handled = true;
-                        break;
-                    }
-                }
-
-                if (!handled)
-                {
-                    pmt.Add(item);
-                }
-
-                return;
+                item = itemFactory.CreateRemoteItem(recipientName, name, netItem);
             }
 
             pmt.Add(item);
-            if (LocationCosts.ContainsKey(originalLocation))
-            {
-                // New-style placement logic with cost overrides
-                List<Cost> costs = new();
-                foreach (KeyValuePair<string, int> entry in LocationCosts[originalLocation])
-                {
-                    switch (entry.Key)
-                    {
-                        case "GEO":
-                            costs.Add(Cost.NewGeoCost(entry.Value));
-                            break;
-                        case "ESSENCE":
-                            costs.Add(Cost.NewEssenceCost(entry.Value));
-                            break;
-                        case "GRUBS":
-                            costs.Add(Cost.NewGrubCost(entry.Value));
-                            break;
-                        case "CHARMS":
-                            costs.Add(new PDIntCost(
-                                entry.Value, nameof(PlayerData.charmsOwned),
-                                $"Acquire {entry.Value} {((entry.Value == 1) ? "charm" : "charms")}"
-                            ));
-                            break;
-                        case "RANCIDEGGS":
-                            costs.Add(new ItemChanger.Modules.CumulativeRancidEggCost(entry.Value));
-                            break;
-                        default:
-                            Archipelago.Instance.LogWarn(
-                                $"Encountered UNKNOWN currency type {entry.Key} at location {originalLocation}!");
-                            break;
-                    }
-                }
-
-                if (costs.Count == 0)
-                {
-                    Archipelago.Instance.LogWarn(
-                        $"Found zero cost types when handling placement at location {originalLocation}!");
-                    return;
-                }
-
-                var costTag = item.AddTag<CostTag>();
-                if (costs.Count == 1)
-                {
-                    costTag.Cost = costs[0];
-                }
-                else
-                {
-                    costTag.Cost = new MultiCost(costs);
-                }
-
-                if (pmt is ISingleCostPlacement scp)
-                {
-                    scp.Cost = costTag.Cost;
-                }
-            }
+            costFactory.ApplyCost(pmt, item, originalLocation);
         }
 
         private string StripShopSuffix(string location)
