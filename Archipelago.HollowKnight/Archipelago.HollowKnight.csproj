@@ -32,10 +32,10 @@
         <MakeDir Directories="$(ExportDir)/$(ModName)/zip/" />
         <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(ModName)/')" Directories="$(HollowKnightRefs)/Mods/$(ModName)/" />
         <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(ModName)/" />
         <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(ModName)/zip/" />
-        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll;$(OutputPath)/Newtonsoft.Json.dll" DestinationFolder="$(ExportDir)/$(ModName)/zip/" />
+        <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll" DestinationFolder="$(ExportDir)/$(ModName)/zip/" />
         <ZipDirectory SourceDirectory="$(ExportDir)/$(ModName)/zip/" DestinationFile="$(ExportDir)/$(ModName)/$(ModName).zip" />
         <RemoveDir Directories="$(ExportDir)/$(ModName)/zip/" />
 
@@ -45,16 +45,7 @@
         <WriteLinesToFile File="$(ExportDir)/$(ModName)/SHA.txt" Lines="@(FilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8" />
     </Target>
     <ItemGroup>
-        <None Remove="Resources\Icon.png" />
-        <None Remove="Resources\IconBig.png" />
-        <None Remove="Resources\IconSmall.png" />
-        <None Remove="Resources\DeathLinkIcon.png" />
-    </ItemGroup>
-    <ItemGroup>
-        <EmbeddedResource Include="Resources\Icon.png" />
-        <EmbeddedResource Include="Resources\IconBig.png" />
-        <EmbeddedResource Include="Resources\IconSmall.png" />
-        <EmbeddedResource Include="Resources\DeathLinkIcon.png" />
+        <EmbeddedResource Include="Resources\*.png" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.5" />
