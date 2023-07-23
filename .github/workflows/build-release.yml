@@ -31,7 +31,9 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build -c Release
+        run: dotnet build -c $BUILD_CONFIGURATION
+        env:
+          BUILD_CONFIGURATION: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) && 'Release' || 'Debug' }}
 
       - name: Prepare artifacts for release
         uses: actions/upload-artifact@v3
