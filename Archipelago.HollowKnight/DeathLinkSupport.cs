@@ -2,10 +2,11 @@
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using HutongGames.PlayMaker;
 using ItemChanger;
+using ItemChanger.Extensions;
+using ItemChanger.FsmStateActions;
 using Modding;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Archipelago.HollowKnight
 {
@@ -133,13 +134,14 @@ namespace Archipelago.HollowKnight
 
     public class DeathLinkSupport
     {
+        public const string AMNESTY_VARIABLE_NAME = "Deathlink Amnesty";
+
         public static readonly DeathLinkSupport Instance = new();
         public bool Enabled { get; private set; } = false;
 
         private DeathLinkService service = null;
         private DeathLinkType mode => Archipelago.Instance.SlotOptions.DeathLink;
         private DeathLinkStatus status;
-        private int outgoingDeathlinks;
         private int lastDamageType;
         private DateTime lastDamageTime;
         private bool hasEditedFsm = false;
@@ -153,7 +155,6 @@ namespace Archipelago.HollowKnight
         {
             lastDamageType = 0;
             lastDamageTime = DateTime.MinValue;
-            outgoingDeathlinks = 0;
             status = DeathLinkStatus.None;
         }
 
@@ -201,29 +202,16 @@ namespace Archipelago.HollowKnight
             hasEditedFsm = false;
         }
 
-
-        private FsmState PrependFSMAction(Fsm fsm, string name, Action action)
+        private FsmBool AddBoolVariable(Fsm fsm, string name, bool value)
         {
-            return PrependFSMAction(fsm.GetState(name), action);
-        }
+            FsmBool[] oldBools = fsm.Variables.BoolVariables;
+            FsmBool[] newBools = new FsmBool[oldBools.Length + 1];
+            oldBools.CopyTo(newBools, 1);
 
-        private FsmState PrependFSMAction(FsmState state, Action action)
-        {
-            state.Actions = state.Actions.Prepend<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action))
-                .ToArray();
-            return state;
-        }
-
-        private FsmState AppendFSMAction(Fsm fsm, string name, Action action)
-        {
-            return AppendFSMAction(fsm.GetState(name), action);
-        }
-
-        private FsmState AppendFSMAction(FsmState state, Action action)
-        {
-            state.Actions = state.Actions.Append<FsmStateAction>(new ItemChanger.FsmStateActions.Lambda(action))
-                .ToArray();
-            return state;
+            FsmBool b = new(name);
+            b.Value = value;
+            oldBools[0] = b;
+            return b;
         }
 
         private void FsmEdit(PlayMakerFSM obj)
@@ -234,20 +222,23 @@ namespace Archipelago.HollowKnight
             }
 
             hasEditedFsm = true;
-            var ap = Archipelago.Instance;
-            bool amnesty = false; // Set True if death penalties should be prevented.
+            Archipelago ap = Archipelago.Instance;
 
             Fsm fsm = obj.Fsm;
-            FsmState fsmState;
+            FsmBool amnesty = AddBoolVariable(fsm, AMNESTY_VARIABLE_NAME, false);
+            // Death animation starts here - normally whether you get a shade or not is determined purely by whether
+            // you're in a dream or not.
+            FsmState mapZone = fsm.GetState("Map Zone");
+            // these states are present at the end of the dream death sequence and will be used to reset deathlink state
+            FsmState dreamReturn = fsm.GetState("Dream Return");
+            FsmState waitForHeroController = fsm.GetState("Wait for HeroController");
 
-            // Patch the Map Zone FSM for base Deathlink logic.  Oddly enough, this is the opening of the death FSM... not "Start"
             // We patch this for most of our logic, as well as a short-circuit past all of the FSM logic for shade creation, charm breakage, etc.
-            fsmState = PrependFSMAction(fsm, "Map Zone", () =>
+            mapZone.AddFirstAction(new Lambda(() =>
             {
-                ap.LogDebug($"FsmEdit Pre: Status={status}  Mode={mode}.  Resetting status to None.");
-                amnesty = (status == DeathLinkStatus.Dying);
+                ap.LogDebug($"FsmEdit Pre: Status={status}  Mode={mode}.");
 
-                if (!amnesty)
+                if (status != DeathLinkStatus.Dying)
                 {
                     {
                         ap.LogDebug($"FsmEdit Pre: Not a deathlink death, so sending out our own deathlink.");
@@ -256,26 +247,29 @@ namespace Archipelago.HollowKnight
                         return;
                     }
                 }
+                else
+                {
+                    ap.LogDebug("Beginning deathlink death handling");
+                }
 
                 amnesty = !(
                     mode == DeathLinkType.Vanilla
                     || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
                 );
 
-                if (!amnesty)
+                if (!amnesty.Value)
                 {
                     ap.LogDebug($"FsmEdit Pre: Ineligible for amnesty.");
-                    return;
                 }
-            });
-            AppendFSMAction(fsmState, () =>
+            }));
+            mapZone.AddLastAction(new Lambda(() =>
             {
-                if (amnesty)
+                if (amnesty.Value)
                 {
                     ap.LogDebug($"FsmEdit Post: Amnesty activated, triggering events");
                     fsm.SetState("Save");
                 }
-            });
+            }));
 
 
             void clearDeathLink()
@@ -284,20 +278,21 @@ namespace Archipelago.HollowKnight
                 status = DeathLinkStatus.None;
             }
 
-            // Near the end of dream deaths, clear DeathLinkStatus
-            AppendFSMAction(fsm, "WP Check", clearDeathLink);
+            // At the end of dream deaths, clear DeathLinkStatus
+            dreamReturn.AddLastAction(new Lambda(clearDeathLink));
+            waitForHeroController.AddLastAction(new Lambda(clearDeathLink));
 
             // Soul Limiter gets set twice!  Just completely delete the first instance, all the time.
             fsm.GetState("Limit Soul?").Actions = new FsmStateAction[] { };
 
             // End of vanilla deaths is... fun.
-            fsmState = fsm.GetState("End");
+            FsmState deathEnding = fsm.GetState("End");
 
             // Replace the first two action (which normally start the soul limiter and notify about it)
-            fsmState.Actions[0] = new ItemChanger.FsmStateActions.Lambda(() =>
+            deathEnding.Actions[0] = new Lambda(() =>
             {
                 // Mimic the former first two actions
-                if (amnesty)
+                if (amnesty.Value)
                 {
                     amnesty = false;
                     return;
@@ -306,7 +301,7 @@ namespace Archipelago.HollowKnight
                 GameManager.instance.StartSoulLimiter();
                 fsm.BroadcastEvent("SOUL LIMITER UP");
             });
-            fsmState.Actions[1] = new ItemChanger.FsmStateActions.Lambda(clearDeathLink);
+            deathEnding.Actions[1] = new Lambda(clearDeathLink);
         }
 
         /// <summary>
@@ -368,42 +363,42 @@ namespace Archipelago.HollowKnight
             }
 
             string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.Player);
-            // Increment outgoing deathlinks and send the death.
-            outgoingDeathlinks += 1;
             ap.LogDebug(
-                $"SendDeathLink(): Sending deathlink.  outgoingDeathLinks = {outgoingDeathlinks}.  \"{message}\"");
+                $"SendDeathLink(): Sending deathlink.  \"{message}\"");
             service.SendDeathLink(new DeathLink(Archipelago.Instance.Player, message));
         }
 
 
         private void OnDeathLinkReceived(DeathLink deathLink)
         {
-            Archipelago.Instance.LogDebug(
-                $"OnDeathLinkReceived(): Receiving deathlink.  Status={status}; outgoingDeathLinks = {outgoingDeathlinks}.");
-            if (outgoingDeathlinks > 0)
-            {
-                outgoingDeathlinks--;
-                return;
-            }
+            Archipelago ap = Archipelago.Instance;
+            ap.LogDebug($"OnDeathLinkReceived(): Receiving deathlink.  Status={status}.");
 
             if (status == DeathLinkStatus.None)
             {
                 status = DeathLinkStatus.Pending;
+
+                string cause = deathLink.Cause;
+                if (cause == null || cause == "")
+                {
+                    cause = $"{deathLink.Source} died.";
+                }
+
+                MenuChanger.ThreadSupport.BeginInvoke(() =>
+                {
+                    new ItemChanger.UIDefs.MsgUIDef()
+                    {
+                        name = new BoxedString(cause),
+                        sprite = new ArchipelagoSprite { key = "DeathLinkIcon" }
+                    }.SendMessage(MessageType.Corner, null);
+                });
+
+                lastDamageType = 0;
             }
-
-            string cause = deathLink.Cause;
-            if (cause == null || cause == "")
+            else
             {
-                cause = $"{deathLink.Source} died.";
+                ap.LogDebug("Skipping this deathlink as one is currently in progress");
             }
-
-            new ItemChanger.UIDefs.MsgUIDef()
-            {
-                name = new BoxedString(cause),
-                sprite = new ArchipelagoSprite { key = "DeathLinkIcon" }
-            }.SendMessage(MessageType.Corner, null);
-
-            lastDamageType = 0;
         }
     }
 }
