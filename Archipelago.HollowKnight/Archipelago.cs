@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
@@ -41,7 +42,12 @@ namespace Archipelago.HollowKnight
 #if DEBUG
             using SHA1 sha = SHA1.Create();
             using FileStream str = File.OpenRead(GetType().Assembly.Location);
-            version += "-prerelease+" + Convert.ToBase64String(sha.ComputeHash(str))[..6];
+            StringBuilder sb = new();
+            foreach (byte b in sha.ComputeHash(str).Take(4))
+            {
+                sb.AppendFormat("{0:x2}", b);
+            }
+            version += "-prerelease+" + sb.ToString();
 #endif
             return version;
         }
