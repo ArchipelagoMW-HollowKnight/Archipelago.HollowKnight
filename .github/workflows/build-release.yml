@@ -36,8 +36,8 @@ jobs:
       - name: Prepare artifacts for release
         uses: actions/upload-artifact@v3
         with:
-          name: Publish
-          path: Archipelago.HollowKnight/bin/Publish/Archipelago
+          name: Archipelago
+          path: Archipelago.HollowKnight/bin/Publish
   release:
     needs:
       - build
