@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>Archipelago.HollowKnight</RootNamespace>
         <AssemblyName>Archipelago.HollowKnight</AssemblyName>
@@ -47,7 +47,7 @@
         <EmbeddedResource Include="Resources\*.png" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.5" />
+        <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.6" />
         <PackageReference Include="PolySharp" Version="1.13.2">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
