@@ -206,11 +206,10 @@ namespace Archipelago.HollowKnight
         {
             if (hasEditedFsm)
             {
-                Archipelago.Instance.LogDebug("Deathlink - Skipping FSM edit");
                 return;
             }
-
             hasEditedFsm = true;
+
             Archipelago ap = Archipelago.Instance;
 
             FsmBool amnesty = fsm.AddFsmBool(AMNESTY_VARIABLE_NAME, false);
@@ -305,7 +304,7 @@ namespace Archipelago.HollowKnight
         public void MurderPlayer()
         {
             string scene = GameManager.instance.sceneName;
-            Archipelago.Instance.LogDebug($"So, somebody else has chosen... death.  Current scene: {scene}");
+            Archipelago.Instance.LogDebug($"Deathlink-initiated kill starting. Current scene: {scene}");
             status = DeathLinkStatus.Dying;
             HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other,
                 9999, 0);
