@@ -202,36 +202,21 @@ namespace Archipelago.HollowKnight
             hasEditedFsm = false;
         }
 
-        private FsmBool AddBoolVariable(Fsm fsm, string name, bool value)
-        {
-            FsmBool[] oldBools = fsm.Variables.BoolVariables;
-            FsmBool[] newBools = new FsmBool[oldBools.Length + 1];
-            oldBools.CopyTo(newBools, 1);
-
-            FsmBool b = new(name);
-            b.Value = value;
-            oldBools[0] = b;
-            return b;
-        }
-
-        private void FsmEdit(PlayMakerFSM obj)
+        private void FsmEdit(PlayMakerFSM fsm)
         {
             if (hasEditedFsm)
             {
+                Archipelago.Instance.LogDebug("Deathlink - Skipping FSM edit");
                 return;
             }
 
             hasEditedFsm = true;
             Archipelago ap = Archipelago.Instance;
 
-            Fsm fsm = obj.Fsm;
-            FsmBool amnesty = AddBoolVariable(fsm, AMNESTY_VARIABLE_NAME, false);
+            FsmBool amnesty = fsm.AddFsmBool(AMNESTY_VARIABLE_NAME, false);
             // Death animation starts here - normally whether you get a shade or not is determined purely by whether
             // you're in a dream or not.
             FsmState mapZone = fsm.GetState("Map Zone");
-            // these states are present at the end of the dream death sequence and will be used to reset deathlink state
-            FsmState dreamReturn = fsm.GetState("Dream Return");
-            FsmState waitForHeroController = fsm.GetState("Wait for HeroController");
 
             // We patch this for most of our logic, as well as a short-circuit past all of the FSM logic for shade creation, charm breakage, etc.
             mapZone.AddFirstAction(new Lambda(() =>
@@ -239,20 +224,18 @@ namespace Archipelago.HollowKnight
                 ap.LogDebug($"FsmEdit Pre: Status={status}  Mode={mode}.");
 
                 if (status != DeathLinkStatus.Dying)
-                {
-                    {
-                        ap.LogDebug($"FsmEdit Pre: Not a deathlink death, so sending out our own deathlink.");
-                        // If we're not caused by DeathLink... then we send a DeathLink
-                        SendDeathLink();
-                        return;
-                    }
+                { 
+                    ap.LogDebug($"FsmEdit Pre: Not a deathlink death, so sending out our own deathlink.");
+                    // If we're not caused by DeathLink... then we send a DeathLink
+                    SendDeathLink();
+                    return;
                 }
                 else
                 {
                     ap.LogDebug("Beginning deathlink death handling");
                 }
 
-                amnesty = !(
+                amnesty.Value = !(
                     mode == DeathLinkType.Vanilla
                     || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
                 );
@@ -271,37 +254,42 @@ namespace Archipelago.HollowKnight
                 }
             }));
 
-
-            void clearDeathLink()
-            {
-                amnesty = false;
-                status = DeathLinkStatus.None;
-            }
-
-            // At the end of dream deaths, clear DeathLinkStatus
-            dreamReturn.AddLastAction(new Lambda(clearDeathLink));
-            waitForHeroController.AddLastAction(new Lambda(clearDeathLink));
-
-            // Soul Limiter gets set twice!  Just completely delete the first instance, all the time.
-            fsm.GetState("Limit Soul?").Actions = new FsmStateAction[] { };
-
             // End of vanilla deaths is... fun.
             FsmState deathEnding = fsm.GetState("End");
+
+            // push this to a later step
+            fsm.GetState("Limit Soul?").Actions = new FsmStateAction[] { };
 
             // Replace the first two action (which normally start the soul limiter and notify about it)
             deathEnding.Actions[0] = new Lambda(() =>
             {
-                // Mimic the former first two actions
-                if (amnesty.Value)
+                // Mimic the Limit Soul? state and the action being replaced - we only want to soul limit if the
+                // player spawned a shade
+                if (!amnesty.Value)
                 {
-                    amnesty = false;
-                    return;
+                    fsm.Fsm.BroadcastEvent("SOUL LIMITER UP");
+                    GameManager.instance.StartSoulLimiter();
                 }
-
-                GameManager.instance.StartSoulLimiter();
-                fsm.BroadcastEvent("SOUL LIMITER UP");
             });
-            deathEnding.Actions[1] = new Lambda(clearDeathLink);
+
+            // the following 3 states are the ending states of each branch of the FSM. we'll link them into a custom state that resets
+            // deathlink for us
+            FsmState dreamReturn = fsm.GetState("Dream Return");
+            FsmState waitForHeroController = fsm.GetState("Wait for HeroController");
+            FsmState steelSoulCheck = fsm.GetState("Shade?");
+            FsmState[] endingStates = new[] { dreamReturn, waitForHeroController, steelSoulCheck };
+            // add deathlink cleanup state
+            FsmState cleanupDeathlink = fsm.AddState("Cleanup Deathlink");
+            cleanupDeathlink.AddFirstAction(new Lambda(() =>
+            {
+                ap.LogDebug("Resetting deathlink state");
+                amnesty.Value = false;
+                status = DeathLinkStatus.None;
+            }));
+            foreach (FsmState state in endingStates)
+            {
+                state.AddTransition("FINISHED", cleanupDeathlink);
+            }
         }
 
         /// <summary>
