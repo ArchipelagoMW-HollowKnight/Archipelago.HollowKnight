@@ -1,5 +1,6 @@
 ﻿using Archipelago.HollowKnight.IC;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
+using HKMirror.Reflection;
 using HutongGames.PlayMaker;
 using ItemChanger;
 using ItemChanger.Extensions;
@@ -174,8 +175,8 @@ namespace Archipelago.HollowKnight
             service = ap.session.CreateDeathLinkService();
             service.EnableDeathLink();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
-            ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
-            On.HeroController.TakeDamage += HeroController_TakeDamage;
+            ModHooks.HeroUpdateHook += OnHeroUpdate;
+            On.HeroController.TakeDamage += OnTakeDamage;
             ItemChanger.Events.AddFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
         }
 
@@ -196,8 +197,8 @@ namespace Archipelago.HollowKnight
             }
 
             Enabled = false;
-            ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
-            On.HeroController.TakeDamage -= HeroController_TakeDamage;
+            ModHooks.HeroUpdateHook -= OnHeroUpdate;
+            On.HeroController.TakeDamage -= OnTakeDamage;
             ItemChanger.Events.RemoveFsmEdit(new FsmID("Hero Death Anim"), FsmEdit);
             hasEditedFsm = false;
         }
@@ -291,16 +292,6 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        /// <summary>
-        /// Returns True if it is safe to kill the current player -- i.e. they can take damage, have character control, and are not in an unsafe scene.
-        /// </summary>
-        public bool CanMurderPlayer()
-        {
-            HeroController hc = HeroController.instance;
-            return hc.acceptingInput && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE &&
-                   PlayerData.instance.health > 0;
-        }
-
         public void MurderPlayer()
         {
             string scene = GameManager.instance.sceneName;
@@ -310,20 +301,20 @@ namespace Archipelago.HollowKnight
                 9999, 0);
         }
 
-        private void ModHooks_HeroUpdateHook()
+        private void OnHeroUpdate()
         {
-            if (status == DeathLinkStatus.Pending && CanMurderPlayer())
+            if (status == DeathLinkStatus.Pending && HeroController.instance.Reflect().CanTakeDamage())
             {
                 MurderPlayer();
             }
         }
 
-        private void HeroController_TakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self,
+        private void OnTakeDamage(On.HeroController.orig_TakeDamage orig, HeroController self,
             UnityEngine.GameObject go, GlobalEnums.CollisionSide damageSide, int damageAmount, int hazardType)
         {
-            orig(self, go, damageSide, damageAmount, hazardType);
             lastDamageTime = DateTime.UtcNow;
             lastDamageType = hazardType;
+            orig(self, go, damageSide, damageAmount, hazardType);
         }
 
         public void SendDeathLink()
