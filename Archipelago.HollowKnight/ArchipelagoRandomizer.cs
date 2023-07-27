@@ -110,18 +110,15 @@ namespace Archipelago.HollowKnight
             // Scout all locations
             void ScoutCallback(LocationInfoPacket packet)
             {
-                MenuChanger.ThreadSupport.BeginInvoke(() =>
+                foreach (var item in packet.Locations)
                 {
-                    foreach (var item in packet.Locations)
-                    {
-                        var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                        var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
+                    var locationName = session.Locations.GetLocationNameFromId(item.Location);
+                    var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
 
-                        PlaceItem(locationName, itemName, item);
-                    }
+                    PlaceItem(locationName, itemName, item);
+                }
 
-                    ItemChangerMod.AddPlacements(placements.Values);
-                });
+                ItemChangerMod.AddPlacements(placements.Values);
             }
 
             var locations = new List<long>(session.Locations.AllLocations);
