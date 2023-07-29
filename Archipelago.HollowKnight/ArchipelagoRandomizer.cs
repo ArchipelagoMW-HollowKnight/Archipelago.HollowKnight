@@ -57,7 +57,7 @@ namespace Archipelago.HollowKnight
 
         public void Randomize()
         {
-            var session = Session;
+            ArchipelagoSession session = Session;
             ItemChangerMod.CreateSettingsProfile();
             // Add IC modules as needed
             // FUTURE: If Entrance rando, disable palace midwarp and some logical blockers
@@ -77,7 +77,7 @@ namespace Archipelago.HollowKnight
             AbstractLocation location;
             AbstractPlacement pmt;
 
-            var shops = new string[]
+            string[] shops = new string[]
             {
                 LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda,
                 LocationNames.Salubra, LocationNames.Leg_Eater, LocationNames.Grubfather,
@@ -110,10 +110,10 @@ namespace Archipelago.HollowKnight
             // Scout all locations
             void ScoutCallback(LocationInfoPacket packet)
             {
-                foreach (var item in packet.Locations)
+                foreach (NetworkItem item in packet.Locations)
                 {
-                    var locationName = session.Locations.GetLocationNameFromId(item.Location);
-                    var itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
+                    string locationName = session.Locations.GetLocationNameFromId(item.Location);
+                    string itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
 
                     PlaceItem(locationName, itemName, item);
                 }
@@ -121,11 +121,11 @@ namespace Archipelago.HollowKnight
                 ItemChangerMod.AddPlacements(placements.Values);
             }
 
-            var locations = new List<long>(session.Locations.AllLocations);
+            List<long> locations = new List<long>(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(locations.ToArray())
                              .ContinueWith(task =>
                              {
-                                 var packet = task.Result;
+                                 LocationInfoPacket packet = task.Result;
                                  ScoutCallback(packet);
                              }).Wait();
         }
@@ -169,7 +169,7 @@ namespace Archipelago.HollowKnight
         {
             ItemChangerMod.Modules.Add<ItemChanger.Modules.NotchCostUI>();
             ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
-            var playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
+            PlayerDataEditModule playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
             Instance.LogDebug(playerDataEditModule);
             for (int i = 0; i < NotchCosts.Count; i++)
             {
@@ -179,10 +179,10 @@ namespace Archipelago.HollowKnight
 
         public void PlaceItem(string location, string name, NetworkItem netItem)
         {
-            var slot = Archipelago.Instance.Slot;
+            int slot = Archipelago.Instance.Slot;
             Instance.LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
 
-            var originalLocation = string.Copy(location);
+            string originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
             // IC does not like placements at these locations if there's also a location at the lore tablet, it renders the lore tablet inoperable.
             // But we can have multiple placements at the same location, so do this workaround.  (Rando4 does something similar per its README)
@@ -251,13 +251,13 @@ namespace Archipelago.HollowKnight
                 return null;
             }
 
-            var names = new[]
+            string[] names = new[]
             {
                 LocationNames.Sly_Key, LocationNames.Sly, LocationNames.Iselda, LocationNames.Salubra,
                 LocationNames.Leg_Eater, LocationNames.Egg_Shop, LocationNames.Seer, LocationNames.Grubfather
             };
 
-            foreach (var name in names)
+            foreach (string name in names)
             {
                 if (location.StartsWith(name))
                 {
