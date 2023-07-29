@@ -1,7 +1,6 @@
-﻿using System;
+﻿using ItemChanger;
+using System;
 using System.Collections.Generic;
-using ItemChanger;
-using UnityEngine.SceneManagement;
 
 namespace Archipelago.HollowKnight
 {
@@ -12,7 +11,8 @@ namespace Archipelago.HollowKnight
         SealedSiblings = 2,
         Radiance = 3,
         Godhome = 4,
-        MAX = Godhome
+        GodhomeFlower = 5,
+        MAX = GodhomeFlower
     }
 
     public abstract class Goal
@@ -22,23 +22,19 @@ namespace Archipelago.HollowKnight
 
         private static readonly Dictionary<GoalsLookup, Goal> Lookup = new Dictionary<GoalsLookup, Goal>()
         {
-            [GoalsLookup.Any] = new AnyGoal(),
+            [GoalsLookup.Any] = new HollowKnightGoal(),
             [GoalsLookup.HollowKnight] = new HollowKnightGoal(),
             [GoalsLookup.SealedSiblings] = new SealedSiblingsGoal(),
             [GoalsLookup.Radiance] = new RadianceGoal(),
-            [GoalsLookup.Godhome] = new GodhomeGoal()
+            [GoalsLookup.Godhome] = new GodhomeGoal(),
+            [GoalsLookup.GodhomeFlower] = new GodhomeFlowerGoal()
         };
 
         protected void FountainPlaqueTopEdit(ref string s) => s = "Your goal is";
         protected void FountainPlaqueNameEdit(ref string s) => s = Name;
         protected void FountainPlaqueDescEdit(ref string s) => s = Description;
 
-        // Helpers for subclasses.
-        protected bool AcquiredVoidHeart => PlayerData.instance.GetInt(nameof(PlayerData.royalCharmState)) == 4;
-        protected bool EquippedVoidHeart => AcquiredVoidHeart && PlayerData.instance.GetBool(nameof(PlayerData.equippedCharm_36));
-        protected bool HasThreeDreamers => PlayerData.instance.GetInt(nameof(PlayerData.guardiansDefeated)) >= 3;
-
-        public abstract bool VictoryCondition(string sceneName);
+        public abstract bool VictoryCondition();
 
         public static Goal GetGoal(GoalsLookup key)
         {
@@ -51,10 +47,11 @@ namespace Archipelago.HollowKnight
             throw new ArgumentOutOfRangeException($"Unrecognized goal condition {key} (are you running an outdated client?)");
         }
 
-        public void CheckForVictory(Scene scene)
+        public void CheckForVictory()
         {
-            Archipelago.Instance.LogDebug($"Checking for victory; goal is {this.Name}; scene {scene.name}");
-            if (VictoryCondition(scene.name))
+            Archipelago.Instance.LogDebug($"Checking for victory; goal is {this.Name}; scene " +
+                $"{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+            if (VictoryCondition())
             {
                 Archipelago.Instance.LogDebug($"Victory detected, declaring!");
                 Archipelago.Instance.DeclareVictory();
@@ -66,19 +63,22 @@ namespace Archipelago.HollowKnight
             ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_TOP"), FountainPlaqueTopEdit);
             ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_MAIN"), FountainPlaqueNameEdit);
             ItemChanger.Events.AddLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_DESC"), FountainPlaqueDescEdit);
-            ItemChanger.Events.OnSceneChange += CheckForVictory;
+            OnSelected();
         }
 
-        public void Unselect()
+        public void Deselect()
         {
             ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_TOP"), FountainPlaqueTopEdit);
             ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_MAIN"), FountainPlaqueNameEdit);
             ItemChanger.Events.RemoveLanguageEdit(new ItemChanger.LanguageKey("Prompts", "FOUNTAIN_PLAQUE_DESC"), FountainPlaqueDescEdit);
-            ItemChanger.Events.OnSceneChange -= CheckForVictory;
+            OnDeselected();
         }
+
+        public abstract void OnSelected();
+        public abstract void OnDeselected();
     }
 
-    public class AnyGoal : Goal
+    public abstract class EndingGoal : Goal
     {
         private static List<string> VictoryScenes = new()
         {
@@ -89,76 +89,69 @@ namespace Archipelago.HollowKnight
             SceneNames.Cinematic_Ending_E    // Godhome w/ flower quest
         };
 
-        public override string Name => "Beat the Game";
-        public override string Description => "Complete Hollow Knight with any ending.";
+        public abstract string MinimumGoalScene { get; }
 
-        public override bool VictoryCondition(string sceneName)
+        public override void OnSelected()
         {
-            return VictoryScenes.Contains(sceneName);
+            Events.OnSceneChange += SceneChanged;
         }
+
+        public override void OnDeselected()
+        {
+            Events.OnSceneChange -= SceneChanged;
+        }
+
+        private void SceneChanged(UnityEngine.SceneManagement.Scene obj)
+        {
+            CheckForVictory();
+        }
+
+        public override bool VictoryCondition()
+        {
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (activeScene.StartsWith("Cinematic_Ending_"))
+            {
+                int minGoalSceneIndex = VictoryScenes.IndexOf(MinimumGoalScene);
+                int sceneIndex = VictoryScenes.IndexOf(activeScene);
+                return sceneIndex >= minGoalSceneIndex;
+            }
+            return false;
+        }
+
     }
 
-    public class HollowKnightGoal : AnyGoal
+    public class HollowKnightGoal : EndingGoal
     {
         public override string Name => "The Hollow Knight";
-        public override string Description => "Defeat The Hollow Knight<br>or any other ending with 3 dreamers.";
-
-        public override bool VictoryCondition(string sceneName)
-        {
-            return HasThreeDreamers && base.VictoryCondition(sceneName);
-        }
+        public override string Description => "Defeat The Hollow Knight<br>or any harder ending.";
+        public override string MinimumGoalScene => SceneNames.Cinematic_Ending_A;
     }
 
-    public class SealedSiblingsGoal : Goal
+    public class SealedSiblingsGoal : EndingGoal
     {
-        private static List<string> VictoryScenes = new()
-        {
-            SceneNames.Cinematic_Ending_B,   // Sealed Siblings
-            SceneNames.Cinematic_Ending_C,   // Radiance
-            "Cinematic_Ending_D",            // Godhome no flower quest(?)
-            SceneNames.Cinematic_Ending_E    // Godhome w/ flower quest
-        };
-
         public override string Name => "Sealed Siblings";
-        public override string Description => "Complete the Sealed Siblings ending<br>or any other ending with 3 dreamers and Void Heart equipped.";
-
-        public override bool VictoryCondition(string sceneName)
-        {
-            return HasThreeDreamers && EquippedVoidHeart && VictoryScenes.Contains(sceneName);
-        }
+        public override string Description => "Complete the Sealed Siblings ending<br>or any harder ending.";
+        public override string MinimumGoalScene => SceneNames.Cinematic_Ending_B;
     }
 
-    public class RadianceGoal : Goal
+    public class RadianceGoal : EndingGoal
     {
-        private static List<string> VictoryScenes = new()
-        {
-            SceneNames.Cinematic_Ending_C,   // Radiance
-            "Cinematic_Ending_D",            // Godhome no flower quest(?)
-            SceneNames.Cinematic_Ending_E    // Godhome w/ flower quest
-        };
-
         public override string Name => "Dream No More";
-        public override string Description => "Defeat The Radiance or Absolute Radiance<br>after obtaining Void Heart and 3 dreamers.";
-
-        public override bool VictoryCondition(string sceneName)
-        {
-            return HasThreeDreamers && EquippedVoidHeart && VictoryScenes.Contains(sceneName);
-        }
+        public override string Description => "Defeat The Radiance in Black Egg Temple<br>or Absolute Radiance in Pantheon 5.";
+        public override string MinimumGoalScene => SceneNames.Cinematic_Ending_C;
     }
-    public class GodhomeGoal : Goal
+
+    public class GodhomeGoal : EndingGoal
     {
-        private static List<string> VictoryScenes = new()
-        {
-            "Cinematic_Ending_D",            // Godhome no flower quest(?)
-            SceneNames.Cinematic_Ending_E    // Godhome w/ flower quest
-        };
-
         public override string Name => "Embrace the Void";
-        public override string Description => "Defeat Absolute Radiance<br>at the end of Pantheon 5.";
+        public override string Description => "Defeat Absolute Radiance in Pantheon 5.";
+        public override string MinimumGoalScene => "Cinematic_Ending_D";
+    }
 
-        public override bool VictoryCondition(string sceneName)
-        {
-            return VictoryScenes.Contains(sceneName);
-        }
+    public class GodhomeFlowerGoal : EndingGoal
+    {
+        public override string Name => "Delicate Flower";
+        public override string Description => "Defeat Absolute Radiance in Pantheon 5<br>after delivering the flower to the Godseeker";
+        public override string MinimumGoalScene => SceneNames.Cinematic_Ending_E;
     }
 }

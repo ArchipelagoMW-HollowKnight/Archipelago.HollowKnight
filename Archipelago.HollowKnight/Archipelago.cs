@@ -246,7 +246,7 @@ namespace Archipelago.HollowKnight
 
             if (Goal != null)
             {
-                Goal.Unselect();
+                Goal.Deselect();
                 Goal = null;
             }
         }
