@@ -34,8 +34,7 @@ Contribution guidelines:
 * All in-progress issues should have someone assigned to them.
 * Pull Requests must have at least (and preferably exactly) one linked issue which they close out.
 * Please use feature branches, especially if working in this repository (not a fork).
-* Please match the style of surrounding code. 
-    * The only exception to this guideline is that we are in the progress of phasing out the usage of `var`. Please use explicit typing instead.
+* Please match the style of surrounding code.
 
 ## Development Setup
 Follow the instructions in the csproj file to create a LocalOverrides.targets file with your Hollow Knight installation path. If you use the Hollow Knight Modding Visual Studio extension (recommended), there is an item template to create this file for you automatically.
