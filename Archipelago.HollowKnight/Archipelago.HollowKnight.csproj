@@ -36,6 +36,7 @@
         <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll" DestinationFolder="$(ExportDir)/zip/" />
         <ZipDirectory SourceDirectory="$(ExportDir)/zip/" DestinationFile="$(ExportDir)/$(ModName).zip" />
         <RemoveDir Directories="$(ExportDir)/zip/" />
+
         <GetFileHash Files="$(ExportDir)/$(ModName).zip" Algorithm="SHA256">
             <Output TaskParameter="Items" ItemName="FilesWithHashes" />
         </GetFileHash>
