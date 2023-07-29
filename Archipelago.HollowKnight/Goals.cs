@@ -151,7 +151,7 @@ namespace Archipelago.HollowKnight
     public class GodhomeFlowerGoal : EndingGoal
     {
         public override string Name => "Delicate Flower";
-        public override string Description => "Defeat Absolute Radiance in Pantheon 5<br>after delivering the flower to the Godseeker";
+        public override string Description => "Defeat Absolute Radiance in Pantheon 5<br>after delivering the flower to the Godseeker.";
         public override string MinimumGoalScene => SceneNames.Cinematic_Ending_E;
     }
 }
