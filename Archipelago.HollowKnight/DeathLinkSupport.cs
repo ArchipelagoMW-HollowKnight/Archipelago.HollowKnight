@@ -292,6 +292,13 @@ namespace Archipelago.HollowKnight
             }
         }
 
+        public bool CanMurderPlayer()
+        {
+            HeroController hc = HeroController.instance;
+            return hc.acceptingInput && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE &&
+                   PlayerData.instance.health > 0 && hc.Reflect().CanTakeDamage();
+        }
+
         public void MurderPlayer()
         {
             string scene = GameManager.instance.sceneName;
@@ -303,7 +310,7 @@ namespace Archipelago.HollowKnight
 
         private void OnHeroUpdate()
         {
-            if (status == DeathLinkStatus.Pending && HeroController.instance.Reflect().CanTakeDamage())
+            if (status == DeathLinkStatus.Pending && CanMurderPlayer())
             {
                 MurderPlayer();
             }
