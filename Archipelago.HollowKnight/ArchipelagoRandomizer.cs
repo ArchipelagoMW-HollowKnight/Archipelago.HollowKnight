@@ -121,7 +121,7 @@ namespace Archipelago.HollowKnight
                 ItemChangerMod.AddPlacements(placements.Values);
             }
 
-            List<long> locations = new List<long>(session.Locations.AllLocations);
+            List<long> locations = new(session.Locations.AllLocations);
             session.Locations.ScoutLocationsAsync(locations.ToArray())
                              .ContinueWith(task =>
                              {
