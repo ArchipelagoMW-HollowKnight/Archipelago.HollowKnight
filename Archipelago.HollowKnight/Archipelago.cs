@@ -275,14 +275,14 @@ namespace Archipelago.HollowKnight
 
                 LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
-                var randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
+                ArchipelagoRandomizer randomizer = new(loginResult.SlotData);
                 randomizer.Randomize();
                 pendingGeo = SlotOptions.StartingGeo;
             }
             else
             {
                 LogDebug($"StartOrResumeGame: Local : Room: {ApSettings.RoomSeed}; Seed = {ApSettings.Seed}");
-                var seed = (long) loginResult.SlotData["seed"];
+                long seed = (long) loginResult.SlotData["seed"];
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
                 if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
                 {
@@ -359,7 +359,7 @@ namespace Archipelago.HollowKnight
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
 
-            var loginResult = session.TryConnectAndLogin("Hollow Knight",
+            LoginResult loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          ApSettings.SlotName,
                                                          ItemsHandlingFlags.AllItems,
                                                          ArchipelagoProtocolVersion,
@@ -367,7 +367,7 @@ namespace Archipelago.HollowKnight
 
             if (loginResult is LoginFailure failure)
             {
-                var errors = string.Join(", ", failure.Errors);
+                string errors = string.Join(", ", failure.Errors);
                 LogError($"Unable to connect to Archipelago because: {string.Join(", ", failure.Errors)}");
                 throw new ArchipelagoConnectionException(errors);
             }
@@ -424,7 +424,7 @@ namespace Archipelago.HollowKnight
                 if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
                 {
                     tag.ReceivedFromItemLink = true;
-                    var itemForMe = Finder.GetItem(item.name);
+                    AbstractItem itemForMe = Finder.GetItem(item.name);
                     itemForMe.Load();
                     itemForMe.Give(pmt, RemoteGiveInfo);
                 }
@@ -464,7 +464,7 @@ namespace Archipelago.HollowKnight
 
         public void ReceiveItem(NetworkItem netItem)
         {
-            var name = session.Items.GetItemName(netItem.Item);
+            string name = session.Items.GetItemName(netItem.Item);
             LogDebug(
                 $"Receiving item ID {netItem.Item}.  Name is {name}.  Slot is {netItem.Player}.  Location is {netItem.Location}.");
 

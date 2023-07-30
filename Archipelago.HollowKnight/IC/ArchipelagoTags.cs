@@ -1,4 +1,5 @@
-﻿using Archipelago.MultiClient.Net.Enums;
+﻿using System.Collections.Generic;
+using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
@@ -72,8 +73,8 @@ namespace Archipelago.HollowKnight.IC
             // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
             if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot)
             {
-                var tags = obj.Item.GetTags<InteropTag>();
-                foreach (var tag in tags)
+                IEnumerable<InteropTag> tags = obj.Item.GetTags<InteropTag>();
+                foreach (InteropTag tag in tags)
                 {
                     if (tag.Message == "RecentItems")
                     {
@@ -82,7 +83,7 @@ namespace Archipelago.HollowKnight.IC
                     }
                 }
                 {
-                    var tag = obj.Item.AddTag<InteropTag>();
+                    InteropTag tag = obj.Item.AddTag<InteropTag>();
                     tag.Message = "RecentItems";
                     tag.Properties["IgnoreItem"] = true;
                 }

@@ -161,7 +161,7 @@ namespace Archipelago.HollowKnight
 
         public void Enable()
         {
-            var ap = Archipelago.Instance;
+            Archipelago ap = Archipelago.Instance;
             if (Enabled)
             {
                 ap.LogWarn("Tried to enable already-enabled DeathlinkSupport; disabling first.");
@@ -319,7 +319,7 @@ namespace Archipelago.HollowKnight
 
         public void SendDeathLink()
         {
-            var ap = Archipelago.Instance;
+            Archipelago ap = Archipelago.Instance;
             // Don't send death links if we're currently in the process of dying to another deathlink.
             if (status == DeathLinkStatus.Dying)
             {
