@@ -642,14 +642,19 @@ namespace Archipelago.HollowKnight
             {
                 foreach (AbstractItem item in pmt.Items)
                 {
-                    if (item.GetTag<ArchipelagoItemTag>(out tag)
-                        && !tag.Hinted
-                        && (tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
-                        && !item.WasEverObtained()
-                        && !item.HasTag<DisableItemPreviewTag>())
+                    if (item.GetTag<ArchipelagoItemTag>(out tag) && !tag.Hinted)
                     {
-                        hintedTags.Add(tag);
-                        hintedLocationIDs.Add(tag.Location);
+                        if ((tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
+                            && !item.WasEverObtained()
+                            && !item.HasTag<DisableItemPreviewTag>())
+                        {
+                            hintedTags.Add(tag);
+                            hintedLocationIDs.Add(tag.Location);
+                        }
+                        else
+                        {
+                            tag.Hinted = true;
+                        }
                     }
                 }
             }

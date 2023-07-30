@@ -163,6 +163,8 @@ namespace Archipelago.HollowKnight
             {
                 ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
             }
+            
+            ItemChangerMod.Modules.Add<HintTracker>();
         }
 
         private void RandomizeCharmCosts()
