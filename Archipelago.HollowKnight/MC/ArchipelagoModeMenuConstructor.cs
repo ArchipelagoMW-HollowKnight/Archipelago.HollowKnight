@@ -21,7 +21,7 @@ namespace Archipelago.HollowKnight.MC
             Type settingsType = typeof(ConnectionDetails);
             ConnectionDetails settings = Archipelago.Instance.MenuSettings;
 
-            EntryField<string> urlField = new EntryField<string>(ApPage, "Server URL: ");
+            EntryField<string> urlField = new(ApPage, "Server URL: ");
             urlField.InputField.characterLimit = 500;
             RectTransform urlRect = urlField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
             urlRect.sizeDelta = new Vector2(1500f, 63.2f);
@@ -29,12 +29,12 @@ namespace Archipelago.HollowKnight.MC
             urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
 
 
-            NumericEntryField<int> portField = new NumericEntryField<int>(ApPage, "Server Port: ");
+            NumericEntryField<int> portField = new(ApPage, "Server Port: ");
             portField.SetClamp(0, 65535);
             portField.InputField.textComponent.font = perpetua;
             portField.Bind(settings, settingsType.GetProperty("ServerPort"));
 
-            EntryField<string> nameField = new EntryField<string>(ApPage, "Slot Name: ");
+            EntryField<string> nameField = new(ApPage, "Slot Name: ");
             nameField.InputField.characterLimit = 500;
             nameField.InputField.textComponent.font = perpetua;
             RectTransform nameRect = nameField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
@@ -42,7 +42,7 @@ namespace Archipelago.HollowKnight.MC
             nameField.Bind(settings, settingsType.GetProperty("SlotName"));
 
 
-            EntryField<string> passwordField = new EntryField<string>(ApPage, "Password: ");
+            EntryField<string> passwordField = new(ApPage, "Password: ");
             passwordField.InputField.characterLimit = 500;
             passwordField.InputField.textComponent.font = perpetua;
             RectTransform passwordRect = passwordField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
@@ -50,7 +50,7 @@ namespace Archipelago.HollowKnight.MC
             passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
 
 
-            BigButton startButton = new BigButton(ApPage, "Start", "Will stall after clicking.");
+            BigButton startButton = new(ApPage, "Start", "Will stall after clicking.");
             startButton.OnClick += StartNewGame;
 
             errorLabel = new MenuLabel(ApPage, "");

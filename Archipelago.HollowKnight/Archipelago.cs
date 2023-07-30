@@ -275,7 +275,7 @@ namespace Archipelago.HollowKnight
 
                 LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
 
-                ArchipelagoRandomizer randomizer = new ArchipelagoRandomizer(loginResult.SlotData);
+                ArchipelagoRandomizer randomizer = new(loginResult.SlotData);
                 randomizer.Randomize();
                 pendingGeo = SlotOptions.StartingGeo;
             }
