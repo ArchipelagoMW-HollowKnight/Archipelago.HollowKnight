@@ -7,6 +7,7 @@ using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Modules;
 using ItemChanger.Placements;
+using ItemChanger.Tags;
 
 namespace Archipelago.HollowKnight;
 
@@ -20,9 +21,9 @@ public class HintTracker : Module
     /// </summary>
     public static List<Hint> Hints;
 
-    private static ArchipelagoSession _session;
+    private ArchipelagoSession session;
 
-    private static void UpdateHints(Hint[] arrayHints)
+    private void UpdateHints(Hint[] arrayHints)
     {
         Hints = arrayHints.ToList();
         foreach (Hint hint in Hints)
@@ -64,20 +65,29 @@ public class HintTracker : Module
                     }
 
                 }
-
-                shop.OnPreviewBatch(previewText);
+                MultiPreviewRecordTag previewRecordTag = shop.GetOrAddTag<MultiPreviewRecordTag>();
+                previewRecordTag.previewTexts ??= new string[shop.Items.Count];
+                
+                foreach ((string, AbstractItem item) p in previewText)
+                {
+                    string str = p.Item1;
+                    int index = shop.Items.IndexOf(p.item);
+                    if (index >= 0)
+                        previewRecordTag.previewTexts[index] = str;
+                }
             }
             else
             {
                 List<string> previewText = new();
                 foreach (AbstractItem item in placement.Items)
                 {
+                    if(item.WasEverObtained()) continue;
                     previewText.Add(item.GetTag<ArchipelagoItemTag>().Hinted
                         ? item.GetPreviewWithCost()
                         : Language.Language.Get("???", "IC"));
                 }
 
-                placement.OnPreview(string.Join(", ", previewText));
+                placement.GetOrAddTag<PreviewRecordTag>().previewText = string.Join(Language.Language.Get("COMMA_SPACE", "IC"), previewText);
             }
 
         }
@@ -94,8 +104,8 @@ public class HintTracker : Module
 
     public override void Initialize()
     {
-        _session = Archipelago.Instance.session;
-        _session.DataStorage.TrackHints(UpdateHints);
+        session = Archipelago.Instance.session;
+        session.DataStorage.TrackHints(UpdateHints);
     }
 
     public override void Unload()

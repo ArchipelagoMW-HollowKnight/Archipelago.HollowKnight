@@ -9,7 +9,7 @@ public static class Extensions
         string text = item.GetPreviewName();
         if (item.GetTag(out CostTag tag))
         {
-            text += " - " + tag.Cost.GetCostText();
+            text += "  -  " + tag.Cost.GetCostText();
         }
         return text;
     }

@@ -343,8 +343,6 @@ namespace Archipelago.HollowKnight
             {
                 LogError($"Error invoking OnArchipelagoGameStarted:\n {ex}");
             }
-
-            ItemChangerMod.Modules.Add<HintTracker>();
         }
 
         private void Events_OnSceneChange(UnityEngine.SceneManagement.Scene obj)
