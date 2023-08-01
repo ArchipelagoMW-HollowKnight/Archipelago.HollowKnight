@@ -1,6 +1,7 @@
 ﻿using ItemChanger;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Archipelago.HollowKnight
 {
@@ -20,15 +21,19 @@ namespace Archipelago.HollowKnight
         public abstract string Name { get; }
         public abstract string Description { get; }
 
-        private static readonly Dictionary<GoalsLookup, Goal> Lookup = new Dictionary<GoalsLookup, Goal>()
+        private static readonly Dictionary<GoalsLookup, Goal> Lookup = new()
         {
-            [GoalsLookup.Any] = new HollowKnightGoal(),
             [GoalsLookup.HollowKnight] = new HollowKnightGoal(),
             [GoalsLookup.SealedSiblings] = new SealedSiblingsGoal(),
             [GoalsLookup.Radiance] = new RadianceGoal(),
             [GoalsLookup.Godhome] = new GodhomeGoal(),
             [GoalsLookup.GodhomeFlower] = new GodhomeFlowerGoal()
         };
+
+        static Goal()
+        {
+            Lookup[GoalsLookup.Any] = new AnyGoal(Lookup.Values.ToList());
+        }
 
         protected void FountainPlaqueTopEdit(ref string s) => s = "Your goal is";
         protected void FountainPlaqueNameEdit(ref string s) => s = Name;
@@ -78,6 +83,42 @@ namespace Archipelago.HollowKnight
         public abstract void OnDeselected();
     }
 
+    public class AnyGoal : Goal
+    {
+        private IReadOnlyList<Goal> subgoals;
+
+        public override string Name => "Any Goal";
+
+        public override string Description => "Do whichever goal you like. If you're not sure,<br>try defeating the Hollow Knight!";
+
+        public AnyGoal(IReadOnlyList<Goal> subgoals)
+        {
+            this.subgoals = subgoals;
+        }
+
+        public override void OnSelected()
+        {
+            foreach (Goal goal in subgoals)
+            {
+                goal.OnSelected();
+            }
+        }
+
+        public override void OnDeselected()
+        {
+            foreach (Goal goal in subgoals)
+            {
+                goal.OnDeselected();
+            }
+        }
+
+        public override bool VictoryCondition()
+        {
+            // this goal is never completed on its own, it relies on subgoals to check for victory themselves.
+            return false;
+        }
+    }
+
     public abstract class EndingGoal : Goal
     {
         private static List<string> VictoryScenes = new()
@@ -85,7 +126,7 @@ namespace Archipelago.HollowKnight
             SceneNames.Cinematic_Ending_A,   // THK
             SceneNames.Cinematic_Ending_B,   // Sealed Siblings
             SceneNames.Cinematic_Ending_C,   // Radiance
-            "Cinematic_Ending_D",            // Godhome no flower quest(?)
+            "Cinematic_Ending_D",            // Godhome no flower quest
             SceneNames.Cinematic_Ending_E    // Godhome w/ flower quest
         };
 
