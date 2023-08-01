@@ -115,7 +115,7 @@ namespace Archipelago.HollowKnight
         public override bool VictoryCondition()
         {
             // this goal is never completed on its own, it relies on subgoals to check for victory themselves.
-            return false;
+            throw new NotImplementedException();
         }
     }
 
