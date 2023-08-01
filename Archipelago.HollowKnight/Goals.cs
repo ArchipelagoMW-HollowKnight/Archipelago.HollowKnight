@@ -39,7 +39,7 @@ namespace Archipelago.HollowKnight
         protected void FountainPlaqueNameEdit(ref string s) => s = Name;
         protected void FountainPlaqueDescEdit(ref string s) => s = Description;
 
-        public abstract bool VictoryCondition();
+        protected abstract bool VictoryCondition();
 
         public static Goal GetGoal(GoalsLookup key)
         {
@@ -112,7 +112,7 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public override bool VictoryCondition()
+        protected override bool VictoryCondition()
         {
             // this goal is never completed on its own, it relies on subgoals to check for victory themselves.
             throw new NotImplementedException();
@@ -147,7 +147,7 @@ namespace Archipelago.HollowKnight
             CheckForVictory();
         }
 
-        public override bool VictoryCondition()
+        protected override bool VictoryCondition()
         {
             string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             if (activeScene.StartsWith("Cinematic_Ending_"))
