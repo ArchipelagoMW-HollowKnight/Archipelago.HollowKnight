@@ -504,7 +504,7 @@ namespace Archipelago.HollowKnight
                 sender = session.Players.GetPlayerName(netItem.Player);
             }
 
-            ArchipelagoPlacement pmt = new(sender);
+            RemotePlacement pmt = new(sender);
             InteropTag recentItemsTag = pmt.AddTag<InteropTag>();
             recentItemsTag.Message = "RecentItems";
             recentItemsTag.Properties["DisplaySource"] = sender;
