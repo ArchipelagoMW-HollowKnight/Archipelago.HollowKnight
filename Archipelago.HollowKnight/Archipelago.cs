@@ -8,7 +8,6 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Internal;
-using ItemChanger.Items;
 using ItemChanger.Tags;
 using Modding;
 using System;
@@ -60,6 +59,7 @@ namespace Archipelago.HollowKnight
         public string Player => session.Players.GetPlayerName(Slot);
 
         public bool DeferringLocationChecks { get; private set; }
+        public bool ShouldReceiveChecks { get; private set; } = false;
         public Goal Goal { get; private set; } = null;
         public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
         
@@ -133,15 +133,19 @@ namespace Archipelago.HollowKnight
             Log("Initialized");
         }
 
-        private void HeroController_Start(On.HeroController.orig_Start orig, HeroController self)
+        private void OnSceneEntered(On.GameManager.orig_FinishedEnteringScene orig, GameManager self)
         {
             orig(self);
-            SynchronizeCheckedLocations();
-            StopDeferringLocationChecks();
-            if (pendingGeo > 0)
+            if (!ShouldReceiveChecks)
             {
-                self.AddGeo(pendingGeo);
-                pendingGeo = 0;
+                SynchronizeCheckedLocations();
+                StopDeferringLocationChecks();
+                if (pendingGeo > 0)
+                {
+                    HeroController.instance.AddGeo(pendingGeo);
+                    pendingGeo = 0;
+                }
+                ShouldReceiveChecks = true;
             }
         }
 
@@ -210,6 +214,11 @@ namespace Archipelago.HollowKnight
 
         private void ModHooks_HeroUpdateHook()
         {
+            if (!ShouldReceiveChecks)
+            {
+                return;
+            }
+
             if (DeferringLocationChecks)
             {
                 StopDeferringLocationChecks();
@@ -237,12 +246,13 @@ namespace Archipelago.HollowKnight
             DisconnectArchipelago();
             ArchipelagoEnabled = false;
             ApSettings = new();
+            ShouldReceiveChecks = false;
 
             ItemChanger.Events.OnItemChangerUnhook -= EndGame;
             ItemChanger.Events.OnSceneChange -= Events_OnSceneChange;
             ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
             ModHooks.AfterPlayerDeadHook -= ModHooks_AfterPlayerDeadHook;
-            On.HeroController.Start -= HeroController_Start;
+            On.GameManager.FinishedEnteringScene -= OnSceneEntered;
 
             if (Goal != null)
             {
@@ -312,7 +322,7 @@ namespace Archipelago.HollowKnight
             ItemChanger.Events.OnSceneChange += Events_OnSceneChange;
             ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             ModHooks.AfterPlayerDeadHook += ModHooks_AfterPlayerDeadHook;
-            On.HeroController.Start += HeroController_Start;
+            On.GameManager.FinishedEnteringScene += OnSceneEntered;
 
             // Discard from the beginning of the incoming item queue up to how many items we have received.
             for (int i = 0; i < ApSettings.ItemIndex; ++i)
@@ -443,16 +453,7 @@ namespace Archipelago.HollowKnight
                 hadNewlyObtainedItems = true;
                 pmt.AddVisitFlag(VisitState.ObtainedAnyItem);
 
-                // Soul items shouldn't be granted if the hero controller isn't instantiated, ItemChanger doesn't like that.
-                if ((item is SoulItem) && (HeroController.instance == null))
-                {
-                    // Just mark it as obtained instead
-                    item.SetObtained();
-                }
-                else
-                {
-                    item.Give(pmt, DeferringLocationChecks ? SilentGiveInfo : RemoteGiveInfo);
-                }
+                item.Give(pmt, RemoteGiveInfo);
             }
 
             if (hadNewlyObtainedItems && !hadUnobtainedItems)
@@ -475,16 +476,13 @@ namespace Archipelago.HollowKnight
             }
 
             // If we're still here, this is an item from someone else.  We'll make up our own dummy placement and grant the item.
-            AbstractItem item;
-            item = Finder.GetItem(name);
+            AbstractItem item = Finder.GetItem(name);
             if (item == null)
             {
                 LogDebug(
                     $"Could not find an item named '{name}'.  This means that item {netItem.Item} was not received.");
                 return;
             }
-
-            item.Load();
 
             string sender;
             if (netItem.Location == -1)
@@ -503,13 +501,13 @@ namespace Archipelago.HollowKnight
             {
                 sender = session.Players.GetPlayerName(netItem.Player);
             }
-
-            RemotePlacement pmt = new(sender);
-            InteropTag recentItemsTag = pmt.AddTag<InteropTag>();
+            InteropTag recentItemsTag = item.AddTag<InteropTag>();
             recentItemsTag.Message = "RecentItems";
             recentItemsTag.Properties["DisplaySource"] = sender;
-            CompletionWeightTag remoteCompletionWeightTag = pmt.AddTag<CompletionWeightTag>();
-            remoteCompletionWeightTag.Weight = 0;
+
+            RemotePlacement pmt = RemotePlacement.GetOrAddSingleton();
+            item.Load();
+            pmt.Add(item);
 
             UIDef def = item.GetResolvedUIDef();
             item.Give(pmt, SilentGiveInfo.Clone());

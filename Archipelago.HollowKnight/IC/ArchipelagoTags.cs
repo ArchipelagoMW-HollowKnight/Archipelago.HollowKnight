@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using Archipelago.MultiClient.Net.Enums;
+﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -82,11 +82,10 @@ namespace Archipelago.HollowKnight.IC
                         return;
                     }
                 }
-                {
-                    InteropTag tag = obj.Item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["IgnoreItem"] = true;
-                }
+
+                InteropTag newTag = obj.Item.AddTag<InteropTag>();
+                newTag.Message = "RecentItems";
+                newTag.Properties["IgnoreItem"] = true;
             }
         }
 
