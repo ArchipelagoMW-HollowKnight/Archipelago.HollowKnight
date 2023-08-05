@@ -7,7 +7,7 @@ namespace Archipelago.HollowKnight.IC
 {
     public class RemotePlacement : AbstractPlacement
     {
-        private const string SINGLETON_NAME = "Remote_Items";
+        public const string SINGLETON_NAME = "Remote_Items";
 
         public RemotePlacement() : base(SINGLETON_NAME)
         {
