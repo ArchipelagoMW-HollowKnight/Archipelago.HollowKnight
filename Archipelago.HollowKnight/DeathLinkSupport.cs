@@ -1,6 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
-using HKMirror.Reflection;
 using HutongGames.PlayMaker;
 using ItemChanger;
 using ItemChanger.Extensions;
@@ -8,6 +7,7 @@ using ItemChanger.FsmStateActions;
 using Modding;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Archipelago.HollowKnight
 {
@@ -136,6 +136,8 @@ namespace Archipelago.HollowKnight
     public class DeathLinkSupport
     {
         public const string AMNESTY_VARIABLE_NAME = "Deathlink Amnesty";
+        private static readonly MethodInfo HeroController_CanTakeDamage = typeof(HeroController)
+            .GetMethod("CanTakeDamage", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public static readonly DeathLinkSupport Instance = new();
         public bool Enabled { get; private set; } = false;
@@ -303,7 +305,11 @@ namespace Archipelago.HollowKnight
 
         private void OnHeroUpdate()
         {
-            if (status == DeathLinkStatus.Pending && HeroController.instance.Reflect().CanTakeDamage())
+            HeroController hc = HeroController.instance;
+            if (status == DeathLinkStatus.Pending 
+                && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE
+                && PlayerData.instance.GetInt(nameof(PlayerData.health)) > 0
+                && (bool)HeroController_CanTakeDamage.Invoke(hc, null))
             {
                 MurderPlayer();
             }
