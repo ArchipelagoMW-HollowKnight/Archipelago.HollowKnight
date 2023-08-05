@@ -2,9 +2,9 @@
 
 namespace Archipelago.HollowKnight.IC
 {
-    internal class ArchipelagoPlacement : AbstractPlacement
+    public class RemotePlacement : AbstractPlacement
     {
-        public ArchipelagoPlacement(string Name) : base(Name)
+        public RemotePlacement(string Name) : base(Name)
         {
         }
 
