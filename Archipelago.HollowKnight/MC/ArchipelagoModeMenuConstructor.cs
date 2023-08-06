@@ -10,57 +10,28 @@ namespace Archipelago.HollowKnight.MC
 {
     internal class ArchipelagoModeMenuConstructor : ModeMenuConstructor
     {
-        MenuPage ApPage;
-        private MenuLabel errorLabel;
+        private MenuPage modeConfigPage;
+
+        private readonly static Type _settingsType = typeof(ConnectionDetails);
+        private readonly static Font _perpetua = CanvasUtil.GetFont("Perpetua");
 
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
-            Font perpetua = CanvasUtil.GetFont("Perpetua");
-
-            ApPage = new MenuPage("Archipelago Settings", modeMenu);
-            Type settingsType = typeof(ConnectionDetails);
+            modeConfigPage = new MenuPage("Archipelago Settings", modeMenu);
             ConnectionDetails settings = Archipelago.Instance.MenuSettings;
 
-            EntryField<string> urlField = new(ApPage, "Server URL: ");
-            urlField.InputField.characterLimit = 500;
-            RectTransform urlRect = urlField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
-            urlRect.sizeDelta = new Vector2(1500f, 63.2f);
-            urlField.InputField.textComponent.font = perpetua;
-            urlField.Bind(settings, settingsType.GetProperty("ServerUrl"));
+            EntryField<string> urlField = CreateUrlField(modeConfigPage, settings);
+            NumericEntryField<int> portField = CreatePortField(modeConfigPage, settings);
+            EntryField<string> nameField = CreateSlotNameField(modeConfigPage, settings);
+            EntryField<string> passwordField = CreatePasswordField(modeConfigPage, settings);
 
+            MenuLabel errorLabel = new(modeConfigPage, "");
+            BigButton startButton = new(modeConfigPage, "Start", "May stall after clicking");
 
-            NumericEntryField<int> portField = new(ApPage, "Server Port: ");
-            portField.SetClamp(0, 65535);
-            portField.InputField.textComponent.font = perpetua;
-            portField.Bind(settings, settingsType.GetProperty("ServerPort"));
+            startButton.AddSetResumeKeyEvent("Archipelago");
+            startButton.OnClick += () => StartOrResumeGame(true, errorLabel);
 
-            EntryField<string> nameField = new(ApPage, "Slot Name: ");
-            nameField.InputField.characterLimit = 500;
-            nameField.InputField.textComponent.font = perpetua;
-            RectTransform nameRect = nameField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
-            nameRect.sizeDelta = new Vector2(1500f, 63.2f);
-            nameField.Bind(settings, settingsType.GetProperty("SlotName"));
-
-
-            EntryField<string> passwordField = new(ApPage, "Password: ");
-            passwordField.InputField.characterLimit = 500;
-            passwordField.InputField.textComponent.font = perpetua;
-            RectTransform passwordRect = passwordField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
-            passwordRect.sizeDelta = new Vector2(1500f, 63.2f);
-            passwordField.Bind(settings, settingsType.GetProperty("ServerPassword"));
-
-
-            BigButton startButton = new(ApPage, "Start", "Will stall after clicking.");
-            startButton.OnClick += StartNewGame;
-
-            errorLabel = new MenuLabel(ApPage, "");
-
-            urlField.SetNeighbor(Neighbor.Down, portField);
-            portField.SetNeighbor(Neighbor.Down, nameField);
-            nameField.SetNeighbor(Neighbor.Down, passwordField);
-            passwordField.SetNeighbor(Neighbor.Down, startButton);
-            startButton.SetNeighbor(Neighbor.Down, ApPage.backButton);
-            ApPage.backButton.SetNeighbor(Neighbor.Up, startButton);
+            modeConfigPage.AfterHide += () => errorLabel.Text.text = "";
 
             IMenuElement[] elements = new IMenuElement[]
             {
@@ -71,19 +42,132 @@ namespace Archipelago.HollowKnight.MC
                 startButton,
                 errorLabel
             };
-            new VerticalItemPanel(ApPage, new Vector2(0, 300), 100, false, elements);
+            VerticalItemPanel vip = new(modeConfigPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, 100, false, elements);
+            modeConfigPage.AddToNavigationControl(vip);
+
+            AttachResumePage();
         }
 
-        private void StartNewGame()
+        private void AttachResumePage()
+        {
+            MenuPage resumePage = new("Archipelago Resume");
+
+            EntryField<string> urlField = CreateUrlField(resumePage, null);
+            NumericEntryField<int> portField = CreatePortField(resumePage, null);
+            EntryField<string> passwordField = CreatePasswordField(resumePage, null);
+
+            SmallButton resumeButton = new(resumePage, "Resume");
+            MenuLabel errorLabel = new(resumePage, "");
+
+            void RebindInputFields()
+            {
+                ConnectionDetails settings = Archipelago.Instance.ApSettings;
+                urlField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerUrl)));
+                portField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPort)));
+                passwordField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPassword)));
+            }
+
+            resumeButton.OnClick += () => StartOrResumeGame(false, errorLabel);
+
+            resumePage.BeforeShow += RebindInputFields;
+            resumePage.AfterHide += () => errorLabel.Text.text = "";
+
+            IMenuElement[] elements = new IMenuElement[]
+            {
+                urlField,
+                portField,
+                passwordField,
+                resumeButton,
+                errorLabel
+            };
+
+            VerticalItemPanel vip = new(resumePage, SpaceParameters.TOP_CENTER_UNDER_TITLE, 100, true, elements);
+            resumePage.AddToNavigationControl(vip);
+
+            ResumeMenu.AddResumePage("Archipelago", resumePage);
+        }
+
+        private static EntryField<string> CreateUrlField(MenuPage apPage, ConnectionDetails settings)
+        {
+            EntryField<string> urlField = new(apPage, "Server URL: ");
+            urlField.InputField.characterLimit = 500;
+            RectTransform urlRect = urlField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            urlRect.sizeDelta = new Vector2(1500f, 63.2f);
+            urlField.InputField.textComponent.font = _perpetua;
+            if (settings != null)
+            {
+                urlField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerUrl)));
+            }
+            return urlField;
+        }
+
+        private static NumericEntryField<int> CreatePortField(MenuPage apPage, ConnectionDetails settings)
+        {
+            NumericEntryField<int> portField = new(apPage, "Server Port: ");
+            portField.SetClamp(0, 65535);
+            portField.InputField.textComponent.font = _perpetua;
+            if (settings != null)
+            {
+                portField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPort)));
+            }
+            return portField;
+        }
+
+        private static EntryField<string> CreateSlotNameField(MenuPage apPage, ConnectionDetails settings)
+        {
+            EntryField<string> nameField = new(apPage, "Slot Name: ");
+            nameField.InputField.characterLimit = 500;
+            nameField.InputField.textComponent.font = _perpetua;
+            RectTransform nameRect = nameField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            nameRect.sizeDelta = new Vector2(1500f, 63.2f);
+            if (settings != null)
+            {
+                nameField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.SlotName)));
+            }
+            return nameField;
+        }
+
+        private static EntryField<string> CreatePasswordField(MenuPage apPage, ConnectionDetails settings)
+        {
+            EntryField<string> passwordField = new(apPage, "Password: ");
+            passwordField.InputField.characterLimit = 500;
+            passwordField.InputField.textComponent.font = _perpetua;
+            RectTransform passwordRect = passwordField.InputField.gameObject.transform.Find("Text").GetComponent<RectTransform>();
+            passwordRect.sizeDelta = new Vector2(1500f, 63.2f);
+            if (settings != null)
+            {
+                passwordField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPassword)));
+            }
+            return passwordField;
+        }
+
+        private static void StartOrResumeGame(bool newGame, MenuLabel errorLabel)
         {
             Archipelago.Instance.ArchipelagoEnabled = true;
-            Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with { };  // Clone MenuSettings into ApSettings
+
+            // Cloning some settings onto others depending on what is taking precedence.
+            // If it's a save slot we're resuming (newGame == false) then we want the slot settings to overwrite the global ones.
+            if (newGame)
+            {
+                Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with { };  // Clone MenuSettings into ApSettings
+            }
+            else
+            {
+                Archipelago.Instance.MenuSettings = Archipelago.Instance.ApSettings with { };
+            }
             try
             {
-                // Archipelago.Instance.ConnectAndRandomize();
-                Archipelago.Instance.StartOrResumeGame(true);
+                Archipelago.Instance.StartOrResumeGame(newGame);
                 MenuChangerMod.HideAllMenuPages();
-                UIManager.instance.StartNewGame();
+                if (newGame)
+                {
+                    UIManager.instance.StartNewGame();
+                }
+                else
+                {
+                    UIManager.instance.ContinueGame();
+                    GameManager.instance.ContinueGame();
+                }
             }
             catch (ArchipelagoConnectionException ex)
             {
@@ -91,7 +175,7 @@ namespace Archipelago.HollowKnight.MC
             }
             catch (Exception ex)
             {
-                errorLabel.Text.text = "An error occurred when attempting to connect.";
+                errorLabel.Text.text = "An unknown error occurred when attempting to connect.";
                 Archipelago.Instance.LogError(ex);
                 Archipelago.Instance.DisconnectArchipelago();
             }
@@ -99,13 +183,13 @@ namespace Archipelago.HollowKnight.MC
 
         public override void OnExitMainMenu()
         {
-            ApPage = null;
+            modeConfigPage = null;
         }
 
         public override bool TryGetModeButton(MenuPage modeMenu, out BigButton button)
         {
             button = new BigButton(modeMenu, Archipelago.Instance.spriteManager.GetSprite("IconBig"), "Archipelago");
-            button.AddHideAndShowEvent(modeMenu, ApPage);
+            button.AddHideAndShowEvent(modeMenu, modeConfigPage);
             return true;
         }
     }
