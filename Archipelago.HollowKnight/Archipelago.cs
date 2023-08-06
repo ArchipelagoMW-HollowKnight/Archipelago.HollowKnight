@@ -128,8 +128,6 @@ namespace Archipelago.HollowKnight
             spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
-
-            ModHooks.SavegameLoadHook += ModHooks_SavegameLoadHook;
             Log("Initialized");
         }
 
@@ -516,12 +514,6 @@ namespace Archipelago.HollowKnight
             {
                 MessageController.Enqueue(def.GetSprite(), $"{def.GetPostviewName()} from {sender}");
             }
-        }
-
-        private void ModHooks_SavegameLoadHook(int obj)
-        {
-            ArchipelagoEnabled = ApSettings.ServerUrl != "" && ApSettings.ServerPort != 0 && ApSettings.SlotName != "";
-            StartOrResumeGame(false); // No-op if AP disabled.
         }
 
         /// <summary>

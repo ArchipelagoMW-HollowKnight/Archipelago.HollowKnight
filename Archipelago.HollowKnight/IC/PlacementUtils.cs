@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using Archipelago.HollowKnight.IC;
 using ItemChanger;
 
-namespace Archipelago.HollowKnight
+namespace Archipelago.HollowKnight.IC
 {
     internal static class PlacementUtils
     {
