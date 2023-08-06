@@ -2,6 +2,7 @@
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -69,21 +70,11 @@ namespace Archipelago.HollowKnight.IC
 
         private void ModifyItem(GiveEventArgs obj)
         {
-            AbstractItem item = obj.Orig;
-            if (item is not ArchipelagoItem)
-            {
-                // Item is for HK.  But is it ours?
-                if (Player != Archipelago.Instance.Slot)
-                {
-                    // Create a dummy ArchipelagoItem and "give" the player that instead.
-                    obj.Item = new ArchipelagoDummyItem(obj.Orig);
-                }
-            }
             // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
             if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot)
             {
-                var tags = obj.Item.GetTags<InteropTag>();
-                foreach (var tag in tags)
+                IEnumerable<InteropTag> tags = obj.Item.GetTags<InteropTag>();
+                foreach (InteropTag tag in tags)
                 {
                     if (tag.Message == "RecentItems")
                     {
@@ -91,11 +82,10 @@ namespace Archipelago.HollowKnight.IC
                         return;
                     }
                 }
-                {
-                    var tag = obj.Item.AddTag<InteropTag>();
-                    tag.Message = "RecentItems";
-                    tag.Properties["IgnoreItem"] = true;
-                }
+
+                InteropTag newTag = obj.Item.AddTag<InteropTag>();
+                newTag.Message = "RecentItems";
+                newTag.Properties["IgnoreItem"] = true;
             }
         }
 

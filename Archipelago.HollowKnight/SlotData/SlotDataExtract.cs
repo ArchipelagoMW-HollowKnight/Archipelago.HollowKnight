@@ -7,15 +7,15 @@ namespace Archipelago.HollowKnight.SlotData
     {
         public static T ExtractObjectFromSlotData<T>(object v) where T : class
         {
-            var jobj = v as JObject;
-            var extractedObject = jobj?.ToObject<T>() ?? default;
+            JObject jobj = v as JObject;
+            T extractedObject = jobj?.ToObject<T>() ?? default;
             Archipelago.Instance.LogDebug($"Successfully read object from SlotData: {jobj}");
             return extractedObject;
         }
         public static T ExtractArrayFromSlotData<T>(object v) where T : class
         {
-            var jarr = v as JArray;
-            var extractedObject = jarr?.ToObject<T>() ?? default;
+            JArray jarr = v as JArray;
+            T extractedObject = jarr?.ToObject<T>() ?? default;
             Archipelago.Instance.LogDebug($"Successfully read object from SlotData: {jarr}");
             return extractedObject;
         }
@@ -23,8 +23,8 @@ namespace Archipelago.HollowKnight.SlotData
         public static Dictionary<string, Dictionary<string, int>> ExtractLocationCostsFromSlotData(object v)
         {
             Dictionary<string, Dictionary<string, int>> ret = new();
-            var jobj = ExtractObjectFromSlotData<Dictionary<string, JObject>>(v);
-            foreach (var key in jobj.Keys)
+            Dictionary<string, JObject> jobj = ExtractObjectFromSlotData<Dictionary<string, JObject>>(v);
+            foreach (string key in jobj.Keys)
             {
                 ret[key] = jobj[key].ToObject<Dictionary<string, int>>();
             }

@@ -5,6 +5,7 @@ using MenuChanger.Extensions;
 using MenuChanger.MenuElements;
 using MenuChanger.MenuPanels;
 using Modding;
+using System;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight.MC
@@ -39,7 +40,7 @@ namespace Archipelago.HollowKnight.MC
             startButton.SetNeighbor(Neighbor.Down, _apPage.backButton);
             _apPage.backButton.SetNeighbor(Neighbor.Up, startButton);
 
-            var elements = new IMenuElement[]
+            IMenuElement[] elements = new IMenuElement[]
             {
                 urlField,
                 portField,
