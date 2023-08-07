@@ -417,7 +417,7 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void MarkLocationAsChecked(long locationID, bool receiveItem = false)
+        public void MarkLocationAsChecked(long locationID)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
@@ -439,14 +439,6 @@ namespace Archipelago.HollowKnight
                     hadUnobtainedItems = true;
                     continue;
                 }
-
-                //if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
-                //{
-                //    tag.ReceivedFromItemLink = true;
-                //    AbstractItem itemForMe = Finder.GetItem(item.name);
-                //    itemForMe.Load();
-                //    itemForMe.Give(pmt, RemoteGiveInfo);
-                //}
 
                 if (item.WasEverObtained())
                 {
@@ -480,7 +472,7 @@ namespace Archipelago.HollowKnight
 
             if (netItem.Player == Slot && netItem.Location > 0)
             {
-                MarkLocationAsChecked(netItem.Location, true);
+                MarkLocationAsChecked(netItem.Location);
                 return;
             }
 
