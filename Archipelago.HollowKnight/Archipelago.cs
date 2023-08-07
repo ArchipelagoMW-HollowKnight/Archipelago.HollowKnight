@@ -56,6 +56,7 @@ namespace Archipelago.HollowKnight
         public bool ArchipelagoEnabled { get; set; }
 
         public int Slot { get; private set; }
+        public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
 
         public bool DeferringLocationChecks { get; private set; }
@@ -366,6 +367,7 @@ namespace Archipelago.HollowKnight
         private LoginSuccessful ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
+            session.Socket.PacketReceived += OnPacketReceived;
 
             LoginResult loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          ApSettings.SlotName,
@@ -406,6 +408,15 @@ namespace Archipelago.HollowKnight
             }
         }
 
+        private void OnPacketReceived(ArchipelagoPacketBase packet)
+        {
+            if (packet is ConnectedPacket cp)
+            {
+                session.Socket.PacketReceived -= OnPacketReceived;
+                AllSlots = cp.SlotInfo;
+            }
+        }
+
         public void MarkLocationAsChecked(long locationID, bool receiveItem = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
@@ -429,13 +440,13 @@ namespace Archipelago.HollowKnight
                     continue;
                 }
 
-                if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
-                {
-                    tag.ReceivedFromItemLink = true;
-                    AbstractItem itemForMe = Finder.GetItem(item.name);
-                    itemForMe.Load();
-                    itemForMe.Give(pmt, RemoteGiveInfo);
-                }
+                //if (receiveItem && tag.Player != Slot && !tag.ReceivedFromItemLink && tag.Location == locationID)
+                //{
+                //    tag.ReceivedFromItemLink = true;
+                //    AbstractItem itemForMe = Finder.GetItem(item.name);
+                //    itemForMe.Load();
+                //    itemForMe.Give(pmt, RemoteGiveInfo);
+                //}
 
                 if (item.WasEverObtained())
                 {
@@ -539,6 +550,7 @@ namespace Archipelago.HollowKnight
 
             DeathLinkSupport.Instance.Disable();
             Slot = 0;
+            AllSlots = null;
 
             if (session?.Socket != null && session.Socket.Connected)
             {
