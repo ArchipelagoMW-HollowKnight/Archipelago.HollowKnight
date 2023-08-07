@@ -181,7 +181,6 @@ namespace Archipelago.HollowKnight
 
         public void PlaceItem(string location, string name, NetworkItem netItem)
         {
-            int slot = Archipelago.Instance.Slot;
             Instance.LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
 
             string originalLocation = string.Copy(location);
@@ -217,7 +216,7 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
-            bool isMyItem = netItem.Player == slot;
+            bool isMyItem = GroupUtil.WillItemRouteToMe(netItem.Player);
             string recipientName = null;
             if (!isMyItem)
             {

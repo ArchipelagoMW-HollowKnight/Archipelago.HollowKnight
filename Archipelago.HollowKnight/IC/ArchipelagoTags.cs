@@ -33,10 +33,7 @@ namespace Archipelago.HollowKnight.IC
         /// </summary>
         public bool Hinted { get; set; } = false;
 
-        /// <summary>
-        /// Set if we forcibly granted this item with GiveImmediate as part of an itemlink.
-        /// </summary>
-        public bool ReceivedFromItemLink { get; set; } = false;
+        public bool IsItemForMe { get; set; }
 
         public ArchipelagoItemTag() : base()
         {
@@ -47,6 +44,7 @@ namespace Archipelago.HollowKnight.IC
             Location = networkItem.Location;
             Player = networkItem.Player;
             Flags = networkItem.Flags;
+            IsItemForMe = GroupUtil.WillItemRouteToMe(networkItem.Player);
         }
 
         public override void Load(object parent)
@@ -71,7 +69,7 @@ namespace Archipelago.HollowKnight.IC
         private void ModifyItem(GiveEventArgs obj)
         {
             // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
-            if (Archipelago.Instance.DeferringLocationChecks && Player != Archipelago.Instance.Slot)
+            if (Archipelago.Instance.DeferringLocationChecks && !IsItemForMe)
             {
                 IEnumerable<InteropTag> tags = obj.Item.GetTags<InteropTag>();
                 foreach (InteropTag tag in tags)
