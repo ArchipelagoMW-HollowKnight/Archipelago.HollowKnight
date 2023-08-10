@@ -307,6 +307,7 @@ namespace Archipelago.HollowKnight
         {
             HeroController hc = HeroController.instance;
             if (status == DeathLinkStatus.Pending 
+                && hc.acceptingInput
                 && hc.damageMode == GlobalEnums.DamageMode.FULL_DAMAGE
                 && PlayerData.instance.GetInt(nameof(PlayerData.health)) > 0
                 && (bool)HeroController_CanTakeDamage.Invoke(hc, null))
