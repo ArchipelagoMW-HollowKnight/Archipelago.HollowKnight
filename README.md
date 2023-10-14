@@ -3,10 +3,10 @@
 A mod which enables Hollow Knight to act as an Archipelago client, enabling multiworld and randomization driven by the [Archipelago multigame multiworld system](https://archipelago.gg).
 
 ## Installing Archipelago.HollowKnight
-### Installing with Scarab+
-1. [Download Scarab+](https://themulhima.github.io/Scarab?download).
-2. Place Scarab+ in a folder other than your Downloads folder and run it
-    * If it does not detect your HK install directory, lead Scarab to the correct directory.
+### Installing with Lumafly+
+1. [Download Lumafly](https://themulhima.github.io/Lumaflu?download).
+2. Place Lumafly+ in a folder other than your Downloads folder and run it
+    * If it does not detect your HK install directory, lead Lumafly to the correct directory.
     * Also, don’t pirate the game. >:(
 3. Install and enable Archipelago.
     * There are several mods that are needed to for Archipelago to run. They are installed automatically.
