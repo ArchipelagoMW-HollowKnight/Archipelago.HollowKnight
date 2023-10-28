@@ -4,7 +4,7 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
 
 ## Installing Archipelago.HollowKnight
 ### Installing with Lumafly+
-1. [Download Lumafly](https://themulhima.github.io/Lumaflu?download).
+1. [Download Lumafly](https://themulhima.github.io/Lumafly?download).
 2. Place Lumafly+ in a folder other than your Downloads folder and run it
     * If it does not detect your HK install directory, lead Lumafly to the correct directory.
     * Also, don’t pirate the game. >:(
