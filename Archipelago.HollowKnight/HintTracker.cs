@@ -106,10 +106,29 @@ public class HintTracker : Module
     {
         session = Archipelago.Instance.session;
         session.DataStorage.TrackHints(UpdateHints);
+
+        AbstractItem.AfterGiveGlobal += UpdateHintFoundStatus;
     }
 
     public override void Unload()
     {
-        // nothing to see here.
+        AbstractItem.AfterGiveGlobal -= UpdateHintFoundStatus;
+    }
+
+    private void UpdateHintFoundStatus(ReadOnlyGiveEventArgs args)
+    {
+        if (args.Orig.GetTag(out ArchipelagoItemTag tag))
+        {
+            long location = tag.Location;
+            foreach (Hint hint in Hints)
+            {
+                if (hint.LocationId == location)
+                {
+                    hint.Found = true;
+                    OnArchipelagoHintUpdate?.Invoke();
+                    break;
+                }
+            }
+        }
     }
 }
