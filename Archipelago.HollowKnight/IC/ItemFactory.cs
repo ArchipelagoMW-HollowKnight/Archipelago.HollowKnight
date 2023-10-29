@@ -1,4 +1,5 @@
-﻿using Archipelago.MultiClient.Net.Models;
+﻿using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using System;
 
@@ -21,8 +22,11 @@ namespace Archipelago.HollowKnight.IC
 
         public AbstractItem CreateRemoteItem(string slotName, string itemName, NetworkItem netItem)
         {
+            ArchipelagoSession session = Archipelago.Instance.session;
+            string game = session.Players.Players[session.ConnectionInfo.Team][netItem.Player].Game;
+
             AbstractItem item = Finder.GetItem(itemName);
-            if (item != null)
+            if (game == "Hollow Knight" && item != null)
             {
                 // this is a remote HK item - make it a no-op, but cosmetically correct
                 item = new ArchipelagoDummyItem(item);
@@ -30,7 +34,7 @@ namespace Archipelago.HollowKnight.IC
             }
             else
             {
-                // Items from other games
+                // Items from other games, or an unknown HK item
                 item = new ArchipelagoItem(itemName, slotName, netItem.Flags);
             }
 
