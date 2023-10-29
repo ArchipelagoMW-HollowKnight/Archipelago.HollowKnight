@@ -188,7 +188,7 @@ namespace Archipelago.HollowKnight.MC
 
         public override bool TryGetModeButton(MenuPage modeMenu, out BigButton button)
         {
-            button = new BigButton(modeMenu, Archipelago.Instance.spriteManager.GetSprite("IconBig"), "Archipelago");
+            button = new BigButton(modeMenu, Archipelago.Instance.spriteManager.GetSprite("IconColorBig"), "Archipelago");
             button.AddHideAndShowEvent(modeMenu, modeConfigPage);
             return true;
         }

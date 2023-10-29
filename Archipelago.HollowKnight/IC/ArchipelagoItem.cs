@@ -64,7 +64,7 @@ namespace Archipelago.HollowKnight.IC
             {
                 name = new BoxedString($"{recipientName}'s {name}"),
                 shopDesc = new BoxedString(desc),
-                sprite = new ArchipelagoSprite { key = "IconSmall" }
+                sprite = new ArchipelagoSprite { key = "IconColorSmall" }
             };
         }
 
