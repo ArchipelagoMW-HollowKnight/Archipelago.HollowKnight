@@ -1,6 +1,8 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
+using ItemChanger.Items;
+using ItemChanger.Tags;
 using System;
 
 namespace Archipelago.HollowKnight.IC
@@ -20,17 +22,28 @@ namespace Archipelago.HollowKnight.IC
             return item;
         }
 
-        public AbstractItem CreateRemoteItem(string slotName, string itemName, NetworkItem netItem)
+        public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, NetworkItem netItem)
         {
             ArchipelagoSession session = Archipelago.Instance.session;
             string game = session.Players.Players[session.ConnectionInfo.Team][netItem.Player].Game;
 
-            AbstractItem item = Finder.GetItem(itemName);
-            if (game == "Hollow Knight" && item != null)
+            AbstractItem orig = Finder.GetItem(itemName);
+            AbstractItem item;
+            if (game == "Hollow Knight" && orig != null)
             {
                 // this is a remote HK item - make it a no-op, but cosmetically correct
-                item = new ArchipelagoDummyItem(item);
-                item.UIDef = ArchipelagoUIDef.CreateForSentItem(item, slotName);
+                item = new ArchipelagoDummyItem(orig);
+                item.UIDef = ArchipelagoUIDef.CreateForSentItem(orig, slotName);
+
+                // give the placement the correct cosmetic soul totem or geo rock type if appropriate
+                if (orig is SoulTotemItem totem)
+                {
+                    targetPlacement.GetOrAddTag<SoulTotemSubtypeTag>().Type = totem.soulTotemSubtype;
+                }
+                else if (orig is GeoRockItem rock)
+                {
+                    targetPlacement.GetOrAddTag<GeoRockSubtypeTag>().Type = rock.geoRockSubtype;
+                }
             }
             else
             {

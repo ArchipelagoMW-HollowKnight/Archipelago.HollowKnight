@@ -249,7 +249,7 @@ namespace Archipelago.HollowKnight
             }
             else
             {
-                item = itemFactory.CreateRemoteItem(recipientName, name, netItem);
+                item = itemFactory.CreateRemoteItem(pmt, recipientName, name, netItem);
             }
 
             pmt.Add(item);
