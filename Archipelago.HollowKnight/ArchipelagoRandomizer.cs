@@ -68,10 +68,7 @@ namespace Archipelago.HollowKnight
 
             AddItemChangerModules();
 
-            if (SlotOptions.RandomCharmCosts != -1)
-            {
-                RandomizeCharmCosts();
-            }
+            ApplyCharmCosts();
 
             // Initialize shop locations in case they end up with zero items placed.
             AbstractLocation location;
@@ -167,8 +164,22 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<HintTracker>();
         }
 
-        private void RandomizeCharmCosts()
+        private void ApplyCharmCosts()
         {
+            bool isNotchCostsRandomizedOrPlando = false;
+            for (int i = 0; i < NotchCosts.Count; i++)
+            {
+                if (PlayerData.instance.GetInt($"charmCost_{i + 1}") != NotchCosts[i])
+                {
+                    isNotchCostsRandomizedOrPlando = true;
+                    break;
+                }
+            }
+            if (!isNotchCostsRandomizedOrPlando)
+            {
+                return;
+            }
+
             ItemChangerMod.Modules.Add<ItemChanger.Modules.NotchCostUI>();
             ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
             PlayerDataEditModule playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
