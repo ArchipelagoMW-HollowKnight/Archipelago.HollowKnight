@@ -124,8 +124,15 @@ public class HintTracker : Module
             {
                 if (hint.LocationId == location)
                 {
-                    hint.Found = true;
-                    OnArchipelagoHintUpdate?.Invoke();
+                    hint.Found = true; 
+                    try
+                    {
+                        OnArchipelagoHintUpdate?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Archipelago.Instance.LogError($"Error invoking OnArchipelagoHintUpdate:\n {ex}");
+                    }
                     break;
                 }
             }
