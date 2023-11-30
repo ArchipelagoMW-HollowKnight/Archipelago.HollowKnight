@@ -3,9 +3,9 @@
 A mod which enables Hollow Knight to act as an Archipelago client, enabling multiworld and randomization driven by the [Archipelago multigame multiworld system](https://archipelago.gg).
 
 ## Installing Archipelago.HollowKnight
-### Installing with Lumafly+
+### Installing with Lumafly
 1. [Download Lumafly](https://themulhima.github.io/Lumafly?download).
-2. Place Lumafly+ in a folder other than your Downloads folder and run it
+2. Place Lumafly in a folder other than your Downloads folder and run it
     * If it does not detect your HK install directory, lead Lumafly to the correct directory.
     * Also, don’t pirate the game. >:(
 3. Install and enable Archipelago.
@@ -37,5 +37,5 @@ Contribution guidelines:
 ## Development Setup
 Follow the instructions in the csproj file to create a LocalOverrides.targets file with your Hollow Knight installation path. If you use the Hollow Knight Modding Visual Studio extension (recommended), there is an item template to create this file for you automatically.
 
-Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through Scarab.** If Archipelago is installed through Scarab, uninstall or disable it before testing. Archipelago.HollowKnight will not load if both Scarab and development versions are installed at the same time.
+Post-build events will automatically package the mod for export **as well as install it in your HK installation.** When developing on the mod **do not install Archipelago through an installer.** Some installers, e.g. Lumafly, can pin the development version to prevent it from being replaced by the production version from the installer.
 
