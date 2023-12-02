@@ -143,7 +143,7 @@ namespace Archipelago.HollowKnight
         public bool Enabled { get; private set; } = false;
 
         private DeathLinkService service = null;
-        private DeathLinkType mode => Archipelago.Instance.SlotOptions.DeathLink;
+        private DeathLinkShadeHandling mode => Archipelago.Instance.SlotOptions.DeathLinkShade;
         private DeathLinkStatus status;
         private int lastDamageType;
         private DateTime lastDamageTime;
@@ -238,8 +238,8 @@ namespace Archipelago.HollowKnight
                 }
 
                 amnesty.Value = !(
-                    mode == DeathLinkType.Vanilla
-                    || (mode == DeathLinkType.Shade && PlayerData.instance.shadeScene == "None")
+                    mode == DeathLinkShadeHandling.Vanilla
+                    || (mode == DeathLinkShadeHandling.Shade && PlayerData.instance.shadeScene == "None")
                 );
 
                 if (!amnesty.Value)

@@ -29,7 +29,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Minimum Archipelago Protocol Version
         /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new(0, 3, 3);
+        private readonly Version ArchipelagoProtocolVersion = new(0, 4, 4);
 
         /// <summary>
         /// Mod version as reported to the modding API
@@ -390,7 +390,7 @@ namespace Archipelago.HollowKnight
 
                 LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
                 // Enable Deathlink
-                if (SlotOptions.DeathLink != DeathLinkType.None)
+                if (SlotOptions.DeathLink)
                 {
                     DeathLinkSupport.Instance.Enable();
                 }
