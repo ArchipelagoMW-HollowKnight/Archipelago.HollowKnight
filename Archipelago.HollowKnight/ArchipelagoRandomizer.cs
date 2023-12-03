@@ -1,4 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.RM;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Models;
@@ -67,6 +68,7 @@ namespace Archipelago.HollowKnight
             // }
 
             AddItemChangerModules();
+            AddHelperPlatforms();
 
             ApplyCharmCosts();
 
@@ -130,38 +132,48 @@ namespace Archipelago.HollowKnight
         private void AddItemChangerModules()
         {
             ItemChangerMod.Modules.Add<CompletionPercentOverride>();
+            ItemChangerMod.Modules.Add<HintTracker>();
+
+            if (SlotOptions.DeathLink)
+            {
+                ItemChangerMod.Modules.Add<DeathLinkModule>();
+            }
 
             if (SlotOptions.RandomizeElevatorPass)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.ElevatorPass>();
+                ItemChangerMod.Modules.Add<ElevatorPass>();
             }
 
             if (SlotOptions.RandomizeFocus)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.FocusSkill>();
+                ItemChangerMod.Modules.Add<FocusSkill>();
             }
 
             if (SlotOptions.RandomizeSwim)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SwimSkill>();
+                ItemChangerMod.Modules.Add<SwimSkill>();
             }
 
             if (SlotOptions.SplitMothwingCloak)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitCloak>();
+                ItemChangerMod.Modules.Add<SplitCloak>();
             }
 
             if (SlotOptions.SplitMantisClaw)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitClaw>();
+                ItemChangerMod.Modules.Add<SplitClaw>();
             }
 
             if (SlotOptions.SplitCrystalHeart)
             {
-                ItemChangerMod.Modules.Add<ItemChanger.Modules.SplitSuperdash>();
+                ItemChangerMod.Modules.Add<SplitSuperdash>();
             }
-            
-            ItemChangerMod.Modules.Add<HintTracker>();
+        }
+
+        private void AddHelperPlatforms()
+        {
+            HelperPlatformBuilder.AddConveniencePlatforms(SlotOptions);
+            HelperPlatformBuilder.AddStartLocationRequiredPlatforms(SlotOptions);
         }
 
         private void ApplyCharmCosts()

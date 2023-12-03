@@ -7,12 +7,11 @@
         Dying = 2
     }
 
-    public enum DeathLinkType
+    public enum DeathLinkShadeHandling
     {
-        None = 0,
+        Vanilla = 0,
         Shadeless = 1,
-        Vanilla = 2,
-        Shade = 3
+        Shade = 2
     }
 
     public enum WhitePalaceOption

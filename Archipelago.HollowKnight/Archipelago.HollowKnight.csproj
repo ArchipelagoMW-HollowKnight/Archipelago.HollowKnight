@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>Archipelago.HollowKnight</RootNamespace>
     <AssemblyName>Archipelago.HollowKnight</AssemblyName>
@@ -8,7 +8,7 @@
     <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright>
     </Copyright>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
     <Company>The Archipelago Community</Company>
