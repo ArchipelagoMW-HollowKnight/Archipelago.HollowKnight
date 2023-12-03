@@ -1,4 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.RM;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Models;
@@ -67,6 +68,7 @@ namespace Archipelago.HollowKnight
             // }
 
             AddItemChangerModules();
+            AddHelperPlatforms();
 
             ApplyCharmCosts();
 
@@ -166,6 +168,12 @@ namespace Archipelago.HollowKnight
             {
                 ItemChangerMod.Modules.Add<SplitSuperdash>();
             }
+        }
+
+        private void AddHelperPlatforms()
+        {
+            HelperPlatformBuilder.AddConveniencePlatforms(SlotOptions);
+            HelperPlatformBuilder.AddStartLocationRequiredPlatforms(SlotOptions);
         }
 
         private void ApplyCharmCosts()
