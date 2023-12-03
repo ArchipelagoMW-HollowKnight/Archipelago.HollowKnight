@@ -388,17 +388,6 @@ namespace Archipelago.HollowKnight
                 SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
                 session.Socket.SocketClosed += Socket_SocketClosed;
 
-                LogDebug($"Deathlink type: {SlotOptions.DeathLink}");
-                // Enable Deathlink
-                if (SlotOptions.DeathLink)
-                {
-                    DeathLinkSupport.Instance.Enable();
-                }
-                else
-                {
-                    DeathLinkSupport.Instance.Disable();
-                }
-
                 return success;
             }
             else
@@ -540,7 +529,6 @@ namespace Archipelago.HollowKnight
                 session.Socket.SocketClosed -= Socket_SocketClosed;
             }
 
-            DeathLinkSupport.Instance.Disable();
             Slot = 0;
             AllSlots = null;
 
