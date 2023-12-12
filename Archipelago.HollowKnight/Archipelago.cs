@@ -10,6 +10,7 @@ using ItemChanger;
 using ItemChanger.Internal;
 using ItemChanger.Tags;
 using Modding;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -202,6 +203,10 @@ namespace Archipelago.HollowKnight
             try
             {
                 ReceiveItem(netItem);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(netItem)}: {ex}");
             }
             finally
             {
