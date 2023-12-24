@@ -13,6 +13,7 @@ namespace Archipelago.HollowKnight.IC
     public class DeathLinkModule : ItemChanger.Modules.Module
     {
         public const string PREVENT_SHADE_VARIABLE_NAME = "Deathlink Prevent Shade";
+        public const string IS_DEATHLINK_VARIABLE_NAME = "Is Deathlink Death";
         private static readonly MethodInfo HeroController_CanTakeDamage = typeof(HeroController)
             .GetMethod("CanTakeDamage", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -74,6 +75,7 @@ namespace Archipelago.HollowKnight.IC
             Archipelago ap = Archipelago.Instance;
 
             FsmBool preventShade = fsm.AddFsmBool(PREVENT_SHADE_VARIABLE_NAME, false);
+            FsmBool isDeathlink = fsm.AddFsmBool(IS_DEATHLINK_VARIABLE_NAME, false);
             // Death animation starts here - normally whether you get a shade or not is determined purely by whether
             // you're in a dream or not.
             FsmState mapZone = fsm.GetState("Map Zone");
@@ -84,7 +86,9 @@ namespace Archipelago.HollowKnight.IC
             {
                 ap.LogDebug($"FsmEdit Pre: Status={status} Shade handling={shadeHandling} Break fragiles={breakFragileCharms}.");
 
-                if (status != DeathLinkStatus.Dying)
+                bool isDeathlinkDeath = status == DeathLinkStatus.Dying;
+
+                if (!isDeathlinkDeath)
                 {
                     ap.LogDebug($"FsmEdit Pre: Not a deathlink death, so sending out our own deathlink.");
                     // If we're not caused by DeathLink... then we send a DeathLink
@@ -96,6 +100,7 @@ namespace Archipelago.HollowKnight.IC
                     ap.LogDebug("Beginning deathlink death handling");
                 }
 
+                isDeathlink.Value = isDeathlinkDeath;
                 preventShade.Value = !(
                     shadeHandling == DeathLinkShadeHandling.Vanilla
                     || (shadeHandling == DeathLinkShadeHandling.Shade && PlayerData.instance.shadeScene == "None")
@@ -112,11 +117,13 @@ namespace Archipelago.HollowKnight.IC
             FsmState removeOvercharm = fsm.GetState("Remove Overcharm");
 
             FsmState createShadeCheck = fsm.AddState("Create Shade?");
+            createShadeCheck.AddLastAction(new DelegateBoolTest(() => isDeathlink.Value, null, "FINISHED"));
             createShadeCheck.AddLastAction(new DelegateBoolTest(() => preventShade.Value, "SKIP SHADE", null));
             createShadeCheck.AddTransition("SKIP SHADE", "Save");
             createShadeCheck.AddTransition("FINISHED", "Remove Geo");
 
             FsmState breakFragilesCheck = fsm.AddState("Break Fragiles?");
+            breakFragilesCheck.AddLastAction(new DelegateBoolTest(() => isDeathlink.Value, null, "FINISHED"));
             breakFragilesCheck.AddLastAction(new DelegateBoolTest(() => !breakFragileCharms, "SKIP BREAK", null));
             breakFragilesCheck.AddTransition("SKIP BREAK", createShadeCheck);
             breakFragilesCheck.AddTransition("FINISHED", "Break Glass HP");
@@ -131,7 +138,7 @@ namespace Archipelago.HollowKnight.IC
 
             // adjust soul limiter to be created only if a shade was created
             FsmState deathEnding = fsm.GetState("End");
-            fsm.GetState("Limit Soul?").Actions = new FsmStateAction[] { };
+            fsm.GetState("Limit Soul?").Actions = [];
             // Replace the first two action (which normally start the soul limiter and notify about it)
             deathEnding.Actions[0] = new Lambda(() =>
             {
@@ -149,13 +156,14 @@ namespace Archipelago.HollowKnight.IC
             FsmState dreamReturn = fsm.GetState("Dream Return");
             FsmState waitForHeroController = fsm.GetState("Wait for HeroController");
             FsmState steelSoulCheck = fsm.GetState("Shade?");
-            FsmState[] endingStates = new[] { dreamReturn, waitForHeroController, steelSoulCheck };
+            FsmState[] endingStates = [dreamReturn, waitForHeroController, steelSoulCheck];
             // add deathlink cleanup state
             FsmState cleanupDeathlink = fsm.AddState("Cleanup Deathlink");
             cleanupDeathlink.AddFirstAction(new Lambda(() =>
             {
                 ap.LogDebug("Resetting deathlink state");
                 preventShade.Value = false;
+                isDeathlink.Value = false;
                 status = DeathLinkStatus.None;
             }));
             foreach (FsmState state in endingStates)
