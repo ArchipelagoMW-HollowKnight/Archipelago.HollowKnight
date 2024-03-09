@@ -91,18 +91,99 @@ namespace Archipelago.HollowKnight
 
                 if (pmt is ShopPlacement shop)
                 {
-                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins | DefaultShopItems.IseldaMapMarkers |
-                                            DefaultShopItems.LegEaterRepair;
+                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins 
+                        | DefaultShopItems.IseldaMapMarkers 
+                        | DefaultShopItems.LegEaterRepair;
+                    if (!SlotOptions.RandomizeCharms)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SlyCharms 
+                            | DefaultShopItems.SlyKeyCharms
+                            | DefaultShopItems.IseldaCharms
+                            | DefaultShopItems.SalubraCharms
+                            | DefaultShopItems.LegEaterCharms;
+                    }
+                    if (!SlotOptions.RandomizeMaps)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.IseldaMaps
+                            | DefaultShopItems.IseldaQuill;
+                    }
+                    if (!SlotOptions.RandomizeCharmNotches)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SalubraNotches
+                            | DefaultShopItems.SalubraBlessing;
+                    }
+                    if (!SlotOptions.RandomizeKeys)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SlySimpleKey
+                            | DefaultShopItems.SlyLantern
+                            | DefaultShopItems.SlyKeyElegantKey;
+                    }
+                    if (!SlotOptions.RandomizeMaskShards)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SlyMaskShards;
+                    }
+                    if (!SlotOptions.RandomizeVesselFragments)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SlyVesselFragments;
+                    }
+                    if (!SlotOptions.RandomizeRancidEggs)
+                    {
+                        shop.defaultShopItems |= DefaultShopItems.SlyRancidEgg;
+                    }
                 }
                 else if (name == LocationNames.Grubfather)
                 {
-                    pmt.AddTag<DestroyGrubRewardTag>().destroyRewards = GrubfatherRewards.AllNonGeo;
+                    DestroyGrubRewardTag t = pmt.AddTag<DestroyGrubRewardTag>();
+                    t.destroyRewards = GrubfatherRewards.None;
+                    if (SlotOptions.RandomizeMaskShards)
+                    {
+                        t.destroyRewards |= GrubfatherRewards.MaskShard;
+                    }
+                    if (SlotOptions.RandomizeCharms)
+                    {
+                        t.destroyRewards |= GrubfatherRewards.Grubsong | GrubfatherRewards.GrubberflysElegy;
+                    }
+                    if (SlotOptions.RandomizeRancidEggs)
+                    {
+                        t.destroyRewards |= GrubfatherRewards.RancidEgg;
+                    }
+                    if (SlotOptions.RandomizeRelics)
+                    {
+                        t.destroyRewards |= GrubfatherRewards.HallownestSeal | GrubfatherRewards.KingsIdol;
+                    }
+                    if (SlotOptions.RandomizePaleOre)
+                    {
+                        t.destroyRewards |= GrubfatherRewards.PaleOre;
+                    }
                 }
                 else if (name == LocationNames.Seer)
                 {
-                    pmt.AddTag<DestroySeerRewardTag>().destroyRewards =
-                        SeerRewards.All & ~SeerRewards.GladeDoor & ~SeerRewards.Ascension;
-                    ;
+                    DestroySeerRewardTag t = pmt.AddTag<DestroySeerRewardTag>();
+                    t.destroyRewards = SeerRewards.None;
+                    if (SlotOptions.RandomizeRelics)
+                    {
+                        t.destroyRewards |= SeerRewards.HallownestSeal | SeerRewards.ArcaneEgg;
+                    }
+                    if (SlotOptions.RandomizePaleOre)
+                    {
+                        t.destroyRewards |= SeerRewards.PaleOre;
+                    }
+                    if (SlotOptions.RandomizeCharms)
+                    {
+                        t.destroyRewards |= SeerRewards.DreamWielder;
+                    }
+                    if (SlotOptions.RandomizeVesselFragments)
+                    {
+                        t.destroyRewards |= SeerRewards.VesselFragment;
+                    }
+                    if (SlotOptions.RandomizeSkills)
+                    {
+                        t.destroyRewards |= SeerRewards.DreamGate | SeerRewards.AwokenDreamNail;
+                    }
+                    if (SlotOptions.RandomizeMaskShards) 
+                    {
+                        t.destroyRewards |= SeerRewards.MaskShard;
+                    }
                 }
             }
 
