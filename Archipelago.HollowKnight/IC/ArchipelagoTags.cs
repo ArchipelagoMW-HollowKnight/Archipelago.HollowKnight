@@ -89,11 +89,14 @@ namespace Archipelago.HollowKnight.IC
         /// </summary>
         public bool Hinted { get; set; }
 
+        private HintTracker hintTracker;
+
         public override void Load(object parent)
         {
             base.Load(parent);
             AbstractPlacement pmt = (AbstractPlacement)parent;
             //Archipelago.Instance.LogDebug($"In ArchipelagoPlacementTag:Load for {parent}, locations ({String.Join(", ", PlacementUtils.GetLocationIDs(pmt))})");
+            hintTracker = ItemChangerMod.Modules.Get<HintTracker>();
 
             foreach (long locationId in PlacementUtils.GetLocationIDs(pmt))
             {
@@ -104,7 +107,7 @@ namespace Archipelago.HollowKnight.IC
             // If we've been previewed but never told AP that, tell it now
             if (!Hinted && pmt.Visited.HasFlag(VisitState.Previewed))
             {
-                Archipelago.Instance.PendingPlacementHints.Add(pmt);
+                hintTracker.HintPlacement(pmt);
             }
         }
 
@@ -126,7 +129,7 @@ namespace Archipelago.HollowKnight.IC
             if (!Hinted && obj.NewFlags.HasFlag(VisitState.Previewed))
             {
                 // We are now previewed, but we weren't before.
-                Archipelago.Instance.PendingPlacementHints.Add(obj.Placement);
+                hintTracker.HintPlacement(obj.Placement);
             }
         }
     }

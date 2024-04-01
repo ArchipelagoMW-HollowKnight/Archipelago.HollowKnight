@@ -1,6 +1,10 @@
 ﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
+using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Modules;
 using ItemChanger.Placements;
@@ -8,6 +12,8 @@ using ItemChanger.Tags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 namespace Archipelago.HollowKnight;
 
@@ -20,6 +26,10 @@ public class HintTracker : Module
     ///  List of MultiClient.Net Hint's
     /// </summary>
     public static List<Hint> Hints;
+    /// <summary>
+    /// List of placement hints to send on scene change or when closing out the session
+    /// </summary>
+    private List<AbstractPlacement> PendingPlacementHints;
 
     private ArchipelagoSession session;
 
@@ -118,15 +128,26 @@ public class HintTracker : Module
 
     public override void Initialize()
     {
+        PendingPlacementHints = [];
+
         session = Archipelago.Instance.session;
         session.DataStorage.TrackHints(UpdateHints);
 
         AbstractItem.AfterGiveGlobal += UpdateHintFoundStatus;
+        Events.OnSceneChange += SendHintsOnSceneChange;
     }
 
-    public override void Unload()
+    public override async void Unload()
     {
         AbstractItem.AfterGiveGlobal -= UpdateHintFoundStatus;
+        Events.OnSceneChange -= SendHintsOnSceneChange;
+        await SendPlacementHintsAsync();
+    }
+
+    public void HintPlacement(AbstractPlacement pmt)
+    {
+        // todo - accommodate different hinting times (immediate/never)
+        PendingPlacementHints.Add(pmt);
     }
 
     private void UpdateHintFoundStatus(ReadOnlyGiveEventArgs args)
@@ -150,6 +171,71 @@ public class HintTracker : Module
                     break;
                 }
             }
+        }
+    }
+
+    private async void SendHintsOnSceneChange(Scene scene)
+    {
+        await SendPlacementHintsAsync();
+    }
+
+    private async Task SendPlacementHintsAsync()
+    {
+        if (!PendingPlacementHints.Any())
+        {
+            return;
+        }
+
+        HashSet<ArchipelagoItemTag> hintedTags = new();
+        HashSet<long> hintedLocationIDs = new();
+        ArchipelagoItemTag tag;
+
+        foreach (AbstractPlacement pmt in PendingPlacementHints)
+        {
+            foreach (AbstractItem item in pmt.Items)
+            {
+                if (item.GetTag(out tag) && !tag.Hinted)
+                {
+                    if ((tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
+                        && !item.WasEverObtained()
+                        && !item.HasTag<DisableItemPreviewTag>())
+                    {
+                        hintedTags.Add(tag);
+                        hintedLocationIDs.Add(tag.Location);
+                    }
+                    else
+                    {
+                        tag.Hinted = true;
+                    }
+                }
+            }
+        }
+
+        PendingPlacementHints.Clear();
+        if (!hintedLocationIDs.Any())
+        {
+            return;
+        }
+
+        Archipelago.Instance.LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
+        try
+        {
+            await session.Socket.SendPacketAsync(new LocationScoutsPacket()
+            {
+                CreateAsHint = true,
+                Locations = hintedLocationIDs.ToArray(),
+            }).ContinueWith(x =>
+            {
+                bool result = !x.IsFaulted;
+                foreach (ArchipelagoItemTag tag in hintedTags)
+                {
+                    tag.Hinted = result;
+                }
+            }).TimeoutAfter(1000);
+        }
+        catch (Exception ex) when (ex is ArchipelagoSocketClosedException or TimeoutException)
+        {
+            ItemChangerMod.Modules.Get<ItemNetworkingModule>().ReportDisconnect();
         }
     }
 }

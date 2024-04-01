@@ -1,15 +1,12 @@
-﻿using Archipelago.HollowKnight.IC;
-using Archipelago.HollowKnight.IC.Modules;
+﻿using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Internal;
-using ItemChanger.Tags;
 using Modding;
 using System;
 using System.Collections.Generic;
@@ -60,9 +57,6 @@ namespace Archipelago.HollowKnight
         public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
 
-        // Placements to attempt hinting
-        public HashSet<AbstractPlacement> PendingPlacementHints = new();
-
         internal SpriteManager spriteManager;
 
         internal ConnectionDetails MenuSettings = new()
@@ -87,7 +81,6 @@ namespace Archipelago.HollowKnight
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
-            SendPlacementHints();
             try
             {
                 OnArchipelagoGameEnded?.Invoke();
@@ -102,7 +95,6 @@ namespace Archipelago.HollowKnight
             ApSettings = new();
 
             Events.OnItemChangerUnhook -= EndGame;
-            Events.OnSceneChange -= OnSceneChange;
         }
 
         /// <summary>
@@ -162,7 +154,6 @@ namespace Archipelago.HollowKnight
             // Doing this before checking for the correct slot/seed/room will cause problems if
             // the client connects to the wrong session with a matching slot.
             Events.OnItemChangerUnhook += EndGame;
-            Events.OnSceneChange += OnSceneChange;
 
             try
             {
@@ -172,11 +163,6 @@ namespace Archipelago.HollowKnight
             {
                 LogError($"Error invoking OnArchipelagoGameStarted:\n {ex}");
             }
-        }
-
-        private void OnSceneChange(UnityEngine.SceneManagement.Scene obj)
-        {
-            SendPlacementHints();
         }
 
         private void OnSocketClosed(string reason)
@@ -242,67 +228,6 @@ namespace Archipelago.HollowKnight
             }
 
             session = null;
-        }
-
-        public void SendPlacementHints()
-        {
-            if (!PendingPlacementHints.Any())
-            {
-                return;
-            }
-
-            HashSet<ArchipelagoItemTag> hintedTags = new();
-            HashSet<long> hintedLocationIDs = new();
-            ArchipelagoItemTag tag;
-
-            foreach (AbstractPlacement pmt in PendingPlacementHints)
-            {
-                foreach (AbstractItem item in pmt.Items)
-                {
-                    if (item.GetTag(out tag) && !tag.Hinted)
-                    {
-                        if ((tag.Flags.HasFlag(ItemFlags.Advancement) || tag.Flags.HasFlag(ItemFlags.NeverExclude))
-                            && !item.WasEverObtained()
-                            && !item.HasTag<DisableItemPreviewTag>())
-                        {
-                            hintedTags.Add(tag);
-                            hintedLocationIDs.Add(tag.Location);
-                        }
-                        else
-                        {
-                            tag.Hinted = true;
-                        }
-                    }
-                }
-            }
-
-            PendingPlacementHints.Clear();
-            if (!hintedLocationIDs.Any())
-            {
-                return;
-            }
-
-            LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
-            try
-            {
-                session.Socket.SendPacketAsync(new LocationScoutsPacket()
-                {
-                    CreateAsHint = true,
-                    Locations = hintedLocationIDs.ToArray(),
-                }).ContinueWith(x =>
-                {
-                    bool result = !x.IsFaulted;
-                    foreach (ArchipelagoItemTag tag in hintedTags)
-                    {
-                        tag.Hinted = result;
-                    }
-                }).TimeoutAfter(1000).Wait();
-            }
-            catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 
-                   && ex.InnerExceptions[0] is ArchipelagoSocketClosedException or TimeoutException)
-            {
-                ItemChangerMod.Modules.Get<ItemNetworkingModule>().ReportDisconnect();
-            }
         }
 
         /// <summary>
