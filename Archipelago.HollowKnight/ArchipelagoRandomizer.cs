@@ -212,6 +212,7 @@ namespace Archipelago.HollowKnight
 
         private void AddItemChangerModules()
         {
+            ItemChangerMod.Modules.Add<ItemNetworkingModule>();
             ItemChangerMod.Modules.Add<CompletionPercentOverride>();
             ItemChangerMod.Modules.Add<HintTracker>();
 
@@ -273,9 +274,9 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
-            ItemChangerMod.Modules.Add<ItemChanger.Modules.NotchCostUI>();
-            ItemChangerMod.Modules.Add<ItemChanger.Modules.ZeroCostCharmEquip>();
-            PlayerDataEditModule playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<ItemChanger.Modules.PlayerDataEditModule>();
+            ItemChangerMod.Modules.Add<NotchCostUI>();
+            ItemChangerMod.Modules.Add<ZeroCostCharmEquip>();
+            PlayerDataEditModule playerDataEditModule = ItemChangerMod.Modules.GetOrAdd<PlayerDataEditModule>();
             Instance.LogDebug(playerDataEditModule);
             for (int i = 0; i < NotchCosts.Count; i++)
             {

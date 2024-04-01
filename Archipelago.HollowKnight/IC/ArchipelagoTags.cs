@@ -1,7 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
-using ItemChanger.Tags;
 using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC
@@ -35,9 +34,7 @@ namespace Archipelago.HollowKnight.IC
 
         public bool IsItemForMe { get; set; }
 
-        public ArchipelagoItemTag() : base()
-        {
-        }
+        private ItemNetworkingModule networkModule;
 
         public void ReadNetItem(NetworkItem networkItem)
         {
@@ -47,49 +44,27 @@ namespace Archipelago.HollowKnight.IC
             IsItemForMe = GroupUtil.WillItemRouteToMe(networkItem.Player);
         }
 
-        public override void Load(object parent)
+        public override async void Load(object parent)
         {
             base.Load(parent);
+            networkModule = ItemChangerMod.Modules.Get<ItemNetworkingModule>();
             AbstractItem item = (AbstractItem)parent;
             // Archipelago.Instance.LogDebug($"In ArchipelagoItemTag:Load for {parent}");
-            item.ModifyItem += ModifyItem;
             item.AfterGive += AfterGive;
 
             if (item.WasEverObtained())
             {
-                Archipelago.Instance.CheckLocation(Location);
+                await networkModule.SendLocationsAsync(Location);
             }
         }
 
-        private void AfterGive(ReadOnlyGiveEventArgs obj)
+        private async void AfterGive(ReadOnlyGiveEventArgs obj)
         {
-            Archipelago.Instance.CheckLocation(Location);
-        }
-
-        private void ModifyItem(GiveEventArgs obj)
-        {
-            // If checks are deferred, we're doing initial catchup -- don't report items we sent to other players.
-            if (Archipelago.Instance.DeferringLocationChecks && !IsItemForMe)
-            {
-                IEnumerable<InteropTag> tags = obj.Item.GetTags<InteropTag>();
-                foreach (InteropTag tag in tags)
-                {
-                    if (tag.Message == "RecentItems")
-                    {
-                        tag.Properties["IgnoreItem"] = true;
-                        return;
-                    }
-                }
-
-                InteropTag newTag = obj.Item.AddTag<InteropTag>();
-                newTag.Message = "RecentItems";
-                newTag.Properties["IgnoreItem"] = true;
-            }
+            await networkModule.SendLocationsAsync(Location);
         }
 
         public override void Unload(object parent)
         {
-            ((AbstractItem)parent).ModifyItem -= ModifyItem;
             ((AbstractItem)parent).AfterGive -= AfterGive;
             base.Unload(parent);
         }
@@ -106,6 +81,8 @@ namespace Archipelago.HollowKnight.IC
     /// </remarks>
     public class ArchipelagoPlacementTag : Tag
     {
+        public static Dictionary<long, AbstractPlacement> PlacementsByLocationId = new();
+
         /// <summary>
         /// True if this location has been hinted AP, or is in the process of being hinted.
         /// </summary>
@@ -119,7 +96,7 @@ namespace Archipelago.HollowKnight.IC
 
             foreach (long locationId in PlacementUtils.GetLocationIDs(pmt))
             {
-                Archipelago.Instance.placementsByLocationID[locationId] = pmt;
+                PlacementsByLocationId[locationId] = pmt;
             }
 
             pmt.OnVisitStateChanged += OnVisitStateChanged;
@@ -137,7 +114,7 @@ namespace Archipelago.HollowKnight.IC
 
             foreach (long locationId in PlacementUtils.GetLocationIDs((AbstractPlacement)parent))
             {
-                Archipelago.Instance.placementsByLocationID.Remove(locationId);
+                PlacementsByLocationId.Remove(locationId);
             }
 
             base.Unload(parent);

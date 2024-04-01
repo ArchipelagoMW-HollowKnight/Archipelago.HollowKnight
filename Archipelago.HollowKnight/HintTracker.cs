@@ -33,12 +33,12 @@ public class HintTracker : Module
                 continue;
             }
 
-            if (!Archipelago.Instance.placementsByLocationID.ContainsKey(hint.LocationId))
+            if (!ArchipelagoPlacementTag.PlacementsByLocationId.ContainsKey(hint.LocationId))
             {
                 continue;
             }
 
-            AbstractPlacement placement = Archipelago.Instance.placementsByLocationID[hint.LocationId];
+            AbstractPlacement placement = ArchipelagoPlacementTag.PlacementsByLocationId[hint.LocationId];
 
             if (placement == null)
             {
