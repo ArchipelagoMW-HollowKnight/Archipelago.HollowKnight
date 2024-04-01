@@ -169,10 +169,6 @@ namespace Archipelago.HollowKnight.MC
                     GameManager.instance.ContinueGame();
                 }
             }
-            catch (ArchipelagoConnectionException ex)
-            {
-                errorLabel.Text.text = ex.Message;
-            }
             catch (LoginValidationException ex)
             {
                 Archipelago.Instance.DisconnectArchipelago();

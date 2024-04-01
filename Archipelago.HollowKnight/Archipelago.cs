@@ -185,7 +185,7 @@ namespace Archipelago.HollowKnight
             {
                 string errors = string.Join(", ", failure.Errors);
                 LogError($"Unable to connect to Archipelago because: {string.Join(", ", failure.Errors)}");
-                throw new ArchipelagoConnectionException(errors);
+                throw new LoginValidationException(errors);
             }
             else if (loginResult is LoginSuccessful success)
             {
@@ -199,7 +199,7 @@ namespace Archipelago.HollowKnight
             else
             {
                 LogError($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}");
-                throw new ArchipelagoConnectionException("Unexpected login result.");
+                throw new LoginValidationException("Unexpected login result.");
             }
         }
 
