@@ -59,15 +59,6 @@ namespace Archipelago.HollowKnight
         public int Slot { get; private set; }
         public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
-        
-        // Shade position fixes
-        public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
-        {
-            { "Abyss_08", (90.0f, 90.0f) },  // Lifeblood Core room.  Even outside of deathlink, shades spawn out of bounds.
-            { "Room_Colosseum_Spectate", (124.0f, 10.0f) },  // Shade spawns inside inaccessible arena
-            { "Resting_Grounds_09", (7.4f, 10.0f) },  // Shade spawns underground.
-            { "Runes1_18", (11.5f, 23.0f) },  // Shade potentially spawns on the wrong side of an inaccessible gate.
-        };
 
         // Placements to attempt hinting
         public HashSet<AbstractPlacement> PendingPlacementHints = new();
@@ -112,7 +103,6 @@ namespace Archipelago.HollowKnight
 
             Events.OnItemChangerUnhook -= EndGame;
             Events.OnSceneChange -= OnSceneChange;
-            ModHooks.AfterPlayerDeadHook -= FixUnreachableShadePosition;
         }
 
         /// <summary>
@@ -173,7 +163,6 @@ namespace Archipelago.HollowKnight
             // the client connects to the wrong session with a matching slot.
             Events.OnItemChangerUnhook += EndGame;
             Events.OnSceneChange += OnSceneChange;
-            ModHooks.AfterPlayerDeadHook += FixUnreachableShadePosition;
 
             try
             {
@@ -234,20 +223,6 @@ namespace Archipelago.HollowKnight
             {
                 session.Socket.PacketReceived -= OnPacketReceived;
                 AllSlots = cp.SlotInfo;
-            }
-        }
-
-        /// <summary>
-        /// With DeathLink (and possibly with future trap implementations), dying in certain locations can produce inaccessible shades.  Fix that.
-        /// </summary>
-        private void FixUnreachableShadePosition()
-        {
-            // Fixes up some bad shade placements by vanilla HK.
-            PlayerData pd = PlayerData.instance;
-            if (ShadeSpawnPositionFixes.TryGetValue(pd.shadeScene, out (float x, float y) position))
-            {
-                pd.shadePositionX = position.x;
-                pd.shadePositionY = position.y;
             }
         }
 
