@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using ItemChanger;
+﻿using ItemChanger;
+using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC
 {

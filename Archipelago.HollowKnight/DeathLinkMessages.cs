@@ -99,16 +99,16 @@ namespace Archipelago.HollowKnight
         {
             // Build candidate death messages.
             List<string> messages;
-            bool knownCauseOfDeath = DeathLinkMessages.MessagesByType.TryGetValue(cause, out messages);
+            bool knownCauseOfDeath = MessagesByType.TryGetValue(cause, out messages);
 
             if (knownCauseOfDeath)
             {
                 messages = new(messages);
-                messages.AddRange(DeathLinkMessages.DefaultMessages);
+                messages.AddRange(DefaultMessages);
             }
             else
             {
-                messages = DeathLinkMessages.UnknownMessages;
+                messages = UnknownMessages;
             }
 
             // Choose one at random

@@ -8,7 +8,7 @@ using Modding;
 using System;
 using System.Reflection;
 
-namespace Archipelago.HollowKnight.IC
+namespace Archipelago.HollowKnight.IC.Modules
 {
     public class DeathLinkModule : ItemChanger.Modules.Module
     {
@@ -103,7 +103,7 @@ namespace Archipelago.HollowKnight.IC
                 isDeathlink.Value = isDeathlinkDeath;
                 preventShade.Value = !(
                     shadeHandling == DeathLinkShadeHandling.Vanilla
-                    || (shadeHandling == DeathLinkShadeHandling.Shade && PlayerData.instance.shadeScene == "None")
+                    || shadeHandling == DeathLinkShadeHandling.Shade && PlayerData.instance.shadeScene == "None"
                 );
 
                 if (!preventShade.Value)
