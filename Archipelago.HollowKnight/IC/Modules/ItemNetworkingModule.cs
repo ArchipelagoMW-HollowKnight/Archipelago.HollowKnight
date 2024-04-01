@@ -11,7 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Archipelago.HollowKnight.IC
+namespace Archipelago.HollowKnight.IC.Modules
 {
     /// <summary>
     /// Handles the sending and receiving of items from the server
@@ -195,13 +195,13 @@ namespace Archipelago.HollowKnight.IC
             }
 
             ConnectionDetails settings = Archipelago.Instance.ApSettings;
-            Archipelago.Instance.LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {settings.ItemIndex}");
 
             NetworkItem netItem = session.Items.DequeueItem(); // Read the next item
             if (settings.ItemIndex >= session.Items.Index) // We've already handled this, so be done
             {
                 return true;
             }
+            Archipelago.Instance.LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {settings.ItemIndex}");
 
             try
             {

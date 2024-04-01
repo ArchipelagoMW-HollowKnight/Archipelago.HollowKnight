@@ -173,6 +173,11 @@ namespace Archipelago.HollowKnight.MC
             {
                 errorLabel.Text.text = ex.Message;
             }
+            catch (LoginValidationException ex)
+            {
+                Archipelago.Instance.DisconnectArchipelago();
+                errorLabel.Text.text = ex.Message;
+            }
             catch (Exception ex)
             {
                 errorLabel.Text.text = "An unknown error occurred when attempting to connect.";

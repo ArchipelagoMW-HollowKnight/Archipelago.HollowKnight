@@ -1,4 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.IC.RM;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -213,6 +214,7 @@ namespace Archipelago.HollowKnight
         private void AddItemChangerModules()
         {
             ItemChangerMod.Modules.Add<ItemNetworkingModule>();
+            ItemChangerMod.Modules.Add<GoalModule>();
             ItemChangerMod.Modules.Add<CompletionPercentOverride>();
             ItemChangerMod.Modules.Add<HintTracker>();
 
@@ -305,6 +307,7 @@ namespace Archipelago.HollowKnight
                     // no default
                 }
             }
+            // below is needed for back compat with 0.4.4
             else if (location == LocationNames.Lore_Tablet_World_Sense)
             {
                 location = LocationNames.World_Sense;

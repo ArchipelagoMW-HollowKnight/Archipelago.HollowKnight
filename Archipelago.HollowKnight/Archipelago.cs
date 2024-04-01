@@ -1,4 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
@@ -16,7 +17,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Archipelago.HollowKnight
@@ -59,9 +59,6 @@ namespace Archipelago.HollowKnight
         public int Slot { get; private set; }
         public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
         public string Player => session.Players.GetPlayerName(Slot);
-
-        public Goal Goal { get; private set; } = null;
-        public bool GoalIsKnown { get; private set; } = false;  // Not Yet Implemented
         
         // Shade position fixes
         public static readonly Dictionary<string, (float x, float y)> ShadeSpawnPositionFixes = new()
@@ -96,25 +93,6 @@ namespace Archipelago.HollowKnight
             Log("Initialized");
         }
 
-        public async Task DeclareVictoryAsync()
-        {
-            LogDebug($"Declaring victory if ArchipelagEnabled.  ArchipelagoEnabled = {ArchipelagoEnabled}");
-            if (ArchipelagoEnabled)
-            {
-                try
-                {
-                    await session.Socket.SendPacketAsync(new StatusUpdatePacket()
-                    {
-                        Status = ArchipelagoClientState.ClientGoal
-                    }).TimeoutAfter(1000);
-                }
-                catch (Exception ex) when (ex is TimeoutException or ArchipelagoSocketClosedException)
-                {
-                    ItemChangerMod.Modules.Get<ItemNetworkingModule>().ReportDisconnect();
-                }
-            }
-        }
-
         public void EndGame()
         {
             LogDebug("Ending Archipelago game");
@@ -135,12 +113,6 @@ namespace Archipelago.HollowKnight
             Events.OnItemChangerUnhook -= EndGame;
             Events.OnSceneChange -= OnSceneChange;
             ModHooks.AfterPlayerDeadHook -= FixUnreachableShadePosition;
-
-            if (Goal != null)
-            {
-                Goal.Deselect();
-                Goal = null;
-            }
         }
 
         /// <summary>
@@ -179,18 +151,21 @@ namespace Archipelago.HollowKnight
                     if (ApSettings.RoomSeed == null)
                     {
                         LogWarn(
-                            "Are you upgrading from a previous version?  Seed data did not exist in save.  It does now.");
+                            "Are you upgrading from a previous version? Seed data did not exist in save. It does now.");
                         ApSettings.Seed = seed;
                         ApSettings.RoomSeed = session.RoomState.Seed;
                     }
                     else
                     {
-                        DisconnectArchipelago();
-                        UIManager.instance.UIReturnToMainMenu();
-                        throw new ArchipelagoConnectionException(
-                            "Slot mismatch.  Saved seed does not match the server value.  Is this the correct save?");
+                        throw new LoginValidationException("Slot mismatch. Saved seed does not match the server value. Is this the correct save?");
                     }
                 }
+            }
+
+            // check the goal is one we know how to cope with
+            if (SlotOptions.Goal > GoalsLookup.MAX)
+            {
+                throw new LoginValidationException($"Unrecognized goal condition {SlotOptions.Goal} (are you running an outdated client?)");
             }
 
             // Hooks happen after we've definitively connected to an Archipelago slot correctly.
@@ -199,27 +174,6 @@ namespace Archipelago.HollowKnight
             Events.OnItemChangerUnhook += EndGame;
             Events.OnSceneChange += OnSceneChange;
             ModHooks.AfterPlayerDeadHook += FixUnreachableShadePosition;
-
-            // Discard from the beginning of the incoming item queue up to how many items we have received.
-            for (int i = 0; i < ApSettings.ItemIndex; ++i)
-            {
-                NetworkItem netItem = session.Items.DequeueItem();
-                LogDebug($"Fast-forwarding past an already-acquired {session.Items.GetItemName(netItem.Item)}");
-            }
-
-            try
-            {
-                Goal = Goal.GetGoal(SlotOptions.Goal);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                UIManager.instance.UIReturnToMainMenu();
-                LogError(
-                    $"Listed goal is {SlotOptions.Goal}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
-                throw ex;
-            }
-
-            Goal.Select();
 
             try
             {

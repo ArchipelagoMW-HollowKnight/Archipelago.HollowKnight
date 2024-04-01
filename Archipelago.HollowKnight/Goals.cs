@@ -1,7 +1,10 @@
-﻿using ItemChanger;
+﻿using Archipelago.HollowKnight.IC.Modules;
+using Archipelago.MultiClient.Net.Exceptions;
+using ItemChanger;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
 {
@@ -48,18 +51,26 @@ namespace Archipelago.HollowKnight
             {
                 return value;
             }
-            Archipelago.Instance.LogError($"Listed goal is {key}, which is greater than {GoalsLookup.MAX}.  Is this an outdated client?");
+            Archipelago.Instance.LogError($"Listed goal is {key}, which is greater than {GoalsLookup.MAX}. Is this an outdated client?");
             throw new ArgumentOutOfRangeException($"Unrecognized goal condition {key} (are you running an outdated client?)");
         }
 
-        public void CheckForVictory()
+        public async Task CheckForVictoryAsync()
         {
             Archipelago.Instance.LogDebug($"Checking for victory; goal is {this.Name}; scene " +
                 $"{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
             if (VictoryCondition())
             {
                 Archipelago.Instance.LogDebug($"Victory detected, declaring!");
-                Archipelago.Instance.DeclareVictoryAsync().TimeoutAfter(1000).Wait();
+                try
+                {
+                    await ItemChangerMod.Modules.Get<GoalModule>().DeclareVictoryAsync().TimeoutAfter(1000);
+                }
+                catch (Exception ex) when (ex is TimeoutException or ArchipelagoSocketClosedException)
+                {
+                    Archipelago.Instance.LogError("Failed to send goal to server");
+                    Archipelago.Instance.LogError(ex);
+                }
             }
         }
 
@@ -142,9 +153,9 @@ namespace Archipelago.HollowKnight
             Events.OnSceneChange -= SceneChanged;
         }
 
-        private void SceneChanged(UnityEngine.SceneManagement.Scene obj)
+        private async void SceneChanged(UnityEngine.SceneManagement.Scene obj)
         {
-            CheckForVictory();
+            await CheckForVictoryAsync();
         }
 
         protected override bool VictoryCondition()
