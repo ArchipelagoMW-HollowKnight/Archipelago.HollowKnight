@@ -129,5 +129,7 @@
         public bool SplitMothwingCloak { get; set; }
 
         public bool SplitCrystalHeart { get; set; }
+
+        public bool AddUnshuffledLocations { get; set; }
     }
 }

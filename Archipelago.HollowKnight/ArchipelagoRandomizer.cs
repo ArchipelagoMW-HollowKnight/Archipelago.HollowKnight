@@ -95,6 +95,12 @@ namespace Archipelago.HollowKnight
                     shop.defaultShopItems = DefaultShopItems.IseldaMapPins 
                         | DefaultShopItems.IseldaMapMarkers 
                         | DefaultShopItems.LegEaterRepair;
+                    if (SlotOptions.AddUnshuffledLocations)
+                    {
+                        // AP will add the default items on our behalf
+                        continue;
+                    }
+
                     if (!SlotOptions.RandomizeCharms)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlyCharms 
@@ -136,23 +142,23 @@ namespace Archipelago.HollowKnight
                 {
                     DestroyGrubRewardTag t = pmt.AddTag<DestroyGrubRewardTag>();
                     t.destroyRewards = GrubfatherRewards.None;
-                    if (SlotOptions.RandomizeMaskShards)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeMaskShards)
                     {
                         t.destroyRewards |= GrubfatherRewards.MaskShard;
                     }
-                    if (SlotOptions.RandomizeCharms)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeCharms)
                     {
                         t.destroyRewards |= GrubfatherRewards.Grubsong | GrubfatherRewards.GrubberflysElegy;
                     }
-                    if (SlotOptions.RandomizeRancidEggs)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRancidEggs)
                     {
                         t.destroyRewards |= GrubfatherRewards.RancidEgg;
                     }
-                    if (SlotOptions.RandomizeRelics)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRelics)
                     {
                         t.destroyRewards |= GrubfatherRewards.HallownestSeal | GrubfatherRewards.KingsIdol;
                     }
-                    if (SlotOptions.RandomizePaleOre)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizePaleOre)
                     {
                         t.destroyRewards |= GrubfatherRewards.PaleOre;
                     }
@@ -161,27 +167,27 @@ namespace Archipelago.HollowKnight
                 {
                     DestroySeerRewardTag t = pmt.AddTag<DestroySeerRewardTag>();
                     t.destroyRewards = SeerRewards.None;
-                    if (SlotOptions.RandomizeRelics)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRelics)
                     {
                         t.destroyRewards |= SeerRewards.HallownestSeal | SeerRewards.ArcaneEgg;
                     }
-                    if (SlotOptions.RandomizePaleOre)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizePaleOre)
                     {
                         t.destroyRewards |= SeerRewards.PaleOre;
                     }
-                    if (SlotOptions.RandomizeCharms)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeCharms)
                     {
                         t.destroyRewards |= SeerRewards.DreamWielder;
                     }
-                    if (SlotOptions.RandomizeVesselFragments)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeVesselFragments)
                     {
                         t.destroyRewards |= SeerRewards.VesselFragment;
                     }
-                    if (SlotOptions.RandomizeSkills)
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeSkills)
                     {
                         t.destroyRewards |= SeerRewards.DreamGate | SeerRewards.AwokenDreamNail;
                     }
-                    if (SlotOptions.RandomizeMaskShards) 
+                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeMaskShards) 
                     {
                         t.destroyRewards |= SeerRewards.MaskShard;
                     }
