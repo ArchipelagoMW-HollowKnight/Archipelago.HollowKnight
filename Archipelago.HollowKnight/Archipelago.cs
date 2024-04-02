@@ -27,7 +27,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Minimum Archipelago Protocol Version
         /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new(0, 4, 5);
+        private readonly Version ArchipelagoProtocolVersion = new(0, 4, 4);
 
         /// <summary>
         /// Mod version as reported to the modding API
