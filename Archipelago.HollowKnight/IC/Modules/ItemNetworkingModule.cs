@@ -174,6 +174,12 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         private async Task Synchronize()
         {
+            // discard any items that we have already handled from previous sessions
+            for (int i = 0; i < Archipelago.Instance.ApSettings.ItemIndex; i++)
+            {
+                NetworkItem seen = session.Items.DequeueItem();
+                Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {session.Items.GetItemName(seen.Item)} at index {i}");
+            }
             // receive from the server any items that are pending
             while (ReceiveNextItem(true)) { }
             // ensure any already-checked locations (co-op, restarting save) are marked cleared
