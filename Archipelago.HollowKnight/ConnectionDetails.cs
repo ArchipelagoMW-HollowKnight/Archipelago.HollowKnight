@@ -10,5 +10,7 @@
 
         public string RoomSeed { get; set; }
         public long Seed { get; set; }
+
+        public bool AlwaysShowItems { get; set; }
     }
 }

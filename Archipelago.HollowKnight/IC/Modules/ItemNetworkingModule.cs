@@ -180,12 +180,13 @@ namespace Archipelago.HollowKnight.IC.Modules
                 NetworkItem seen = session.Items.DequeueItem();
                 Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {session.Items.GetItemName(seen.Item)} at index {i}");
             }
+            bool silentGive = !Archipelago.Instance.MenuSettings.AlwaysShowItems;
             // receive from the server any items that are pending
-            while (ReceiveNextItem(true)) { }
+            while (ReceiveNextItem(silentGive)) { }
             // ensure any already-checked locations (co-op, restarting save) are marked cleared
             foreach (long location in session.Locations.AllLocationsChecked)
             {
-                MarkLocationAsChecked(location, true);
+                MarkLocationAsChecked(location, silentGive);
             }
             // send out any pending items that didn't get to the network from the previous session
             long[] pendingLocations = deferredLocationChecks.ToArray();

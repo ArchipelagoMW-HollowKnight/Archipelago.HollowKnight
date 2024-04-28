@@ -297,7 +297,8 @@ namespace Archipelago.HollowKnight
             {
                 ServerUrl = MenuSettings.ServerUrl,
                 ServerPort = MenuSettings.ServerPort,
-                SlotName = MenuSettings.SlotName
+                SlotName = MenuSettings.SlotName,
+                AlwaysShowItems = MenuSettings.AlwaysShowItems,
             };
         }
     }
