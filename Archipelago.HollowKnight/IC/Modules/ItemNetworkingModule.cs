@@ -106,7 +106,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
-            Archipelago.Instance.LogDebug($"Marking location {locationId} as checked.");
+            Archipelago.Instance.LogDebug($"Marking location {locationId} as checked{(silentGive ? " silently" : "")}.");
             if (!ArchipelagoPlacementTag.PlacementsByLocationId.TryGetValue(locationId, out pmt))
             {
                 Archipelago.Instance.LogDebug($"Could not find a placement for location {locationId}");
@@ -229,7 +229,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         {
             string name = session.Items.GetItemName(netItem.Item);
             Archipelago.Instance.LogDebug($"Receiving item ID {netItem.Item}. Name is {name}. " +
-                $"Slot is {netItem.Player}. Location is {netItem.Location}.");
+                $"Slot is {netItem.Player}. Location is {netItem.Location}. Silent is {silentGive}");
 
             if (netItem.Player == Archipelago.Instance.Slot && netItem.Location > 0)
             {
