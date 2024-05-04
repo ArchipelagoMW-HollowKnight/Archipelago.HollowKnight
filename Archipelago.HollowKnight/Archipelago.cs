@@ -51,6 +51,7 @@ namespace Archipelago.HollowKnight
         public static Archipelago Instance;
         public ArchipelagoSession session { get; private set; }
         public SlotOptions SlotOptions { get; set; }
+        public int GrubHuntRequiredGrubs { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
         public int Slot { get; private set; }
@@ -111,6 +112,17 @@ namespace Archipelago.HollowKnight
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
 
             LoginSuccessful loginResult = ConnectToArchipelago();
+            if (loginResult.SlotData.TryGetValue("grub_count", out object objGrubsRequired))
+            {
+                GrubHuntRequiredGrubs = (int)((long) objGrubsRequired);
+            }
+            else
+            {
+                // if not present, it's an older world version so make the goal functionally impossible
+                // (e.g. for Any goal)
+                GrubHuntRequiredGrubs = int.MaxValue;
+            }
+
             if (randomize)
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");

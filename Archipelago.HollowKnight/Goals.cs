@@ -1,9 +1,11 @@
 ﻿using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.MultiClient.Net.Exceptions;
 using ItemChanger;
+using MonoMod.RuntimeDetour;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
@@ -16,7 +18,8 @@ namespace Archipelago.HollowKnight
         Radiance = 3,
         Godhome = 4,
         GodhomeFlower = 5,
-        MAX = GodhomeFlower
+        GrubHunt = 6,
+        MAX = GrubHunt
     }
 
     public abstract class Goal
@@ -30,7 +33,8 @@ namespace Archipelago.HollowKnight
             [GoalsLookup.SealedSiblings] = new SealedSiblingsGoal(),
             [GoalsLookup.Radiance] = new RadianceGoal(),
             [GoalsLookup.Godhome] = new GodhomeGoal(),
-            [GoalsLookup.GodhomeFlower] = new GodhomeFlowerGoal()
+            [GoalsLookup.GodhomeFlower] = new GodhomeFlowerGoal(),
+            [GoalsLookup.GrubHunt] = new GrubHuntGoal(),
         };
 
         static Goal()
@@ -205,5 +209,46 @@ namespace Archipelago.HollowKnight
         public override string Name => "Delicate Flower";
         public override string Description => "Defeat Absolute Radiance in Pantheon 5<br>after delivering the flower to the Godseeker.";
         public override string MinimumGoalScene => SceneNames.Cinematic_Ending_E;
+    }
+
+    public class GrubHuntGoal : Goal
+    {
+        public override string Name => "Grub Hunt";
+
+        public override string Description => $"Save {Archipelago.Instance.GrubHuntRequiredGrubs} of your Grubs.";
+
+        private static readonly MethodInfo setIntInternal = typeof(PlayerData).GetMethod("SetIntInternal");
+        private Hook onSetIntInternal;
+        
+        public override void OnSelected()
+        {
+            if (onSetIntInternal == null)
+            {
+                onSetIntInternal = new Hook(setIntInternal, OnSetPlayerInt);
+            }
+            else
+            {
+                onSetIntInternal.Apply();
+            }
+        }
+
+        public override void OnDeselected()
+        {
+            onSetIntInternal.Undo();
+        }
+
+        protected override bool VictoryCondition()
+        {
+            return PlayerData.instance.grubsCollected >= Archipelago.Instance.GrubHuntRequiredGrubs;
+        }
+
+        private async void OnSetPlayerInt(On.PlayerData.orig_SetInt orig, PlayerData self, string intName, int value)
+        {
+            orig(self, intName, value);
+            if (intName == nameof(PlayerData.grubsCollected))
+            {
+                await CheckForVictoryAsync();
+            }
+        }
     }
 }
