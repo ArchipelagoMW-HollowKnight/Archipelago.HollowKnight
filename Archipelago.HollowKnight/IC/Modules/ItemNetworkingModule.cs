@@ -191,10 +191,15 @@ namespace Archipelago.HollowKnight.IC.Modules
             bool silentGive = !Archipelago.Instance.MenuSettings.AlwaysShowItems;
             // receive from the server any items that are pending
             while (ReceiveNextItem(silentGive)) { }
-            // ensure any already-checked locations (co-op, restarting save) are marked cleared
+            // ensure any already-checked locations (co-op, restarting save, other players collecting) are marked cleared
             foreach (long location in session.Locations.AllLocationsChecked)
             {
-                MarkLocationAsChecked(location, silentGive);
+                // NOTE: this is intentionally always set to silently give during initial sync even when
+                // AlwaysShowItems is true because this shows the items that OTHER players have gotten
+                // FROM this world, which can SERIOUSLY lock up the item display if someone collects a
+                // lot of their items at once (usually via the !collect command). It also prevents these
+                // items from displaying in RecentItemsDisplay (if installed) for the same reason.
+                MarkLocationAsChecked(location, true, true);
             }
             // send out any pending items that didn't get to the network from the previous session
             long[] pendingLocations = deferredLocationChecks.ToArray();
