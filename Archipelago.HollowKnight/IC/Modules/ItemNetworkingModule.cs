@@ -98,7 +98,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
         }
 
-        public void MarkLocationAsChecked(long locationId, bool silentGive)
+        public void MarkLocationAsChecked(long locationId, bool silentGive, bool silenceRecentItems = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
@@ -136,6 +136,14 @@ namespace Archipelago.HollowKnight.IC.Modules
                 pmt.AddVisitFlag(VisitState.ObtainedAnyItem);
 
                 GiveInfo giveInfo = silentGive ? SilentGiveInfo : RemoteGiveInfo;
+
+                if (silenceRecentItems)
+                {
+                    InteropTag recentItemsTag = item.AddTag<InteropTag>();
+                    recentItemsTag.Message = "RecentItems";
+                    recentItemsTag.Properties["IgnoreItem"] = true;
+                }
+
                 item.Give(pmt, giveInfo.Clone());
             }
 
