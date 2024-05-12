@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
+    public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>, IMenuMod
     {
         // Events support
         public static event Action OnArchipelagoGameStarted;
@@ -297,8 +297,23 @@ namespace Archipelago.HollowKnight
             {
                 ServerUrl = MenuSettings.ServerUrl,
                 ServerPort = MenuSettings.ServerPort,
-                SlotName = MenuSettings.SlotName
+                SlotName = MenuSettings.SlotName,
+                AlwaysShowItems = MenuSettings.AlwaysShowItems,
             };
+        }
+
+        public bool ToggleButtonInsideMenu => false;
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            return [
+                new IMenuMod.MenuEntry {
+                    Name = "Show offline items",
+                    Description = "Show items received while you were disconnected.",
+                    Values = ["No", "Yes"],
+                    Saver = opt => { MenuSettings.AlwaysShowItems = opt == 1; },
+                    Loader = () => MenuSettings.AlwaysShowItems ? 1 : 0,
+                },
+            ];
         }
     }
 }

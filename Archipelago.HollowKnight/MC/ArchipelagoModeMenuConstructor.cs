@@ -153,7 +153,9 @@ namespace Archipelago.HollowKnight.MC
             }
             else
             {
-                Archipelago.Instance.MenuSettings = Archipelago.Instance.ApSettings with { };
+                Archipelago.Instance.MenuSettings = Archipelago.Instance.ApSettings with {
+                    AlwaysShowItems = Archipelago.Instance.MenuSettings.AlwaysShowItems
+                };
             }
             try
             {

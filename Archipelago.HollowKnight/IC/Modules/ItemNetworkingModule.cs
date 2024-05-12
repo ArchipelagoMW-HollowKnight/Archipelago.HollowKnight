@@ -98,7 +98,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
         }
 
-        public void MarkLocationAsChecked(long locationId, bool silentGive)
+        public void MarkLocationAsChecked(long locationId, bool silentGive, bool silenceRecentItems = false)
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
@@ -106,7 +106,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
-            Archipelago.Instance.LogDebug($"Marking location {locationId} as checked.");
+            Archipelago.Instance.LogDebug($"Marking location {locationId} as checked{(silentGive ? " silently" : "")}.");
             if (!ArchipelagoPlacementTag.PlacementsByLocationId.TryGetValue(locationId, out pmt))
             {
                 Archipelago.Instance.LogDebug($"Could not find a placement for location {locationId}");
@@ -136,6 +136,14 @@ namespace Archipelago.HollowKnight.IC.Modules
                 pmt.AddVisitFlag(VisitState.ObtainedAnyItem);
 
                 GiveInfo giveInfo = silentGive ? SilentGiveInfo : RemoteGiveInfo;
+
+                if (silenceRecentItems)
+                {
+                    InteropTag recentItemsTag = item.AddTag<InteropTag>();
+                    recentItemsTag.Message = "RecentItems";
+                    recentItemsTag.Properties["IgnoreItem"] = true;
+                }
+
                 item.Give(pmt, giveInfo.Clone());
             }
 
@@ -180,12 +188,18 @@ namespace Archipelago.HollowKnight.IC.Modules
                 NetworkItem seen = session.Items.DequeueItem();
                 Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {session.Items.GetItemName(seen.Item)} at index {i}");
             }
+            bool silentGive = !Archipelago.Instance.MenuSettings.AlwaysShowItems;
             // receive from the server any items that are pending
-            while (ReceiveNextItem(true)) { }
-            // ensure any already-checked locations (co-op, restarting save) are marked cleared
+            while (ReceiveNextItem(silentGive)) { }
+            // ensure any already-checked locations (co-op, restarting save, other players collecting) are marked cleared
             foreach (long location in session.Locations.AllLocationsChecked)
             {
-                MarkLocationAsChecked(location, true);
+                // NOTE: this is intentionally always set to silently give during initial sync even when
+                // AlwaysShowItems is true because this shows the items that OTHER players have gotten
+                // FROM this world, which can SERIOUSLY lock up the item display if someone collects a
+                // lot of their items at once (usually via the !collect command). It also prevents these
+                // items from displaying in RecentItemsDisplay (if installed) for the same reason.
+                MarkLocationAsChecked(location, true, true);
             }
             // send out any pending items that didn't get to the network from the previous session
             long[] pendingLocations = deferredLocationChecks.ToArray();
@@ -229,7 +243,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         {
             string name = session.Items.GetItemName(netItem.Item);
             Archipelago.Instance.LogDebug($"Receiving item ID {netItem.Item}. Name is {name}. " +
-                $"Slot is {netItem.Player}. Location is {netItem.Location}.");
+                $"Slot is {netItem.Player}. Location is {netItem.Location}. Silent is {silentGive}");
 
             if (netItem.Player == Archipelago.Instance.Slot && netItem.Location > 0)
             {
