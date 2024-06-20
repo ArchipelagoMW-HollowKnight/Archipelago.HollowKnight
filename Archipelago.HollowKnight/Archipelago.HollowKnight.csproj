@@ -45,7 +45,7 @@
     <EmbeddedResource Include="Resources\*.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.6" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.1.1" />
     <PackageReference Include="PolySharp" Version="1.14.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
