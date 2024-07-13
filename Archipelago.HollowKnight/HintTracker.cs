@@ -220,18 +220,15 @@ public class HintTracker : Module
         Archipelago.Instance.LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
         try
         {
-            await session.Socket.SendPacketAsync(new LocationScoutsPacket()
-            {
-                CreateAsHint = true,
-                Locations = hintedLocationIDs.ToArray(),
-            }).ContinueWith(x =>
-            {
-                bool result = !x.IsFaulted;
-                foreach (ArchipelagoItemTag tag in hintedTags)
+            await session.Locations.ScoutLocationsAsync(true, hintedLocationIDs.ToArray())
+                .ContinueWith(x =>
                 {
-                    tag.Hinted = result;
-                }
-            }).TimeoutAfter(1000);
+                    bool result = !x.IsFaulted;
+                    foreach (ArchipelagoItemTag tag in hintedTags)
+                    {
+                        tag.Hinted = result;
+                    }
+                }).TimeoutAfter(1000);
         }
         catch (Exception ex) when (ex is ArchipelagoSocketClosedException or TimeoutException)
         {

@@ -9,7 +9,7 @@ namespace Archipelago.HollowKnight.IC
 {
     internal class ItemFactory
     {
-        public AbstractItem CreateMyItem(string itemName, NetworkItem netItem)
+        public AbstractItem CreateMyItem(string itemName, ItemInfo itemInfo)
         {
             AbstractItem item = Finder.GetItem(itemName);
             if (item == null)
@@ -18,14 +18,14 @@ namespace Archipelago.HollowKnight.IC
                 throw new NullReferenceException($"Could not find local item with name {itemName}");
             }
 
-            AddArchipelagoTag(item, netItem);
+            AddArchipelagoTag(item, itemInfo);
             return item;
         }
 
-        public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, NetworkItem netItem)
+        public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, ItemInfo itemInfo)
         {
             ArchipelagoSession session = Archipelago.Instance.session;
-            string game = session.Players.Players[session.ConnectionInfo.Team][netItem.Player].Game;
+            string game = itemInfo.ItemGame;
 
             AbstractItem orig = Finder.GetItem(itemName);
             AbstractItem item;
@@ -48,17 +48,17 @@ namespace Archipelago.HollowKnight.IC
             else
             {
                 // Items from other games, or an unknown HK item
-                item = new ArchipelagoItem(itemName, slotName, netItem.Flags);
+                item = new ArchipelagoItem(itemName, slotName, itemInfo.Flags);
             }
 
-            AddArchipelagoTag(item, netItem);
+            AddArchipelagoTag(item, itemInfo);
             return item;
         }
 
-        private void AddArchipelagoTag(AbstractItem item, NetworkItem netItem)
+        private void AddArchipelagoTag(AbstractItem item, ItemInfo itemInfo)
         {
             ArchipelagoItemTag itemTag = item.AddTag<ArchipelagoItemTag>();
-            itemTag.ReadNetItem(netItem);
+            itemTag.ReadItemInfo(itemInfo);
         }
     }
 }

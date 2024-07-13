@@ -3,6 +3,7 @@ using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.IC.RM;
 using Archipelago.HollowKnight.SlotData;
 using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
@@ -12,6 +13,8 @@ using ItemChanger.Placements;
 using ItemChanger.Tags;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
 {
@@ -77,12 +80,11 @@ namespace Archipelago.HollowKnight
             AbstractLocation location;
             AbstractPlacement pmt;
 
-            string[] shops = new string[]
-            {
+            string[] shops = [
                 LocationNames.Sly, LocationNames.Sly_Key, LocationNames.Iselda,
                 LocationNames.Salubra, LocationNames.Leg_Eater, LocationNames.Grubfather,
                 LocationNames.Seer
-            };
+            ];
             foreach (string name in shops)
             {
                 location = Finder.GetLocation(name);
@@ -194,27 +196,20 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            // Scout all locations
-            void ScoutCallback(LocationInfoPacket packet)
+            Task<Dictionary<long, ScoutedItemInfo>> scoutTask = session.Locations
+                .ScoutLocationsAsync(session.Locations.AllLocations.ToArray());
+            scoutTask.Wait();
+
+            Dictionary<long, ScoutedItemInfo> scoutResult = scoutTask.Result;
+            foreach (KeyValuePair<long, ScoutedItemInfo> scout in scoutResult)
             {
-                foreach (NetworkItem item in packet.Locations)
-                {
-                    string locationName = session.Locations.GetLocationNameFromId(item.Location);
-                    string itemName = session.Items.GetItemName(item.Item) ?? $"?Item {item.Item}?";
-
-                    PlaceItem(locationName, itemName, item);
-                }
-
-                ItemChangerMod.AddPlacements(placements.Values);
+                long id = scout.Key;
+                ScoutedItemInfo item = scout.Value;
+                string itemName = item.ItemName ?? $"?Item {item.ItemId}";
+                PlaceItem(item.LocationName, itemName, item);
             }
+            ItemChangerMod.AddPlacements(placements.Values);
 
-            List<long> locations = new(session.Locations.AllLocations);
-            session.Locations.ScoutLocationsAsync(locations.ToArray())
-                             .ContinueWith(task =>
-                             {
-                                 LocationInfoPacket packet = task.Result;
-                                 ScoutCallback(packet);
-                             }).Wait();
         }
 
         private void AddItemChangerModules()
@@ -293,9 +288,9 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void PlaceItem(string location, string name, NetworkItem netItem)
+        public void PlaceItem(string location, string name, ItemInfo itemInfo)
         {
-            Instance.LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {netItem.Item}");
+            Instance.LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {itemInfo.ItemId}");
 
             string originalLocation = string.Copy(location);
             location = StripShopSuffix(location);
@@ -314,15 +309,6 @@ namespace Archipelago.HollowKnight
                     // no default
                 }
             }
-            // below is needed for back compat with 0.4.4
-            else if (location == LocationNames.Lore_Tablet_World_Sense)
-            {
-                location = LocationNames.World_Sense;
-            }
-            else if (SlotOptions.RandomizeFocus && location == LocationNames.Lore_Tablet_Kings_Pass_Focus)
-            {
-                location = LocationNames.Focus;
-            }
 
             AbstractLocation loc = Finder.GetLocation(location);
             if (loc == null)
@@ -331,11 +317,11 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
-            bool isMyItem = GroupUtil.WillItemRouteToMe(netItem.Player);
+            bool isMyItem = GroupUtil.WillItemRouteToMe(itemInfo.Player);
             string recipientName = null;
             if (!isMyItem)
             {
-                recipientName = Session.Players.GetPlayerName(netItem.Player);
+                recipientName = Session.Players.GetPlayerName(itemInfo.Player);
             }
 
             AbstractPlacement pmt = placements.GetOrDefault(location);
@@ -349,11 +335,11 @@ namespace Archipelago.HollowKnight
             AbstractItem item;
             if (isMyItem)
             {
-                item = itemFactory.CreateMyItem(name, netItem);
+                item = itemFactory.CreateMyItem(name, itemInfo);
             }
             else
             {
-                item = itemFactory.CreateRemoteItem(pmt, recipientName, name, netItem);
+                item = itemFactory.CreateRemoteItem(pmt, recipientName, name, itemInfo);
             }
 
             pmt.Add(item);
