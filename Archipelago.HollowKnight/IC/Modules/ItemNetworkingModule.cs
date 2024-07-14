@@ -175,7 +175,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         private async Task Synchronize()
         {
             // discard any items that we have already handled from previous sessions
-            for (int i = 0; i < Archipelago.Instance.ApSettings.ItemIndex; i++)
+            for (int i = 0; i < Archipelago.Instance.LS.ItemIndex; i++)
             {
                 ItemInfo seen = session.Items.DequeueItem();
                 Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {seen.ItemName} at index {i}");
@@ -200,7 +200,7 @@ namespace Archipelago.HollowKnight.IC.Modules
                 return false; // No items are waiting.
             }
 
-            ConnectionDetails settings = Archipelago.Instance.ApSettings;
+            APLocalSettings settings = Archipelago.Instance.LS;
 
             ItemInfo itemInfo = session.Items.DequeueItem(); // Read the next item
             if (settings.ItemIndex >= session.Items.Index) // We've already handled this, so be done
@@ -219,7 +219,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
             finally
             {
-                Archipelago.Instance.ApSettings.ItemIndex++;
+                Archipelago.Instance.LS.ItemIndex++;
             }
 
             return true;

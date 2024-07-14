@@ -353,11 +353,11 @@ namespace Archipelago.HollowKnight
                 return null;
             }
 
-            string[] names = new[]
-            {
+            string[] names =
+            [
                 LocationNames.Sly_Key, LocationNames.Sly, LocationNames.Iselda, LocationNames.Salubra,
                 LocationNames.Leg_Eater, LocationNames.Egg_Shop, LocationNames.Seer, LocationNames.Grubfather
-            };
+            ];
 
             foreach (string name in names)
             {
