@@ -18,7 +18,7 @@ namespace Archipelago.HollowKnight.MC
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
             modeConfigPage = new MenuPage("Archipelago Settings", modeMenu);
-            ConnectionDetails settings = Archipelago.Instance.MenuSettings;
+            ConnectionDetails settings = Archipelago.Instance.GS.MenuConnectionDetails;
 
             EntryField<string> urlField = CreateUrlField(modeConfigPage, settings);
             NumericEntryField<int> portField = CreatePortField(modeConfigPage, settings);
@@ -33,15 +33,15 @@ namespace Archipelago.HollowKnight.MC
 
             modeConfigPage.AfterHide += () => errorLabel.Text.text = "";
 
-            IMenuElement[] elements = new IMenuElement[]
-            {
+            IMenuElement[] elements =
+            [
                 urlField,
                 portField,
                 nameField,
                 passwordField,
                 startButton,
                 errorLabel
-            };
+            ];
             VerticalItemPanel vip = new(modeConfigPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, 100, false, elements);
             modeConfigPage.AddToNavigationControl(vip);
 
@@ -52,6 +52,8 @@ namespace Archipelago.HollowKnight.MC
         {
             MenuPage resumePage = new("Archipelago Resume");
 
+            MenuLabel slotName = new(resumePage, "");
+
             EntryField<string> urlField = CreateUrlField(resumePage, null);
             NumericEntryField<int> portField = CreatePortField(resumePage, null);
             EntryField<string> passwordField = CreatePasswordField(resumePage, null);
@@ -59,27 +61,37 @@ namespace Archipelago.HollowKnight.MC
             SmallButton resumeButton = new(resumePage, "Resume");
             MenuLabel errorLabel = new(resumePage, "");
 
-            void RebindInputFields()
+            void RebindSettings()
             {
-                ConnectionDetails settings = Archipelago.Instance.ApSettings;
-                urlField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerUrl)));
-                portField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPort)));
-                passwordField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPassword)));
+                ConnectionDetails settings = Archipelago.Instance.LS.ConnectionDetails;
+                if (settings != null)
+                {
+                    slotName.Text.text = $"Slot Name: {settings.SlotName}";
+                    urlField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerUrl)));
+                    portField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPort)));
+                    passwordField.Bind(settings, _settingsType.GetProperty(nameof(ConnectionDetails.ServerPassword)));
+                }
+                else
+                {
+                    slotName.Text.text = "Incompatible save file";
+                    errorLabel.Text.text = "To resume, recreate your save or downgrade to an older client version.";
+                }
             }
 
             resumeButton.OnClick += () => StartOrResumeGame(false, errorLabel);
 
-            resumePage.BeforeShow += RebindInputFields;
+            resumePage.BeforeShow += RebindSettings;
             resumePage.AfterHide += () => errorLabel.Text.text = "";
 
-            IMenuElement[] elements = new IMenuElement[]
-            {
+            IMenuElement[] elements =
+            [
+                slotName,
                 urlField,
                 portField,
                 passwordField,
                 resumeButton,
                 errorLabel
-            };
+            ];
 
             VerticalItemPanel vip = new(resumePage, SpaceParameters.TOP_CENTER_UNDER_TITLE, 100, true, elements);
             resumePage.AddToNavigationControl(vip);
@@ -149,12 +161,17 @@ namespace Archipelago.HollowKnight.MC
             // If it's a save slot we're resuming (newGame == false) then we want the slot settings to overwrite the global ones.
             if (newGame)
             {
-                Archipelago.Instance.ApSettings = Archipelago.Instance.MenuSettings with { };  // Clone MenuSettings into ApSettings
+                Archipelago.Instance.LS = new APLocalSettings()
+                {
+                    ConnectionDetails = Archipelago.Instance.GS.MenuConnectionDetails with { },
+                    ItemIndex = 0
+                };
             }
-            else
+            else if (Archipelago.Instance.LS.ConnectionDetails != null)
             {
-                Archipelago.Instance.MenuSettings = Archipelago.Instance.ApSettings with { };
+                Archipelago.Instance.GS.MenuConnectionDetails = Archipelago.Instance.LS.ConnectionDetails with { };
             }
+
             try
             {
                 Archipelago.Instance.StartOrResumeGame(newGame);

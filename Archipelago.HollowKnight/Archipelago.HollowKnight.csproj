@@ -8,7 +8,7 @@
     <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright>
     </Copyright>
-    <Version>0.4.2</Version>
+    <Version>0.5.0</Version>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
     <Company>The Archipelago Community</Company>
@@ -45,7 +45,7 @@
     <EmbeddedResource Include="Resources\*.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="5.0.6" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.2.0" />
     <PackageReference Include="PolySharp" Version="1.14.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

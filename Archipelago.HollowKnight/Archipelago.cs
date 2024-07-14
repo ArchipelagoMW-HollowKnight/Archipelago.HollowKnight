@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    public class Archipelago : Mod, IGlobalSettings<ConnectionDetails>, ILocalSettings<ConnectionDetails>
+    public class Archipelago : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>
     {
         // Events support
         public static event Action OnArchipelagoGameStarted;
@@ -27,7 +27,7 @@ namespace Archipelago.HollowKnight
         /// <summary>
         /// Minimum Archipelago Protocol Version
         /// </summary>
-        private readonly Version ArchipelagoProtocolVersion = new(0, 4, 4);
+        private readonly Version ArchipelagoProtocolVersion = new(0, 5, 0);
 
         /// <summary>
         /// Mod version as reported to the modding API
@@ -60,13 +60,8 @@ namespace Archipelago.HollowKnight
 
         internal SpriteManager spriteManager;
 
-        internal ConnectionDetails MenuSettings = new()
-        {
-            ServerUrl = "archipelago.gg",
-            ServerPort = 38281,
-        };
-
-        internal ConnectionDetails ApSettings = new();
+        internal APGlobalSettings GS = new();
+        internal APLocalSettings LS = new();
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -93,7 +88,7 @@ namespace Archipelago.HollowKnight
 
             DisconnectArchipelago();
             ArchipelagoEnabled = false;
-            ApSettings = new();
+            LS = new();
 
             Events.OnItemChangerUnhook -= EndGame;
         }
@@ -126,33 +121,23 @@ namespace Archipelago.HollowKnight
             if (randomize)
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
-                ApSettings.ItemIndex = 0;
-                ApSettings.Seed = (long) loginResult.SlotData["seed"];
-                ApSettings.RoomSeed = session.RoomState.Seed;
+                LS.ItemIndex = 0;
+                LS.Seed = (long) loginResult.SlotData["seed"];
+                LS.RoomSeed = session.RoomState.Seed;
 
-                LogDebug($"StartOrResumeGame: Room: {ApSettings.RoomSeed}; Seed = {ApSettings.RoomSeed}");
+                LogDebug($"StartOrResumeGame: Room: {LS.RoomSeed}; Seed = {LS.RoomSeed}");
 
                 ArchipelagoRandomizer randomizer = new(loginResult.SlotData);
                 randomizer.Randomize();
             }
             else
             {
-                LogDebug($"StartOrResumeGame: Local : Room: {ApSettings.RoomSeed}; Seed = {ApSettings.Seed}");
+                LogDebug($"StartOrResumeGame: Local : Room: {LS.RoomSeed}; Seed = {LS.Seed}");
                 long seed = (long) loginResult.SlotData["seed"];
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
-                if (seed != ApSettings.Seed || session.RoomState.Seed != ApSettings.RoomSeed)
+                if (seed != LS.Seed || session.RoomState.Seed != LS.RoomSeed)
                 {
-                    if (ApSettings.RoomSeed == null)
-                    {
-                        LogWarn(
-                            "Are you upgrading from a previous version? Seed data did not exist in save. It does now.");
-                        ApSettings.Seed = seed;
-                        ApSettings.RoomSeed = session.RoomState.Seed;
-                    }
-                    else
-                    {
-                        throw new LoginValidationException("Slot mismatch. Saved seed does not match the server value. Is this the correct save?");
-                    }
+                    throw new LoginValidationException("Slot mismatch. Saved seed does not match the server value. Is this the correct save?");
                 }
             }
 
@@ -184,14 +169,14 @@ namespace Archipelago.HollowKnight
 
         private LoginSuccessful ConnectToArchipelago()
         {
-            session = ArchipelagoSessionFactory.CreateSession(ApSettings.ServerUrl, ApSettings.ServerPort);
+            session = ArchipelagoSessionFactory.CreateSession(LS.ConnectionDetails.ServerUrl, LS.ConnectionDetails.ServerPort);
             session.Socket.PacketReceived += OnPacketReceived;
 
             LoginResult loginResult = session.TryConnectAndLogin("Hollow Knight",
-                                                         ApSettings.SlotName,
+                                                         LS.ConnectionDetails.SlotName,
                                                          ItemsHandlingFlags.AllItems,
                                                          ArchipelagoProtocolVersion,
-                                                         password: ApSettings.ServerPassword);
+                                                         password: LS.ConnectionDetails.ServerPassword);
 
             if (loginResult is LoginFailure failure)
             {
@@ -249,29 +234,30 @@ namespace Archipelago.HollowKnight
         /// This is also called on the main menu screen with empty (defaulted) ConnectionDetails.  This will have an empty SlotName, so we treat this as a noop.
         /// </remarks>
         /// <param name="details"></param>
-        public void OnLoadLocal(ConnectionDetails details)
+        public void OnLoadLocal(APLocalSettings ls)
         {
-            if (details.SlotName == null ||
-                details.SlotName == "") // Apparently, this is called even before a save is loaded.  Catch this.
+            if (ls.ConnectionDetails == null
+                || ls.ConnectionDetails.SlotName == null
+                || ls.ConnectionDetails.SlotName == "") // Apparently, this is called even before a save is loaded.  Catch this.
             {
                 return;
             }
 
-            ApSettings = details;
+            LS = ls;
         }
 
         /// <summary>
         /// Called when saving local (game-specific) save data.
         /// </summary>
         /// <returns></returns>
-        public ConnectionDetails OnSaveLocal()
+        public APLocalSettings OnSaveLocal()
         {
             if (!ArchipelagoEnabled)
             {
                 return default;
             }
 
-            return ApSettings;
+            return LS;
         }
 
         /// <summary>
@@ -281,23 +267,20 @@ namespace Archipelago.HollowKnight
         /// For simplicity's sake, we use the same data structure for both global and local save data, though not all fields are relevant in the global context.
         /// </remarks>
         /// <param name="details"></param>
-        public void OnLoadGlobal(ConnectionDetails details)
+        public void OnLoadGlobal(APGlobalSettings gs)
         {
-            MenuSettings = details;
-            MenuSettings.ItemIndex = 0;
+            GS = gs;
         }
 
         /// <summary>
         /// Called when saving global save data.
         /// </summary>
         /// <returns></returns>
-        public ConnectionDetails OnSaveGlobal()
+        public APGlobalSettings OnSaveGlobal()
         {
-            return new ConnectionDetails()
+            return GS with
             {
-                ServerUrl = MenuSettings.ServerUrl,
-                ServerPort = MenuSettings.ServerPort,
-                SlotName = MenuSettings.SlotName
+                MenuConnectionDetails = GS.MenuConnectionDetails with { ServerPassword = null }
             };
         }
     }

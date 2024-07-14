@@ -1,5 +1,7 @@
 ﻿using Archipelago.HollowKnight.IC.Modules;
+using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using System.Collections.Generic;
@@ -37,12 +39,13 @@ namespace Archipelago.HollowKnight.IC
 
         private ItemNetworkingModule networkModule;
 
-        public void ReadNetItem(NetworkItem networkItem)
+        public void ReadItemInfo(ItemInfo itemInfo)
         {
-            Location = networkItem.Location;
-            Player = networkItem.Player;
-            Flags = networkItem.Flags;
-            IsItemForMe = GroupUtil.WillItemRouteToMe(networkItem.Player);
+            Location = itemInfo.LocationId;
+            Player = itemInfo.Player;
+            Flags = itemInfo.Flags;
+
+            IsItemForMe = GroupUtil.WillItemRouteToMe(itemInfo.Player);
         }
 
         public override async void Load(object parent)
@@ -50,7 +53,6 @@ namespace Archipelago.HollowKnight.IC
             base.Load(parent);
             networkModule = ItemChangerMod.Modules.Get<ItemNetworkingModule>();
             AbstractItem item = (AbstractItem)parent;
-            // Archipelago.Instance.LogDebug($"In ArchipelagoItemTag:Load for {parent}");
             item.AfterGive += AfterGive;
 
             if (item.WasEverObtained())

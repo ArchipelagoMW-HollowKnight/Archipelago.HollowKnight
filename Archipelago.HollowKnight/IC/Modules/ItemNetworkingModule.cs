@@ -175,10 +175,10 @@ namespace Archipelago.HollowKnight.IC.Modules
         private async Task Synchronize()
         {
             // discard any items that we have already handled from previous sessions
-            for (int i = 0; i < Archipelago.Instance.ApSettings.ItemIndex; i++)
+            for (int i = 0; i < Archipelago.Instance.LS.ItemIndex; i++)
             {
-                NetworkItem seen = session.Items.DequeueItem();
-                Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {session.Items.GetItemName(seen.Item)} at index {i}");
+                ItemInfo seen = session.Items.DequeueItem();
+                Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {seen.ItemName} at index {i}");
             }
             // receive from the server any items that are pending
             while (ReceiveNextItem(true)) { }
@@ -200,9 +200,9 @@ namespace Archipelago.HollowKnight.IC.Modules
                 return false; // No items are waiting.
             }
 
-            ConnectionDetails settings = Archipelago.Instance.ApSettings;
+            APLocalSettings settings = Archipelago.Instance.LS;
 
-            NetworkItem netItem = session.Items.DequeueItem(); // Read the next item
+            ItemInfo itemInfo = session.Items.DequeueItem(); // Read the next item
             if (settings.ItemIndex >= session.Items.Index) // We've already handled this, so be done
             {
                 return true;
@@ -211,29 +211,29 @@ namespace Archipelago.HollowKnight.IC.Modules
 
             try
             {
-                ReceiveItem(netItem, silentGive);
+                ReceiveItem(itemInfo, silentGive);
             }
             catch (Exception ex)
             {
-                Archipelago.Instance.LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(netItem)}: {ex}");
+                Archipelago.Instance.LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(itemInfo.ToSerializable())}: {ex}");
             }
             finally
             {
-                Archipelago.Instance.ApSettings.ItemIndex++;
+                Archipelago.Instance.LS.ItemIndex++;
             }
 
             return true;
         }
 
-        private void ReceiveItem(NetworkItem netItem, bool silentGive)
+        private void ReceiveItem(ItemInfo itemInfo, bool silentGive)
         {
-            string name = session.Items.GetItemName(netItem.Item);
-            Archipelago.Instance.LogDebug($"Receiving item ID {netItem.Item}. Name is {name}. " +
-                $"Slot is {netItem.Player}. Location is {netItem.Location}.");
+            string name = itemInfo.ItemName;
+            Archipelago.Instance.LogDebug($"Receiving item {itemInfo.ItemId} with name {name}. " +
+                $"Slot is {itemInfo.Player}. Location is {itemInfo.LocationId} with name {itemInfo.LocationName}");
 
-            if (netItem.Player == Archipelago.Instance.Slot && netItem.Location > 0)
+            if (itemInfo.Player == Archipelago.Instance.Slot && itemInfo.LocationId > 0)
             {
-                MarkLocationAsChecked(netItem.Location, silentGive);
+                MarkLocationAsChecked(itemInfo.LocationId, silentGive);
                 return;
             }
 
@@ -242,26 +242,26 @@ namespace Archipelago.HollowKnight.IC.Modules
             if (item == null)
             {
                 Archipelago.Instance.LogDebug($"Could not find an item named '{name}'. " +
-                    $"This means that item {netItem.Item} was not received.");
+                    $"This means that item {itemInfo.ItemId} was not received.");
                 return;
             }
 
             string sender;
-            if (netItem.Location == -1)
+            if (itemInfo.LocationId == -1)
             {
                 sender = "Cheat Console";
             }
-            else if (netItem.Location == -2)
+            else if (itemInfo.LocationId == -2)
             {
                 sender = "Start";
             }
-            else if (netItem.Player == 0)
+            else if (itemInfo.Player == 0)
             {
                 sender = "Archipelago";
             }
             else
             {
-                sender = session.Players.GetPlayerName(netItem.Player);
+                sender = session.Players.GetPlayerName(itemInfo.Player);
             }
             InteropTag recentItemsTag = item.AddTag<InteropTag>();
             recentItemsTag.Message = "RecentItems";
