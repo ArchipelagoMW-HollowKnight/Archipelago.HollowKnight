@@ -58,6 +58,9 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="Benchwarp">
+      <HintPath>$(HollowKnightRefs)/Mods/Benchwarp/Benchwarp.dll</HintPath>
+    </Reference>
     <Reference Include="GalaxyCSharp">
       <HintPath>$(HollowKnightRefs)/GalaxyCSharp.dll</HintPath>
     </Reference>

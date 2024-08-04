@@ -218,6 +218,7 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<CompletionPercentOverride>();
             ItemChangerMod.Modules.Add<HintTracker>();
             ItemChangerMod.Modules.Add<RepositionShadeModule>();
+            ItemChangerMod.Modules.Add<BenchSyncModule>();
 
             if (SlotData.Options.DeathLink)
             {
