@@ -1,7 +1,5 @@
 ﻿using Archipelago.HollowKnight.IC.Modules;
-using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using System.Collections.Generic;
@@ -39,13 +37,13 @@ namespace Archipelago.HollowKnight.IC
 
         private ItemNetworkingModule networkModule;
 
-        public void ReadItemInfo(ItemInfo itemInfo)
+        public void ReadItemInfo(ScoutedItemInfo itemInfo)
         {
             Location = itemInfo.LocationId;
             Player = itemInfo.Player;
             Flags = itemInfo.Flags;
 
-            IsItemForMe = GroupUtil.WillItemRouteToMe(itemInfo.Player);
+            IsItemForMe = itemInfo.IsReceiverRelatedToActivePlayer;
         }
 
         public override async void Load(object parent)

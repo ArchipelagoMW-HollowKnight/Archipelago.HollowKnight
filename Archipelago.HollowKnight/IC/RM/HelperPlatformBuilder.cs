@@ -1,4 +1,4 @@
-﻿using Archipelago.HollowKnight.SlotData;
+﻿using Archipelago.HollowKnight.SlotDataModel;
 using ItemChanger;
 using System.Collections.Generic;
 using SD = ItemChanger.Util.SceneDataUtil;

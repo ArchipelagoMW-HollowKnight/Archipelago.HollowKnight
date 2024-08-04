@@ -154,7 +154,7 @@ namespace Archipelago.HollowKnight.IC.Modules
                 On.GameManager.FinishedEnteringScene -= DoInitialSyncAndStartSendReceive;
                 if (!hasEverRecievedStartingGeo)
                 {
-                    HeroController.instance.AddGeo(Archipelago.Instance.SlotOptions.StartingGeo);
+                    HeroController.instance.AddGeo(Archipelago.Instance.SlotData.Options.StartingGeo);
                     hasEverRecievedStartingGeo = true;
                 }
                 readyToSendReceiveChecks = true;
@@ -231,7 +231,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             Archipelago.Instance.LogDebug($"Receiving item {itemInfo.ItemId} with name {name}. " +
                 $"Slot is {itemInfo.Player}. Location is {itemInfo.LocationId} with name {itemInfo.LocationName}");
 
-            if (itemInfo.Player == Archipelago.Instance.Slot && itemInfo.LocationId > 0)
+            if (itemInfo.Player == Archipelago.Instance.session.Players.ActivePlayer.Slot && itemInfo.LocationId > 0)
             {
                 MarkLocationAsChecked(itemInfo.LocationId, silentGive);
                 return;

@@ -9,7 +9,7 @@ namespace Archipelago.HollowKnight.IC
 {
     internal class ItemFactory
     {
-        public AbstractItem CreateMyItem(string itemName, ItemInfo itemInfo)
+        public AbstractItem CreateMyItem(string itemName, ScoutedItemInfo itemInfo)
         {
             AbstractItem item = Finder.GetItem(itemName);
             if (item == null)
@@ -22,7 +22,7 @@ namespace Archipelago.HollowKnight.IC
             return item;
         }
 
-        public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, ItemInfo itemInfo)
+        public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, ScoutedItemInfo itemInfo)
         {
             ArchipelagoSession session = Archipelago.Instance.session;
             string game = itemInfo.ItemGame;
@@ -55,7 +55,7 @@ namespace Archipelago.HollowKnight.IC
             return item;
         }
 
-        private void AddArchipelagoTag(AbstractItem item, ItemInfo itemInfo)
+        private void AddArchipelagoTag(AbstractItem item, ScoutedItemInfo itemInfo)
         {
             ArchipelagoItemTag itemTag = item.AddTag<ArchipelagoItemTag>();
             itemTag.ReadItemInfo(itemInfo);

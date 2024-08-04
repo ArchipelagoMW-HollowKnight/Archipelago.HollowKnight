@@ -1,6 +1,6 @@
 ﻿using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.MC;
-using Archipelago.HollowKnight.SlotData;
+using Archipelago.HollowKnight.SlotDataModel;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
@@ -50,13 +50,11 @@ namespace Archipelago.HollowKnight
         }
         public static Archipelago Instance;
         public ArchipelagoSession session { get; private set; }
-        public SlotOptions SlotOptions { get; set; }
+        public SlotData SlotData { get; private set; }
         public int GrubHuntRequiredGrubs { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
-        public int Slot { get; private set; }
         public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
-        public string Player => session.Players.GetPlayerName(Slot);
 
         internal SpriteManager spriteManager;
 
@@ -107,33 +105,24 @@ namespace Archipelago.HollowKnight
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
 
             LoginSuccessful loginResult = ConnectToArchipelago();
-            if (loginResult.SlotData.TryGetValue("grub_count", out object objGrubsRequired))
-            {
-                GrubHuntRequiredGrubs = (int)((long) objGrubsRequired);
-            }
-            else
-            {
-                // if not present, it's an older world version so make the goal functionally impossible
-                // (e.g. for Any goal)
-                GrubHuntRequiredGrubs = int.MaxValue;
-            }
+            GrubHuntRequiredGrubs = SlotData.GrubsRequired.GetValueOrDefault(int.MaxValue);
 
             if (randomize)
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
                 LS.ItemIndex = 0;
-                LS.Seed = (long) loginResult.SlotData["seed"];
+                LS.Seed = SlotData.Seed;
                 LS.RoomSeed = session.RoomState.Seed;
 
                 LogDebug($"StartOrResumeGame: Room: {LS.RoomSeed}; Seed = {LS.RoomSeed}");
 
-                ArchipelagoRandomizer randomizer = new(loginResult.SlotData);
+                ArchipelagoRandomizer randomizer = new(SlotData);
                 randomizer.Randomize();
             }
             else
             {
                 LogDebug($"StartOrResumeGame: Local : Room: {LS.RoomSeed}; Seed = {LS.Seed}");
-                long seed = (long) loginResult.SlotData["seed"];
+                int seed = SlotData.Seed;
                 LogDebug($"StartOrResumeGame: AP    : Room: {session.RoomState.Seed}; Seed = {seed}");
                 if (seed != LS.Seed || session.RoomState.Seed != LS.RoomSeed)
                 {
@@ -142,9 +131,9 @@ namespace Archipelago.HollowKnight
             }
 
             // check the goal is one we know how to cope with
-            if (SlotOptions.Goal > GoalsLookup.MAX)
+            if (SlotData.Options.Goal > GoalsLookup.MAX)
             {
-                throw new LoginValidationException($"Unrecognized goal condition {SlotOptions.Goal} (are you running an outdated client?)");
+                throw new LoginValidationException($"Unrecognized goal condition {SlotData.Options.Goal} (are you running an outdated client?)");
             }
 
             // Hooks happen after we've definitively connected to an Archipelago slot correctly.
@@ -176,7 +165,8 @@ namespace Archipelago.HollowKnight
                                                          LS.ConnectionDetails.SlotName,
                                                          ItemsHandlingFlags.AllItems,
                                                          ArchipelagoProtocolVersion,
-                                                         password: LS.ConnectionDetails.ServerPassword);
+                                                         password: LS.ConnectionDetails.ServerPassword,
+                                                         requestSlotData: false);
 
             if (loginResult is LoginFailure failure)
             {
@@ -186,9 +176,7 @@ namespace Archipelago.HollowKnight
             }
             else if (loginResult is LoginSuccessful success)
             {
-                // Read slot data.
-                Slot = success.Slot;
-                SlotOptions = SlotDataExtract.ExtractObjectFromSlotData<SlotOptions>(success.SlotData["options"]);
+                SlotData = session.DataStorage.GetSlotData<SlotData>();
                 session.Socket.SocketClosed += OnSocketClosed;
 
                 return success;
@@ -216,7 +204,6 @@ namespace Archipelago.HollowKnight
                 session.Socket.SocketClosed -= OnSocketClosed;
             }
 
-            Slot = 0;
             AllSlots = null;
 
             if (session?.Socket != null && session.Socket.Connected)

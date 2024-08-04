@@ -1,4 +1,4 @@
-﻿namespace Archipelago.HollowKnight.SlotData
+﻿namespace Archipelago.HollowKnight.SlotDataModel
 {
     public class SlotOptions
     {

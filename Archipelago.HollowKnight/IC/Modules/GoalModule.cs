@@ -17,7 +17,7 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         public override void Initialize()
         {
-            goal = Goal.GetGoal(Archipelago.Instance.SlotOptions.Goal);
+            goal = Goal.GetGoal(Archipelago.Instance.SlotData.Options.Goal);
             goal.Select();
         }
 

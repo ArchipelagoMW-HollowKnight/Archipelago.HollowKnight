@@ -1,11 +1,9 @@
 ﻿using Archipelago.HollowKnight.IC;
 using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.HollowKnight.IC.RM;
-using Archipelago.HollowKnight.SlotData;
+using Archipelago.HollowKnight.SlotDataModel;
 using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
-using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Modules;
@@ -48,16 +46,17 @@ namespace Archipelago.HollowKnight
         /// </summary>
         public readonly CostFactory costFactory;
 
-        private SlotOptions SlotOptions => Archipelago.Instance.SlotOptions;
+        private readonly SlotData SlotData;
         private ArchipelagoSession Session => Archipelago.Instance.session;
         private Archipelago Instance => Archipelago.Instance;
 
-        public ArchipelagoRandomizer(Dictionary<string, object> slotData)
+        public ArchipelagoRandomizer(SlotData slotData)
         {
-            Random = new Random(Convert.ToInt32((long) slotData["seed"]));
+            SlotData = slotData;
+            Random = new Random(slotData.Seed);
             itemFactory = new ItemFactory();
-            costFactory = new CostFactory(SlotDataExtract.ExtractLocationCostsFromSlotData(slotData["location_costs"]));
-            NotchCosts = SlotDataExtract.ExtractArrayFromSlotData<List<int>>(slotData["notch_costs"]);
+            costFactory = new CostFactory(slotData.LocationCosts);
+            NotchCosts = slotData.NotchCosts;
         }
 
         public void Randomize()
@@ -97,13 +96,13 @@ namespace Archipelago.HollowKnight
                     shop.defaultShopItems = DefaultShopItems.IseldaMapPins 
                         | DefaultShopItems.IseldaMapMarkers 
                         | DefaultShopItems.LegEaterRepair;
-                    if (SlotOptions.AddUnshuffledLocations)
+                    if (SlotData.Options.AddUnshuffledLocations)
                     {
                         // AP will add the default items on our behalf
                         continue;
                     }
 
-                    if (!SlotOptions.RandomizeCharms)
+                    if (!SlotData.Options.RandomizeCharms)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlyCharms 
                             | DefaultShopItems.SlyKeyCharms
@@ -111,31 +110,31 @@ namespace Archipelago.HollowKnight
                             | DefaultShopItems.SalubraCharms
                             | DefaultShopItems.LegEaterCharms;
                     }
-                    if (!SlotOptions.RandomizeMaps)
+                    if (!SlotData.Options.RandomizeMaps)
                     {
                         shop.defaultShopItems |= DefaultShopItems.IseldaMaps
                             | DefaultShopItems.IseldaQuill;
                     }
-                    if (!SlotOptions.RandomizeCharmNotches)
+                    if (!SlotData.Options.RandomizeCharmNotches)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SalubraNotches
                             | DefaultShopItems.SalubraBlessing;
                     }
-                    if (!SlotOptions.RandomizeKeys)
+                    if (!SlotData.Options.RandomizeKeys)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlySimpleKey
                             | DefaultShopItems.SlyLantern
                             | DefaultShopItems.SlyKeyElegantKey;
                     }
-                    if (!SlotOptions.RandomizeMaskShards)
+                    if (!SlotData.Options.RandomizeMaskShards)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlyMaskShards;
                     }
-                    if (!SlotOptions.RandomizeVesselFragments)
+                    if (!SlotData.Options.RandomizeVesselFragments)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlyVesselFragments;
                     }
-                    if (!SlotOptions.RandomizeRancidEggs)
+                    if (!SlotData.Options.RandomizeRancidEggs)
                     {
                         shop.defaultShopItems |= DefaultShopItems.SlyRancidEgg;
                     }
@@ -144,23 +143,23 @@ namespace Archipelago.HollowKnight
                 {
                     DestroyGrubRewardTag t = pmt.AddTag<DestroyGrubRewardTag>();
                     t.destroyRewards = GrubfatherRewards.None;
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeMaskShards)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeMaskShards)
                     {
                         t.destroyRewards |= GrubfatherRewards.MaskShard;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeCharms)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeCharms)
                     {
                         t.destroyRewards |= GrubfatherRewards.Grubsong | GrubfatherRewards.GrubberflysElegy;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRancidEggs)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeRancidEggs)
                     {
                         t.destroyRewards |= GrubfatherRewards.RancidEgg;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRelics)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeRelics)
                     {
                         t.destroyRewards |= GrubfatherRewards.HallownestSeal | GrubfatherRewards.KingsIdol;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizePaleOre)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizePaleOre)
                     {
                         t.destroyRewards |= GrubfatherRewards.PaleOre;
                     }
@@ -169,27 +168,27 @@ namespace Archipelago.HollowKnight
                 {
                     DestroySeerRewardTag t = pmt.AddTag<DestroySeerRewardTag>();
                     t.destroyRewards = SeerRewards.None;
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeRelics)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeRelics)
                     {
                         t.destroyRewards |= SeerRewards.HallownestSeal | SeerRewards.ArcaneEgg;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizePaleOre)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizePaleOre)
                     {
                         t.destroyRewards |= SeerRewards.PaleOre;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeCharms)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeCharms)
                     {
                         t.destroyRewards |= SeerRewards.DreamWielder;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeVesselFragments)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeVesselFragments)
                     {
                         t.destroyRewards |= SeerRewards.VesselFragment;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeSkills)
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeSkills)
                     {
                         t.destroyRewards |= SeerRewards.DreamGate | SeerRewards.AwokenDreamNail;
                     }
-                    if (SlotOptions.AddUnshuffledLocations || SlotOptions.RandomizeMaskShards) 
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeMaskShards) 
                     {
                         t.destroyRewards |= SeerRewards.MaskShard;
                     }
@@ -220,37 +219,37 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<HintTracker>();
             ItemChangerMod.Modules.Add<RepositionShadeModule>();
 
-            if (SlotOptions.DeathLink)
+            if (SlotData.Options.DeathLink)
             {
                 ItemChangerMod.Modules.Add<DeathLinkModule>();
             }
 
-            if (SlotOptions.RandomizeElevatorPass)
+            if (SlotData.Options.RandomizeElevatorPass)
             {
                 ItemChangerMod.Modules.Add<ElevatorPass>();
             }
 
-            if (SlotOptions.RandomizeFocus)
+            if (SlotData.Options.RandomizeFocus)
             {
                 ItemChangerMod.Modules.Add<FocusSkill>();
             }
 
-            if (SlotOptions.RandomizeSwim)
+            if (SlotData.Options.RandomizeSwim)
             {
                 ItemChangerMod.Modules.Add<SwimSkill>();
             }
 
-            if (SlotOptions.SplitMothwingCloak)
+            if (SlotData.Options.SplitMothwingCloak)
             {
                 ItemChangerMod.Modules.Add<SplitCloak>();
             }
 
-            if (SlotOptions.SplitMantisClaw)
+            if (SlotData.Options.SplitMantisClaw)
             {
                 ItemChangerMod.Modules.Add<SplitClaw>();
             }
 
-            if (SlotOptions.SplitCrystalHeart)
+            if (SlotData.Options.SplitCrystalHeart)
             {
                 ItemChangerMod.Modules.Add<SplitSuperdash>();
             }
@@ -258,8 +257,8 @@ namespace Archipelago.HollowKnight
 
         private void AddHelperPlatforms()
         {
-            HelperPlatformBuilder.AddConveniencePlatforms(SlotOptions);
-            HelperPlatformBuilder.AddStartLocationRequiredPlatforms(SlotOptions);
+            HelperPlatformBuilder.AddConveniencePlatforms(SlotData.Options);
+            HelperPlatformBuilder.AddStartLocationRequiredPlatforms(SlotData.Options);
         }
 
         private void ApplyCharmCosts()
@@ -288,7 +287,7 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        public void PlaceItem(string location, string name, ItemInfo itemInfo)
+        public void PlaceItem(string location, string name, ScoutedItemInfo itemInfo)
         {
             Instance.LogDebug($"[PlaceItem] Placing item {name} into {location} with ID {itemInfo.ItemId}");
 
@@ -296,7 +295,7 @@ namespace Archipelago.HollowKnight
             location = StripShopSuffix(location);
             // IC does not like placements at these locations if there's also a location at the lore tablet, it renders the lore tablet inoperable.
             // But we can have multiple placements at the same location, so do this workaround.  (Rando4 does something similar per its README)
-            if (SlotOptions.RandomizeLoreTablets)
+            if (SlotData.Options.RandomizeLoreTablets)
             {
                 switch (location)
                 {
@@ -317,7 +316,7 @@ namespace Archipelago.HollowKnight
                 return;
             }
 
-            bool isMyItem = GroupUtil.WillItemRouteToMe(itemInfo.Player);
+            bool isMyItem = itemInfo.IsReceiverRelatedToActivePlayer;
             string recipientName = null;
             if (!isMyItem)
             {

@@ -18,8 +18,8 @@ namespace Archipelago.HollowKnight.IC.Modules
             .GetMethod("CanTakeDamage", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private DeathLinkService service = null;
-        private DeathLinkShadeHandling shadeHandling => Archipelago.Instance.SlotOptions.DeathLinkShade;
-        private bool breakFragileCharms => Archipelago.Instance.SlotOptions.DeathLinkBreaksFragileCharms;
+        private DeathLinkShadeHandling shadeHandling => Archipelago.Instance.SlotData.Options.DeathLinkShade;
+        private bool breakFragileCharms => Archipelago.Instance.SlotData.Options.DeathLinkBreaksFragileCharms;
         private DeathLinkStatus status;
         private int lastDamageType;
         private DateTime lastDamageTime;
@@ -225,10 +225,10 @@ namespace Archipelago.HollowKnight.IC.Modules
                 lastDamageType = 0;
             }
 
-            string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.Player);
+            string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.session.Players.ActivePlayer.Alias);
             ap.LogDebug(
                 $"SendDeathLink(): Sending deathlink.  \"{message}\"");
-            service.SendDeathLink(new DeathLink(Archipelago.Instance.Player, message));
+            service.SendDeathLink(new DeathLink(Archipelago.Instance.session.Players.ActivePlayer.Alias, message));
         }
 
         private void OnDeathLinkReceived(DeathLink deathLink)
