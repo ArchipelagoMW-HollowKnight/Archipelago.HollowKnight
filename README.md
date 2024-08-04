@@ -10,7 +10,7 @@ A mod which enables Hollow Knight to act as an Archipelago client, enabling mult
     * Also, don’t pirate the game. >:(
 3. Install and enable Archipelago.
     * There are several mods that are needed to for Archipelago to run. They are installed automatically.
-    * Archipelago Map Mod is an in-game tracker for Archipelago. It is optional, but if you choose to install it, make sure that RandoMapMod and MapChanger are disabled or uninstalled if you came from the standalone randomizer.
+    * Archipelago Map Mod is an in-game tracker for Archipelago. It is optional and can also be installed from Lumafly.
 4. Start the game and ensure **Archipelago** appears in the top left corner of the main menu.
 
 ## Joining an Archipelago Session
