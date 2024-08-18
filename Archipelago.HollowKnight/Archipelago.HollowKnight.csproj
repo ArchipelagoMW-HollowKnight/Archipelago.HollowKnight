@@ -46,6 +46,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Archipelago.MultiClient.Net" Version="6.3.0" />
+    <PackageReference Include="Archipelago.MultiClient.Net.Analyzers" Version="1.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="PolySharp" Version="1.14.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
