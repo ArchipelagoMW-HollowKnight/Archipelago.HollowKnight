@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    public class Archipelago : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>
+    public class ArchipelagoMod : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>
     {
         // Events support
         public static event Action OnArchipelagoGameStarted;
@@ -48,7 +48,7 @@ namespace Archipelago.HollowKnight
 #endif
             return version;
         }
-        public static Archipelago Instance;
+        public static ArchipelagoMod Instance;
         public ArchipelagoSession session { get; private set; }
         public SlotData SlotData { get; private set; }
         public int GrubHuntRequiredGrubs { get; set; }
@@ -61,12 +61,14 @@ namespace Archipelago.HollowKnight
         internal APGlobalSettings GS = new();
         internal APLocalSettings LS = new();
 
+        public ArchipelagoMod() : base("Archipelago") { }
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
             Log("Initializing");
             Instance = this;
-            spriteManager = new SpriteManager(typeof(Archipelago).Assembly, "Archipelago.HollowKnight.Resources.");
+            spriteManager = new SpriteManager(typeof(ArchipelagoMod).Assembly, "Archipelago.HollowKnight.Resources.");
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
             Log("Initialized");

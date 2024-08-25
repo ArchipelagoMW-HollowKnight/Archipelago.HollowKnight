@@ -40,7 +40,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             MessageType = MessageType.None
         };
 
-        private ArchipelagoSession session => Archipelago.Instance.session;
+        private ArchipelagoSession session => ArchipelagoMod.Instance.session;
 
         private bool networkErrored;
         private bool readyToSendReceiveChecks;
@@ -85,14 +85,14 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
             catch (Exception ex) when (ex is TimeoutException or ArchipelagoSocketClosedException)
             {
-                Archipelago.Instance.LogWarn("SendLocationsAsync disconnected");
+                ArchipelagoMod.Instance.LogWarn("SendLocationsAsync disconnected");
                 deferredLocationChecks.AddRange(locationIds);
                 ReportDisconnect();
             }
             catch (Exception ex)
             {
-                Archipelago.Instance.LogError("Unexpected error in SendLocationsAsync");
-                Archipelago.Instance.LogError(ex);
+                ArchipelagoMod.Instance.LogError("Unexpected error in SendLocationsAsync");
+                ArchipelagoMod.Instance.LogError(ex);
                 deferredLocationChecks.AddRange(locationIds);
                 ReportDisconnect();
             }
@@ -106,10 +106,10 @@ namespace Archipelago.HollowKnight.IC.Modules
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
-            Archipelago.Instance.LogDebug($"Marking location {locationId} as checked.");
+            ArchipelagoMod.Instance.LogDebug($"Marking location {locationId} as checked.");
             if (!ArchipelagoPlacementTag.PlacementsByLocationId.TryGetValue(locationId, out pmt))
             {
-                Archipelago.Instance.LogDebug($"Could not find a placement for location {locationId}");
+                ArchipelagoMod.Instance.LogDebug($"Could not find a placement for location {locationId}");
                 return;
             }
 
@@ -154,7 +154,7 @@ namespace Archipelago.HollowKnight.IC.Modules
                 On.GameManager.FinishedEnteringScene -= DoInitialSyncAndStartSendReceive;
                 if (!hasEverRecievedStartingGeo)
                 {
-                    HeroController.instance.AddGeo(Archipelago.Instance.SlotData.Options.StartingGeo);
+                    HeroController.instance.AddGeo(ArchipelagoMod.Instance.SlotData.Options.StartingGeo);
                     hasEverRecievedStartingGeo = true;
                 }
                 readyToSendReceiveChecks = true;
@@ -175,10 +175,10 @@ namespace Archipelago.HollowKnight.IC.Modules
         private async Task Synchronize()
         {
             // discard any items that we have already handled from previous sessions
-            for (int i = 0; i < Archipelago.Instance.LS.ItemIndex; i++)
+            for (int i = 0; i < ArchipelagoMod.Instance.LS.ItemIndex; i++)
             {
                 ItemInfo seen = session.Items.DequeueItem();
-                Archipelago.Instance.LogDebug($"Fast-forwarding past already-obtained {seen.ItemName} at index {i}");
+                ArchipelagoMod.Instance.LogDebug($"Fast-forwarding past already-obtained {seen.ItemName} at index {i}");
             }
             // receive from the server any items that are pending
             while (ReceiveNextItem(true)) { }
@@ -200,14 +200,14 @@ namespace Archipelago.HollowKnight.IC.Modules
                 return false; // No items are waiting.
             }
 
-            APLocalSettings settings = Archipelago.Instance.LS;
+            APLocalSettings settings = ArchipelagoMod.Instance.LS;
 
             ItemInfo itemInfo = session.Items.DequeueItem(); // Read the next item
             if (settings.ItemIndex >= session.Items.Index) // We've already handled this, so be done
             {
                 return true;
             }
-            Archipelago.Instance.LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {settings.ItemIndex}");
+            ArchipelagoMod.Instance.LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {settings.ItemIndex}");
 
             try
             {
@@ -215,11 +215,11 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
             catch (Exception ex)
             {
-                Archipelago.Instance.LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(itemInfo.ToSerializable())}: {ex}");
+                ArchipelagoMod.Instance.LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(itemInfo.ToSerializable())}: {ex}");
             }
             finally
             {
-                Archipelago.Instance.LS.ItemIndex++;
+                ArchipelagoMod.Instance.LS.ItemIndex++;
             }
 
             return true;
@@ -228,10 +228,10 @@ namespace Archipelago.HollowKnight.IC.Modules
         private void ReceiveItem(ItemInfo itemInfo, bool silentGive)
         {
             string name = itemInfo.ItemName;
-            Archipelago.Instance.LogDebug($"Receiving item {itemInfo.ItemId} with name {name}. " +
+            ArchipelagoMod.Instance.LogDebug($"Receiving item {itemInfo.ItemId} with name {name}. " +
                 $"Slot is {itemInfo.Player}. Location is {itemInfo.LocationId} with name {itemInfo.LocationName}");
 
-            if (itemInfo.Player == Archipelago.Instance.session.Players.ActivePlayer.Slot && itemInfo.LocationId > 0)
+            if (itemInfo.Player == ArchipelagoMod.Instance.session.Players.ActivePlayer.Slot && itemInfo.LocationId > 0)
             {
                 MarkLocationAsChecked(itemInfo.LocationId, silentGive);
                 return;
@@ -241,7 +241,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             AbstractItem item = Finder.GetItem(name);
             if (item == null)
             {
-                Archipelago.Instance.LogDebug($"Could not find an item named '{name}'. " +
+                ArchipelagoMod.Instance.LogDebug($"Could not find an item named '{name}'. " +
                     $"This means that item {itemInfo.ItemId} was not received.");
                 return;
             }

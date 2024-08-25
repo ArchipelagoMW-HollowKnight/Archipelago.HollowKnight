@@ -14,7 +14,7 @@ namespace Archipelago.HollowKnight.IC
             AbstractItem item = Finder.GetItem(itemName);
             if (item == null)
             {
-                Archipelago.Instance.LogError($"Could not find local item with name {itemName}");
+                ArchipelagoMod.Instance.LogError($"Could not find local item with name {itemName}");
                 throw new NullReferenceException($"Could not find local item with name {itemName}");
             }
 
@@ -24,7 +24,7 @@ namespace Archipelago.HollowKnight.IC
 
         public AbstractItem CreateRemoteItem(AbstractPlacement targetPlacement, string slotName, string itemName, ScoutedItemInfo itemInfo)
         {
-            ArchipelagoSession session = Archipelago.Instance.session;
+            ArchipelagoSession session = ArchipelagoMod.Instance.session;
             string game = itemInfo.ItemGame;
 
             AbstractItem orig = Finder.GetItem(itemName);

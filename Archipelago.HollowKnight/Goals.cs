@@ -55,25 +55,25 @@ namespace Archipelago.HollowKnight
             {
                 return value;
             }
-            Archipelago.Instance.LogError($"Listed goal is {key}, which is greater than {GoalsLookup.MAX}. Is this an outdated client?");
+            ArchipelagoMod.Instance.LogError($"Listed goal is {key}, which is greater than {GoalsLookup.MAX}. Is this an outdated client?");
             throw new ArgumentOutOfRangeException($"Unrecognized goal condition {key} (are you running an outdated client?)");
         }
 
         public async Task CheckForVictoryAsync()
         {
-            Archipelago.Instance.LogDebug($"Checking for victory; goal is {this.Name}; scene " +
+            ArchipelagoMod.Instance.LogDebug($"Checking for victory; goal is {this.Name}; scene " +
                 $"{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
             if (VictoryCondition())
             {
-                Archipelago.Instance.LogDebug($"Victory detected, declaring!");
+                ArchipelagoMod.Instance.LogDebug($"Victory detected, declaring!");
                 try
                 {
                     await ItemChangerMod.Modules.Get<GoalModule>().DeclareVictoryAsync().TimeoutAfter(1000);
                 }
                 catch (Exception ex) when (ex is TimeoutException or ArchipelagoSocketClosedException)
                 {
-                    Archipelago.Instance.LogError("Failed to send goal to server");
-                    Archipelago.Instance.LogError(ex);
+                    ArchipelagoMod.Instance.LogError("Failed to send goal to server");
+                    ArchipelagoMod.Instance.LogError(ex);
                 }
             }
         }
@@ -215,7 +215,7 @@ namespace Archipelago.HollowKnight
     {
         public override string Name => "Grub Hunt";
 
-        public override string Description => $"Save {Archipelago.Instance.GrubHuntRequiredGrubs} of your Grubs.";
+        public override string Description => $"Save {ArchipelagoMod.Instance.GrubHuntRequiredGrubs} of your Grubs.";
 
         private static readonly MethodInfo setIntInternal = typeof(PlayerData).GetMethod("SetIntInternal");
         private Hook onSetIntInternal;
@@ -239,7 +239,7 @@ namespace Archipelago.HollowKnight
 
         protected override bool VictoryCondition()
         {
-            return PlayerData.instance.grubsCollected >= Archipelago.Instance.GrubHuntRequiredGrubs;
+            return PlayerData.instance.grubsCollected >= ArchipelagoMod.Instance.GrubHuntRequiredGrubs;
         }
 
         private async void OnSetPlayerInt(On.PlayerData.orig_SetInt orig, PlayerData self, string intName, int value)

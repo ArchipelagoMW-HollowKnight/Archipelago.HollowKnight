@@ -11,13 +11,13 @@ namespace Archipelago.HollowKnight.IC.Modules
 {
     public class GoalModule : Module
     {
-        private ArchipelagoSession session => Archipelago.Instance.session;
+        private ArchipelagoSession session => ArchipelagoMod.Instance.session;
 
         private Goal goal;
 
         public override void Initialize()
         {
-            goal = Goal.GetGoal(Archipelago.Instance.SlotData.Options.Goal);
+            goal = Goal.GetGoal(ArchipelagoMod.Instance.SlotData.Options.Goal);
             goal.Select();
         }
 

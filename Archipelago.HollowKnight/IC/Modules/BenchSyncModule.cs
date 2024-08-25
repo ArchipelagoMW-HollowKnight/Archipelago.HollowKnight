@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Archipelago.HollowKnight.IC.Modules
 {
-    public class BenchSyncModule : Module
+    public partial class BenchSyncModule : Module
     {
         private const string DATASTORAGE_KEY_UNLOCKED_BENCHES = "unlocked_benches";
         private const string BENCH_KEY_SEPARATOR = ":::";
@@ -19,38 +19,41 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         private Dictionary<BenchKey, Bench> benchLookup;
 
+        [DataStorageProperty(nameof(session), Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES)]
+        private readonly DataStorageElement _unlockedBenches;
+
         public override async void Initialize()
         {
-            session = Archipelago.Instance.session;
+            session = ArchipelagoMod.Instance.session;
             benchLookup = Bench.Benches.ToDictionary(x => x.ToBenchKey(), x => x);
 
             Benchwarp.Events.OnBenchUnlock += OnUnlockLocalBench;
-            session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES].Initialize(JObject.FromObject(new Dictionary<string, bool>()));
+            UnlockedBenches.Initialize(JObject.FromObject(new Dictionary<string, bool>()));
 
-            session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES].OnValueChanged += OnUnlockRemoteBench;
+            UnlockedBenches.OnValueChanged += OnUnlockRemoteBench;
             Dictionary<string, bool> benchData = BuildBenchData(Bench.Benches.Where(x => x.HasVisited()).Select(x => x.ToBenchKey()));
-            session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES] += Operation.Update(benchData);
+            UnlockedBenches += Operation.Update(benchData);
 
             try
             {
-                Dictionary<string, bool> benches = await session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES].GetAsync<Dictionary<string, bool>>();
+                Dictionary<string, bool> benches = await UnlockedBenches.GetAsync<Dictionary<string, bool>>();
                 UnlockBenches(benches);
             } 
             catch (Exception ex)
             {
-                Archipelago.Instance.LogError($"Unexpected issue unlocking benches from server data: {ex}");
+                ArchipelagoMod.Instance.LogError($"Unexpected issue unlocking benches from server data: {ex}");
             }
         }
 
         public override void Unload()
         {
             Benchwarp.Events.OnBenchUnlock -= OnUnlockLocalBench;
-            session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES].OnValueChanged -= OnUnlockRemoteBench;
+            UnlockedBenches.OnValueChanged -= OnUnlockRemoteBench;
         }
 
         private void OnUnlockLocalBench(BenchKey obj)
         {
-            session.DataStorage[Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES] += Operation.Update(BuildBenchData([obj]));
+            UnlockedBenches += Operation.Update(BuildBenchData([obj]));
         }
 
         private void OnUnlockRemoteBench(JToken oldData, JToken newData, Dictionary<string, JToken> args)

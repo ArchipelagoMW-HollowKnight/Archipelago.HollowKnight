@@ -37,7 +37,7 @@ public class HintTracker : Module
         Hints = arrayHints.ToList();
         foreach (Hint hint in Hints)
         {
-            if (hint.FindingPlayer != Archipelago.Instance.session.ConnectionInfo.Slot)
+            if (hint.FindingPlayer != ArchipelagoMod.Instance.session.ConnectionInfo.Slot)
             {
                 continue;
             }
@@ -121,7 +121,7 @@ public class HintTracker : Module
         }
         catch (Exception ex)
         {
-            Archipelago.Instance.LogError($"Error invoking OnArchipelagoHintUpdate:\n {ex}");
+            ArchipelagoMod.Instance.LogError($"Error invoking OnArchipelagoHintUpdate:\n {ex}");
         }
     }
 
@@ -129,7 +129,7 @@ public class HintTracker : Module
     {
         PendingPlacementHints = [];
 
-        session = Archipelago.Instance.session;
+        session = ArchipelagoMod.Instance.session;
         session.DataStorage.TrackHints(UpdateHints);
 
         AbstractItem.AfterGiveGlobal += UpdateHintFoundStatus;
@@ -165,7 +165,7 @@ public class HintTracker : Module
                     }
                     catch (Exception ex)
                     {
-                        Archipelago.Instance.LogError($"Error invoking OnArchipelagoHintUpdate:\n {ex}");
+                        ArchipelagoMod.Instance.LogError($"Error invoking OnArchipelagoHintUpdate:\n {ex}");
                     }
                     break;
                 }
@@ -216,7 +216,7 @@ public class HintTracker : Module
             return;
         }
 
-        Archipelago.Instance.LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
+        ArchipelagoMod.Instance.LogDebug($"Hinting {hintedLocationIDs.Count()} locations.");
         try
         {
             await session.Locations.ScoutLocationsAsync(true, hintedLocationIDs.ToArray())

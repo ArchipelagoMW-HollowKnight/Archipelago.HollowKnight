@@ -48,7 +48,7 @@ namespace Archipelago.HollowKnight.IC
                             proposedCost = new ItemChanger.Modules.CumulativeRancidEggCost(entry.Value);
                             break;
                         default:
-                            Archipelago.Instance.LogWarn(
+                            ArchipelagoMod.Instance.LogWarn(
                                 $"Encountered UNKNOWN currency type {entry.Key} at location {serverLocationName}!");
                             break;
                     }
@@ -63,7 +63,7 @@ namespace Archipelago.HollowKnight.IC
                             .Select(t => t.Cost);
                         if (inherentCosts.Any(c => c.Includes(proposedCost)))
                         {
-                            Archipelago.Instance.LogDebug($"Supressing cost {entry.Value} {entry.Key} for location {serverLocationName}");
+                            ArchipelagoMod.Instance.LogDebug($"Supressing cost {entry.Value} {entry.Key} for location {serverLocationName}");
                             continue;
                         }
                         else
@@ -75,7 +75,7 @@ namespace Archipelago.HollowKnight.IC
 
                 if (icCosts.Count == 0)
                 {
-                    Archipelago.Instance.LogWarn(
+                    ArchipelagoMod.Instance.LogWarn(
                         $"Found zero cost types when handling placement at location {serverLocationName}!");
                     return;
                 }

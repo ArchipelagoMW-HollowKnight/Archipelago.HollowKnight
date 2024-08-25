@@ -18,7 +18,7 @@ namespace Archipelago.HollowKnight.MC
         public override void OnEnterMainMenu(MenuPage modeMenu)
         {
             modeConfigPage = new MenuPage("Archipelago Settings", modeMenu);
-            ConnectionDetails settings = Archipelago.Instance.GS.MenuConnectionDetails;
+            ConnectionDetails settings = ArchipelagoMod.Instance.GS.MenuConnectionDetails;
 
             EntryField<string> urlField = CreateUrlField(modeConfigPage, settings);
             NumericEntryField<int> portField = CreatePortField(modeConfigPage, settings);
@@ -63,7 +63,7 @@ namespace Archipelago.HollowKnight.MC
 
             void RebindSettings()
             {
-                ConnectionDetails settings = Archipelago.Instance.LS.ConnectionDetails;
+                ConnectionDetails settings = ArchipelagoMod.Instance.LS.ConnectionDetails;
                 if (settings != null)
                 {
                     slotName.Text.text = $"Slot Name: {settings.SlotName}";
@@ -155,26 +155,26 @@ namespace Archipelago.HollowKnight.MC
 
         private static void StartOrResumeGame(bool newGame, MenuLabel errorLabel)
         {
-            Archipelago.Instance.ArchipelagoEnabled = true;
+            ArchipelagoMod.Instance.ArchipelagoEnabled = true;
 
             // Cloning some settings onto others depending on what is taking precedence.
             // If it's a save slot we're resuming (newGame == false) then we want the slot settings to overwrite the global ones.
             if (newGame)
             {
-                Archipelago.Instance.LS = new APLocalSettings()
+                ArchipelagoMod.Instance.LS = new APLocalSettings()
                 {
-                    ConnectionDetails = Archipelago.Instance.GS.MenuConnectionDetails with { },
+                    ConnectionDetails = ArchipelagoMod.Instance.GS.MenuConnectionDetails with { },
                     ItemIndex = 0
                 };
             }
-            else if (Archipelago.Instance.LS.ConnectionDetails != null)
+            else if (ArchipelagoMod.Instance.LS.ConnectionDetails != null)
             {
-                Archipelago.Instance.GS.MenuConnectionDetails = Archipelago.Instance.LS.ConnectionDetails with { };
+                ArchipelagoMod.Instance.GS.MenuConnectionDetails = ArchipelagoMod.Instance.LS.ConnectionDetails with { };
             }
 
             try
             {
-                Archipelago.Instance.StartOrResumeGame(newGame);
+                ArchipelagoMod.Instance.StartOrResumeGame(newGame);
                 MenuChangerMod.HideAllMenuPages();
                 if (newGame)
                 {
@@ -188,14 +188,14 @@ namespace Archipelago.HollowKnight.MC
             }
             catch (LoginValidationException ex)
             {
-                Archipelago.Instance.DisconnectArchipelago();
+                ArchipelagoMod.Instance.DisconnectArchipelago();
                 errorLabel.Text.text = ex.Message;
             }
             catch (Exception ex)
             {
                 errorLabel.Text.text = "An unknown error occurred when attempting to connect.";
-                Archipelago.Instance.LogError(ex);
-                Archipelago.Instance.DisconnectArchipelago();
+                ArchipelagoMod.Instance.LogError(ex);
+                ArchipelagoMod.Instance.DisconnectArchipelago();
             }
         }
 
@@ -206,7 +206,7 @@ namespace Archipelago.HollowKnight.MC
 
         public override bool TryGetModeButton(MenuPage modeMenu, out BigButton button)
         {
-            button = new BigButton(modeMenu, Archipelago.Instance.spriteManager.GetSprite("IconColorBig"), "Archipelago");
+            button = new BigButton(modeMenu, ArchipelagoMod.Instance.spriteManager.GetSprite("IconColorBig"), "Archipelago");
             button.AddHideAndShowEvent(modeMenu, modeConfigPage);
             return true;
         }

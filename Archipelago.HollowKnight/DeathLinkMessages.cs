@@ -117,7 +117,7 @@ namespace Archipelago.HollowKnight
             // If it's an unknown death, tag in some debugging info
             if (!knownCauseOfDeath)
             {
-                Archipelago.Instance.LogWarn($"UNKNOWN cause of death {cause}");
+                ArchipelagoMod.Instance.LogWarn($"UNKNOWN cause of death {cause}");
                 message += $" (Type: {cause})";
             }
 

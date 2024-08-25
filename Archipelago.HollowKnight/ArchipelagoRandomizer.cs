@@ -47,8 +47,8 @@ namespace Archipelago.HollowKnight
         public readonly CostFactory costFactory;
 
         private readonly SlotData SlotData;
-        private ArchipelagoSession Session => Archipelago.Instance.session;
-        private Archipelago Instance => Archipelago.Instance;
+        private ArchipelagoSession Session => ArchipelagoMod.Instance.session;
+        private ArchipelagoMod Instance => ArchipelagoMod.Instance;
 
         public ArchipelagoRandomizer(SlotData slotData)
         {

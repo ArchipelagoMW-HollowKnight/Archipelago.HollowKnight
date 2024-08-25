@@ -18,8 +18,8 @@ namespace Archipelago.HollowKnight.IC.Modules
             .GetMethod("CanTakeDamage", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private DeathLinkService service = null;
-        private DeathLinkShadeHandling shadeHandling => Archipelago.Instance.SlotData.Options.DeathLinkShade;
-        private bool breakFragileCharms => Archipelago.Instance.SlotData.Options.DeathLinkBreaksFragileCharms;
+        private DeathLinkShadeHandling shadeHandling => ArchipelagoMod.Instance.SlotData.Options.DeathLinkShade;
+        private bool breakFragileCharms => ArchipelagoMod.Instance.SlotData.Options.DeathLinkBreaksFragileCharms;
         private DeathLinkStatus status;
         private int lastDamageType;
         private DateTime lastDamageTime;
@@ -36,11 +36,11 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         public override void Initialize()
         {
-            session = Archipelago.Instance.session;
+            session = ArchipelagoMod.Instance.session;
             Reset();
 
-            Archipelago.Instance.LogDebug($"Enabling DeathLink support, type: {shadeHandling}");
-            service = Archipelago.Instance.session.CreateDeathLinkService();
+            ArchipelagoMod.Instance.LogDebug($"Enabling DeathLink support, type: {shadeHandling}");
+            service = ArchipelagoMod.Instance.session.CreateDeathLinkService();
             service.EnableDeathLink();
             service.OnDeathLinkReceived += OnDeathLinkReceived;
             ModHooks.HeroUpdateHook += OnHeroUpdate;
@@ -72,7 +72,7 @@ namespace Archipelago.HollowKnight.IC.Modules
             }
             hasEditedFsm = true;
 
-            Archipelago ap = Archipelago.Instance;
+            ArchipelagoMod ap = ArchipelagoMod.Instance;
 
             FsmBool preventShade = fsm.AddFsmBool(PREVENT_SHADE_VARIABLE_NAME, false);
             FsmBool isDeathlink = fsm.AddFsmBool(IS_DEATHLINK_VARIABLE_NAME, false);
@@ -175,7 +175,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         public void MurderPlayer()
         {
             string scene = GameManager.instance.sceneName;
-            Archipelago.Instance.LogDebug($"Deathlink-initiated kill starting. Current scene: {scene}");
+            ArchipelagoMod.Instance.LogDebug($"Deathlink-initiated kill starting. Current scene: {scene}");
             status = DeathLinkStatus.Dying;
             HeroController.instance.TakeDamage(HeroController.instance.gameObject, GlobalEnums.CollisionSide.other,
                 9999, 0);
@@ -204,7 +204,7 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         public void SendDeathLink()
         {
-            Archipelago ap = Archipelago.Instance;
+            ArchipelagoMod ap = ArchipelagoMod.Instance;
             // Don't send death links if we're currently in the process of dying to another deathlink.
             if (status == DeathLinkStatus.Dying)
             {
@@ -225,15 +225,15 @@ namespace Archipelago.HollowKnight.IC.Modules
                 lastDamageType = 0;
             }
 
-            string message = DeathLinkMessages.GetDeathMessage(lastDamageType, Archipelago.Instance.session.Players.ActivePlayer.Alias);
+            string message = DeathLinkMessages.GetDeathMessage(lastDamageType, ArchipelagoMod.Instance.session.Players.ActivePlayer.Alias);
             ap.LogDebug(
                 $"SendDeathLink(): Sending deathlink.  \"{message}\"");
-            service.SendDeathLink(new DeathLink(Archipelago.Instance.session.Players.ActivePlayer.Alias, message));
+            service.SendDeathLink(new DeathLink(ArchipelagoMod.Instance.session.Players.ActivePlayer.Alias, message));
         }
 
         private void OnDeathLinkReceived(DeathLink deathLink)
         {
-            Archipelago ap = Archipelago.Instance;
+            ArchipelagoMod ap = ArchipelagoMod.Instance;
             ap.LogDebug($"OnDeathLinkReceived(): Receiving deathlink.  Status={status}.");
 
             if (status == DeathLinkStatus.None)
