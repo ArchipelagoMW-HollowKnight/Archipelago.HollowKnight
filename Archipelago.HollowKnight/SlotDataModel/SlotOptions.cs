@@ -94,17 +94,17 @@
 
         public int StartLocation { get; set; }
 
-        public int MinGrubPrice { get; set; }
+        public int MinimumGrubPrice { get; set; }
 
-        public int MaxGrubPrice { get; set; }
+        public int MaximumGrubPrice { get; set; }
 
-        public int MinEssencePrice { get; set; }
+        public int MinimumEssencePrice { get; set; }
 
-        public int MaxEssencePrice { get; set; }
+        public int MaximumEssencePrice { get; set; }
 
-        public int MinEggPrice { get; set; }
+        public int MinimumEggPrice { get; set; }
 
-        public int MaxEggPrice { get; set; }
+        public int MaximumEggPrice { get; set; }
 
         public int RandomCharmCosts { get; set; }
 

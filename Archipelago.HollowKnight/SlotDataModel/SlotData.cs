@@ -19,5 +19,8 @@ namespace Archipelago.HollowKnight.SlotDataModel
 
         [JsonProperty("grub_count")]
         public int? GrubsRequired { get; set; }
+
+        [JsonProperty("is_race")]
+        public bool DisableLocalSpoilerLogs { get; set; }
     }
 }
