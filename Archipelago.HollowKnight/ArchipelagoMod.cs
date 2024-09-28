@@ -3,8 +3,6 @@ using Archipelago.HollowKnight.MC;
 using Archipelago.HollowKnight.SlotDataModel;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Models;
-using Archipelago.MultiClient.Net.Packets;
 using ItemChanger;
 using ItemChanger.Internal;
 using Modding;
@@ -53,8 +51,6 @@ namespace Archipelago.HollowKnight
         public SlotData SlotData { get; private set; }
         public int GrubHuntRequiredGrubs { get; set; }
         public bool ArchipelagoEnabled { get; set; }
-
-        public IReadOnlyDictionary<int, NetworkSlot> AllSlots { get; private set; }
 
         internal SpriteManager spriteManager;
 
@@ -161,7 +157,6 @@ namespace Archipelago.HollowKnight
         private LoginSuccessful ConnectToArchipelago()
         {
             session = ArchipelagoSessionFactory.CreateSession(LS.ConnectionDetails.ServerUrl, LS.ConnectionDetails.ServerPort);
-            session.Socket.PacketReceived += OnPacketReceived;
 
             LoginResult loginResult = session.TryConnectAndLogin("Hollow Knight",
                                                          LS.ConnectionDetails.SlotName,
@@ -190,23 +185,12 @@ namespace Archipelago.HollowKnight
             }
         }
 
-        private void OnPacketReceived(ArchipelagoPacketBase packet)
-        {
-            if (packet is ConnectedPacket cp)
-            {
-                session.Socket.PacketReceived -= OnPacketReceived;
-                AllSlots = cp.SlotInfo;
-            }
-        }
-
         public void DisconnectArchipelago()
         {
             if (session?.Socket != null)
             {
                 session.Socket.SocketClosed -= OnSocketClosed;
             }
-
-            AllSlots = null;
 
             if (session?.Socket != null && session.Socket.Connected)
             {

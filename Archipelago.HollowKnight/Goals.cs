@@ -1,11 +1,14 @@
-﻿using Archipelago.HollowKnight.IC.Modules;
+﻿using Archipelago.HollowKnight.IC;
+using Archipelago.HollowKnight.IC.Items;
+using Archipelago.HollowKnight.IC.Modules;
 using Archipelago.MultiClient.Net.Exceptions;
 using ItemChanger;
-using MonoMod.RuntimeDetour;
+using ItemChanger.Extensions;
+using ItemChanger.Internal;
+using ItemChanger.Placements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight
@@ -134,6 +137,9 @@ namespace Archipelago.HollowKnight
         }
     }
 
+    /// <summary>
+    /// A goal which is achieved by completing a given ending (or harder)
+    /// </summary>
     public abstract class EndingGoal : Goal
     {
         private static List<string> VictoryScenes = new()
@@ -176,6 +182,74 @@ namespace Archipelago.HollowKnight
 
     }
 
+    /// <summary>
+    /// A goal which is achieved by obtaining the Victory item placed at a given location in the world
+    /// </summary>
+    public abstract class ItemGoal : Goal
+    {
+        // We don't use CheckForVictoryAsync here, rather, the Victory item uses GoalModule.DeclareVictoryAsync
+        // directly when acquired.
+        protected override bool VictoryCondition() => false;
+
+        protected virtual string GetGoalItemName() => "Victory";
+        protected abstract string GetGoalLocation();
+        protected virtual Cost GetGoalCost() => null;
+        protected virtual UIDef GetGoalUIDef() => new ArchipelagoUIDef()
+        {
+            name = new BoxedString(GetGoalItemName()),
+            shopDesc = new BoxedString("You completed your goal so you should probably get this to flex on your friends."),
+            sprite = new ArchipelagoSprite { key = "IconColorSmall" }
+        };
+
+        public override void OnSelected()
+        {
+            string goalLocation = GetGoalLocation();
+            AbstractPlacement plt = Ref.Settings.Placements.GetOrDefault(goalLocation);
+            if (plt == null)
+            {
+                plt = Finder.GetLocation(goalLocation).Wrap();
+            }
+
+            // don't duplicate the goal
+            if (plt.Items.Any(i => i is GoalItem))
+            {
+                return;
+            }
+
+            AbstractItem item = new GoalItem()
+            {
+                name = GetGoalItemName(),
+                UIDef = GetGoalUIDef(),
+            };
+            // modules (and therefore goals) are loaded prior to placements so nothing special needed
+            // to make this load.
+            plt.Add(item);
+
+            // handle the cost
+            if (plt is ISingleCostPlacement icsp)
+            {
+                Cost desiredCost = GetGoalCost();
+                if (icsp.Cost == null)
+                {
+                    icsp.Cost = desiredCost;
+                }
+                else
+                {
+                    icsp.Cost += desiredCost;
+                }
+            }
+            else
+            {
+                item.AddTag(new CostTag()
+                {
+                    Cost = GetGoalCost(),
+                });
+            }
+        }
+
+        public override void OnDeselected() { }
+    }
+
     public class HollowKnightGoal : EndingGoal
     {
         public override string Name => "The Hollow Knight";
@@ -211,44 +285,20 @@ namespace Archipelago.HollowKnight
         public override string MinimumGoalScene => SceneNames.Cinematic_Ending_E;
     }
 
-    public class GrubHuntGoal : Goal
+    public class GrubHuntGoal : ItemGoal
     {
         public override string Name => "Grub Hunt";
 
-        public override string Description => $"Save {ArchipelagoMod.Instance.GrubHuntRequiredGrubs} of your Grubs.";
+        public override string Description => $"Save {ArchipelagoMod.Instance.GrubHuntRequiredGrubs} of your Grubs and visit Grubfather<br>to obtain happiness.";
 
-        private static readonly MethodInfo setIntInternal = typeof(PlayerData).GetMethod("SetIntInternal");
-        private Hook onSetIntInternal;
-        
-        public override void OnSelected()
+        protected override string GetGoalItemName() => "Happiness";
+        protected override string GetGoalLocation() => LocationNames.Grubfather;
+        protected override Cost GetGoalCost() => Cost.NewGrubCost(ArchipelagoMod.Instance.GrubHuntRequiredGrubs);
+        protected override UIDef GetGoalUIDef() => new ArchipelagoUIDef()
         {
-            if (onSetIntInternal == null)
-            {
-                onSetIntInternal = new Hook(setIntInternal, OnSetPlayerInt);
-            }
-            else
-            {
-                onSetIntInternal.Apply();
-            }
-        }
-
-        public override void OnDeselected()
-        {
-            onSetIntInternal.Undo();
-        }
-
-        protected override bool VictoryCondition()
-        {
-            return PlayerData.instance.grubsCollected >= ArchipelagoMod.Instance.GrubHuntRequiredGrubs;
-        }
-
-        private async void OnSetPlayerInt(On.PlayerData.orig_SetInt orig, PlayerData self, string intName, int value)
-        {
-            orig(self, intName, value);
-            if (intName == nameof(PlayerData.grubsCollected))
-            {
-                await CheckForVictoryAsync();
-            }
-        }
+            name = new BoxedString("Happiness"),
+            shopDesc = new BoxedString("Meemawmaw! Meemawmaw!"),
+            sprite = new ArchipelagoSprite { key = "GrubHappyv2" }
+        };
     }
 }
