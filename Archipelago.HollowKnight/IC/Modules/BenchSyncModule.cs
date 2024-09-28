@@ -2,6 +2,7 @@
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Benchwarp;
+using ItemChanger;
 using ItemChanger.Modules;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,6 +15,13 @@ namespace Archipelago.HollowKnight.IC.Modules
     {
         private const string DATASTORAGE_KEY_UNLOCKED_BENCHES = "unlocked_benches";
         private const string BENCH_KEY_SEPARATOR = ":::";
+        static readonly Dictionary<string, string> lockedBenches = new()
+        {
+            [SceneNames.Hive_01] = "Hive Bench",
+            [SceneNames.Ruins1_31] = "Toll Machine Bench",
+            [SceneNames.Abyss_18] = "Toll Machine Bench",
+            [SceneNames.Fungus3_50] = "Toll Machine Bench"
+        };
 
         private ArchipelagoSession session;
 
@@ -86,6 +94,28 @@ namespace Archipelago.HollowKnight.IC.Modules
                 if (benchLookup.TryGetValue(key, out Bench bench))
                 {
                     bench.SetVisited(kv.Value);
+                    if (lockedBenches.TryGetValue(bench.sceneName, out string persistentBoolName))
+                    {
+                        GameManager.instance.sceneData.SaveMyState(new PersistentBoolData()
+                        {
+                            activated = true,
+                            sceneName = bench.sceneName,
+                            semiPersistent = false,
+                            id = persistentBoolName
+                        });
+                    }
+
+                    switch (bench.sceneName)
+                    {
+                        case SceneNames.Room_Tram:
+                            PlayerData.instance.SetBool(nameof(PlayerData.openedTramLower), true);
+                            PlayerData.instance.SetBool(nameof(PlayerData.tramOpenedDeepnest), true);
+                            break;
+                        case SceneNames.Room_Tram_RG:
+                            PlayerData.instance.SetBool(nameof(PlayerData.openedTramRestingGrounds), true);
+                            PlayerData.instance.SetBool(nameof(PlayerData.tramOpenedCrossroads), true);
+                            break;
+                    }
                 }
             }
         }
