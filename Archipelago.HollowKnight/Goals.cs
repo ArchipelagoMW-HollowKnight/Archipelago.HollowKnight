@@ -29,6 +29,7 @@ namespace Archipelago.HollowKnight
     {
         public abstract string Name { get; }
         public abstract string Description { get; }
+        public virtual bool CanBeSelectedForAnyGoal => true;
 
         private static readonly Dictionary<GoalsLookup, Goal> Lookup = new()
         {
@@ -116,7 +117,7 @@ namespace Archipelago.HollowKnight
 
         public override void OnSelected()
         {
-            foreach (Goal goal in subgoals)
+            foreach (Goal goal in subgoals.Where(g => g.CanBeSelectedForAnyGoal))
             {
                 goal.OnSelected();
             }
@@ -124,7 +125,7 @@ namespace Archipelago.HollowKnight
 
         public override void OnDeselected()
         {
-            foreach (Goal goal in subgoals)
+            foreach (Goal goal in subgoals.Where(g => g.CanBeSelectedForAnyGoal))
             {
                 goal.OnDeselected();
             }
@@ -289,11 +290,13 @@ namespace Archipelago.HollowKnight
     {
         public override string Name => "Grub Hunt";
 
-        public override string Description => $"Save {ArchipelagoMod.Instance.GrubHuntRequiredGrubs} of your Grubs and visit Grubfather<br>to obtain happiness.";
+        public override string Description => $"Save {ArchipelagoMod.Instance.SlotData.GrubsRequired.Value} of your Grubs and visit Grubfather<br>to obtain happiness.";
+
+        public override bool CanBeSelectedForAnyGoal => ArchipelagoMod.Instance.SlotData.GrubsRequired != null;
 
         protected override string GetGoalItemName() => "Happiness";
         protected override string GetGoalLocation() => LocationNames.Grubfather;
-        protected override Cost GetGoalCost() => Cost.NewGrubCost(ArchipelagoMod.Instance.GrubHuntRequiredGrubs);
+        protected override Cost GetGoalCost() => Cost.NewGrubCost(ArchipelagoMod.Instance.SlotData.GrubsRequired.Value);
         protected override UIDef GetGoalUIDef() => new ArchipelagoUIDef()
         {
             name = new BoxedString("Happiness"),

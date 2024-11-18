@@ -49,7 +49,6 @@ namespace Archipelago.HollowKnight
         public static ArchipelagoMod Instance;
         public ArchipelagoSession session { get; private set; }
         public SlotData SlotData { get; private set; }
-        public int GrubHuntRequiredGrubs { get; set; }
         public bool ArchipelagoEnabled { get; set; }
 
         internal SpriteManager spriteManager;
@@ -103,7 +102,6 @@ namespace Archipelago.HollowKnight
             LogDebug("StartOrResumeGame: This is an Archipelago Game.");
 
             LoginSuccessful loginResult = ConnectToArchipelago();
-            GrubHuntRequiredGrubs = SlotData.GrubsRequired.GetValueOrDefault(int.MaxValue);
 
             if (randomize)
             {
