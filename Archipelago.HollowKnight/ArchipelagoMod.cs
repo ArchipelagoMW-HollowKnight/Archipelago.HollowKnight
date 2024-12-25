@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Archipelago.HollowKnight
 {
-    public class ArchipelagoMod : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>
+    public class ArchipelagoMod : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>, IMenuMod
     {
         // Events support
         public static event Action OnArchipelagoGameStarted;
@@ -50,6 +50,8 @@ namespace Archipelago.HollowKnight
         public ArchipelagoSession session { get; private set; }
         public SlotData SlotData { get; private set; }
         public bool ArchipelagoEnabled { get; set; }
+
+        public bool ToggleButtonInsideMenu => false;
 
         internal SpriteManager spriteManager;
 
@@ -249,10 +251,24 @@ namespace Archipelago.HollowKnight
         /// <returns></returns>
         public APGlobalSettings OnSaveGlobal()
         {
-            return GS with
+            var r = GS with
             {
                 MenuConnectionDetails = GS.MenuConnectionDetails with { ServerPassword = null }
             };
+            return r;
+        }
+
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            return [
+                new IMenuMod.MenuEntry(
+                    "Enable Gifting", 
+                    ["false", "true"],
+                    "Enable or disable interaction with the Archipelago gifting system. Requires reloading the save to take effect.",
+                    (v) => GS.EnableGifting = v == 1,
+                    () => GS.EnableGifting ? 1 : 0
+                )
+            ];
         }
     }
 }

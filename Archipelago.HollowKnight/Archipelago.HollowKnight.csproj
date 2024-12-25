@@ -8,7 +8,7 @@
     <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright>
     </Copyright>
-    <Version>0.6.2</Version>
+    <Version>0.7.0</Version>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
     <Company>The Archipelago Community</Company>
@@ -32,8 +32,10 @@
     <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(ModName)/')" Directories="$(HollowKnightRefs)/Mods/$(ModName)/" />
     <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
     <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
+    <Copy SourceFiles="$(OutputPath)/Archipelago.Gifting.Net.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(ModName)/" />
     <Copy SourceFiles="../README.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/zip/" />
     <Copy SourceFiles="$(OutputPath)/Archipelago.MultiClient.Net.dll" DestinationFolder="$(ExportDir)/zip/" />
+    <Copy SourceFiles="$(OutputPath)/Archipelago.Gifting.Net.dll" DestinationFolder="$(ExportDir)/zip/" />
     <ZipDirectory SourceDirectory="$(ExportDir)/zip/" DestinationFile="$(ExportDir)/$(ModName).zip" />
     <RemoveDir Directories="$(ExportDir)/zip/" />
     <GetFileHash Files="$(ExportDir)/$(ModName).zip" Algorithm="SHA256">
@@ -50,6 +52,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Archipelago.Gifting.Net" Version="0.3.5"/>
     <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

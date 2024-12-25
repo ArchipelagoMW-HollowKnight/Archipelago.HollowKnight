@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Archipelago.HollowKnight
+﻿namespace Archipelago.HollowKnight
 {
     public record ConnectionDetails
     {
@@ -17,6 +11,7 @@ namespace Archipelago.HollowKnight
     public record APGlobalSettings
     {
         public ConnectionDetails MenuConnectionDetails { get; set; } = new();
+        public bool EnableGifting { get; set; } = true;
     }
 
     public record APLocalSettings

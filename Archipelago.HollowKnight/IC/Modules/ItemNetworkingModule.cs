@@ -21,7 +21,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         /// <summary>
         /// A preset GiveInfo structure that avoids creating geo and places messages in the corner.
         /// </summary>
-        private static GiveInfo RemoteGiveInfo = new()
+        public static GiveInfo RemoteGiveInfo = new()
         {
             FlingType = FlingType.DirectDeposit,
             Callback = null,
@@ -32,7 +32,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         /// <summary>
         /// A preset GiveInfo structure that avoids creating geo and outputs no messages, e.g. for Start Items.
         /// </summary>
-        private static GiveInfo SilentGiveInfo = new()
+        public static GiveInfo SilentGiveInfo = new()
         {
             FlingType = FlingType.DirectDeposit,
             Callback = null,

@@ -214,6 +214,7 @@ namespace Archipelago.HollowKnight
         private void AddItemChangerModules()
         {
             ItemChangerMod.Modules.Add<ItemNetworkingModule>();
+            ItemChangerMod.Modules.Add<GiftingModule>();
             ItemChangerMod.Modules.Add<GoalModule>();
             ItemChangerMod.Modules.Add<CompletionPercentOverride>();
             ItemChangerMod.Modules.Add<HintTracker>();
