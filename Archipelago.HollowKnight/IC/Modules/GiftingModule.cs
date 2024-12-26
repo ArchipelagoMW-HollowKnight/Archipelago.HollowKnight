@@ -40,6 +40,7 @@ public class GiftingModule : Module
 
     private async void BeginGifting(On.GameManager.orig_FinishedEnteringScene orig, GameManager self)
     {
+        orig(self);
         On.GameManager.FinishedEnteringScene -= BeginGifting;
         session.DataStorage[giftingService.GetMyGiftBoxKey()].OnValueChanged += OnGiftBoxUpdated;
         Dictionary<string, Gift> pendingGifts = await giftingService.CheckGiftBoxAsync();
