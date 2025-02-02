@@ -5,10 +5,12 @@ using ItemChanger;
 using ItemChanger.Internal;
 using ItemChanger.Modules;
 using ItemChanger.Tags;
+using MenuChanger;
 using Modding;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace Archipelago.HollowKnight.IC.Modules
@@ -62,6 +64,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         {
             // DoInitialSyncAndStartSendReceive unsubscribes itself
             ModHooks.HeroUpdateHook -= PollForItems;
+            session.Locations.CheckedLocationsUpdated -= OnLocationChecksUpdated;
         }
 
         public async Task SendLocationsAsync(params long[] locationIds)
@@ -159,6 +162,15 @@ namespace Archipelago.HollowKnight.IC.Modules
                 }
                 readyToSendReceiveChecks = true;
                 await Synchronize();
+                session.Locations.CheckedLocationsUpdated += OnLocationChecksUpdated;
+            }
+        }
+
+        private void OnLocationChecksUpdated(ReadOnlyCollection<long> newCheckedLocations)
+        {
+            foreach (long location in newCheckedLocations)
+            {
+                ThreadSupport.BeginInvoke(() => MarkLocationAsChecked(location, false));
             }
         }
 
