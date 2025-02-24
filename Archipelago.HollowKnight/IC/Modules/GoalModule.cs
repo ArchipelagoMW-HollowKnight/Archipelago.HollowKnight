@@ -15,14 +15,18 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         private Goal goal;
 
+        public bool queuedGoal = false;
+
         public override void Initialize()
         {
             goal = Goal.GetGoal(ArchipelagoMod.Instance.SlotData.Options.Goal);
             goal.Select();
+            Events.OnEnterGame += OnEnterGame;
         }
 
         public override void Unload()
         {
+            Events.OnEnterGame -= OnEnterGame;
             goal.Deselect();
             goal = null;
         }
@@ -35,10 +39,20 @@ namespace Archipelago.HollowKnight.IC.Modules
                 {
                     Status = ArchipelagoClientState.ClientGoal
                 }).TimeoutAfter(1000);
+                queuedGoal = false;
             }
             catch (Exception ex) when (ex is TimeoutException or ArchipelagoSocketClosedException)
             {
                 ItemChangerMod.Modules.Get<ItemNetworkingModule>().ReportDisconnect();
+                queuedGoal = true;
+            }
+        }
+
+        private async void OnEnterGame()
+        {
+            if (queuedGoal)
+            {
+                await DeclareVictoryAsync();
             }
         }
     }
