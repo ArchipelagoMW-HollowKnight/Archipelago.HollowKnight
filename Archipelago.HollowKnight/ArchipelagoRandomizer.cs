@@ -213,6 +213,7 @@ namespace Archipelago.HollowKnight
 
         private void AddItemChangerModules()
         {
+            ItemChangerMod.Modules.Add<DupeHandlingModule>();
             ItemChangerMod.Modules.Add<ItemNetworkingModule>();
             ItemChangerMod.Modules.Add<GiftingModule>();
             ItemChangerMod.Modules.Add<GoalModule>();
