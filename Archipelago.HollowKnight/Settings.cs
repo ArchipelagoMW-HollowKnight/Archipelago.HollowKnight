@@ -12,6 +12,7 @@
     {
         public ConnectionDetails MenuConnectionDetails { get; set; } = new();
         public bool EnableGifting { get; set; } = true;
+        public DeathLinkOverride DeathLinkOverride = DeathLinkOverride.UseYaml;
     }
 
     public record APLocalSettings
