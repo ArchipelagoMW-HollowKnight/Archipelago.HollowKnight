@@ -267,6 +267,13 @@ namespace Archipelago.HollowKnight
                     "Enable or disable interaction with the Archipelago gifting system. Requires reloading the save to take effect.",
                     (v) => GS.EnableGifting = v == 1,
                     () => GS.EnableGifting ? 1 : 0
+                ),
+                new IMenuMod.MenuEntry(
+                    "DeathLink Override", 
+                    ["Use Yaml", "Override On", "Override Off"],
+                    "Override deathlink as set in the yaml file. Requires reloading the save to take effect.",
+                    (v) => GS.DeathLinkOverride = (DeathLinkOverride)Enum.Parse(typeof(DeathLinkOverride), v.Remove(' ')),
+                    () => GS.EnableGifting ? 1 : 0
                 )
             ];
         }
