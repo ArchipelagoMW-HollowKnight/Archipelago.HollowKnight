@@ -2,6 +2,8 @@
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
+using ItemChanger.Tags;
+using System;
 using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC
@@ -13,7 +15,7 @@ namespace Archipelago.HollowKnight.IC
     /// ArchipelagoItemTags are attached to AP-randomized items to track what their location ID and player ("slot") are.  Additionally, they manage events
     /// for when items are picked up, ensuring that HK items for other players get replaced out and that all location checks actually get sent.
     /// </remarks>
-    public class ArchipelagoItemTag : Tag
+    public class ArchipelagoItemTag : Tag, IInteropTag
     {
         /// <summary>
         /// AP location ID for this item.
@@ -68,6 +70,20 @@ namespace Archipelago.HollowKnight.IC
         {
             ((AbstractItem)parent).AfterGive -= AfterGive;
             base.Unload(parent);
+        }
+
+        string IInteropTag.Message => "RandoSupplementalMetadata";
+
+        bool IInteropTag.TryGetProperty<T>(string propertyName, out T value) where T : default
+        {
+            if (propertyName == "ForceEnablePreview" && Hinted is T t)
+            {
+                value = t;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
     }
 
