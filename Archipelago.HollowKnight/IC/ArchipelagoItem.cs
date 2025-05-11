@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Enums;
 using ItemChanger;
+using ItemChanger.Tags;
 
 namespace Archipelago.HollowKnight.IC
 {
@@ -43,17 +44,21 @@ namespace Archipelago.HollowKnight.IC
         public ArchipelagoItem(string name, string recipientName = null, ItemFlags itemFlags = 0)
         {
             string desc;
+            ISprite pinSprite;
             if (itemFlags.HasFlag(ItemFlags.Advancement))
             {
                 desc = "This otherworldly artifact looks very important. Somebody probably really needs it.";
+                pinSprite = new ArchipelagoSprite { key = "Pins.pinAPProgression" };
             }
             else if (itemFlags.HasFlag(ItemFlags.NeverExclude))
             {
                 desc = "This otherworldly artifact looks like it might be useful to someone.";
+                pinSprite = new ArchipelagoSprite { key = "Pins.pinAPUseful" };
             }
             else
             {
                 desc = "I'm not entirely sure what this is. It appears to be a strange artifact from another world.";
+                pinSprite = new ArchipelagoSprite { key = "Pins.pinAP" };
             }
             if (itemFlags.HasFlag(ItemFlags.Trap))
             {
@@ -66,6 +71,14 @@ namespace Archipelago.HollowKnight.IC
                 shopDesc = new BoxedString(desc),
                 sprite = new ArchipelagoSprite { key = "IconColorSmall" }
             };
+            InteropTag mapInteropTag = new()
+            {
+                Message = "RandoSupplementalMetadata",
+                Properties = new() {
+                    ["PinSprite"] = pinSprite
+                }
+            };
+            this.AddTag(mapInteropTag);
         }
 
         public override void GiveImmediate(GiveInfo info)
