@@ -13,6 +13,13 @@
         Shadeless = 1,
         Shade = 2
     }
+    
+    public enum DeathLinkOverride
+    {
+        UseYaml = 0,
+        OverrideOn = 1,
+        OverrideOff = 2
+    }
 
     public enum WhitePalaceOption
     {
