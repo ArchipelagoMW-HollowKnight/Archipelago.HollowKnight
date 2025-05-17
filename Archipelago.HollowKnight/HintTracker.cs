@@ -130,6 +130,14 @@ public class HintTracker : Module
         PendingPlacementHints = [];
 
         session = ArchipelagoMod.Instance.session;
+
+        // do most setup in OnEnterGame so save data can completely load, we need to
+        // populate all the AP placements to sync with server
+        Events.OnEnterGame += OnEnterGame;
+    }
+
+    private void OnEnterGame()
+    {
         session.DataStorage.TrackHints(UpdateHints);
 
         AbstractItem.AfterGiveGlobal += UpdateHintFoundStatus;
@@ -138,6 +146,7 @@ public class HintTracker : Module
 
     public override async void Unload()
     {
+        Events.OnEnterGame -= OnEnterGame;
         AbstractItem.AfterGiveGlobal -= UpdateHintFoundStatus;
         Events.OnSceneChange -= SendHintsOnSceneChange;
         await SendPlacementHintsAsync();
