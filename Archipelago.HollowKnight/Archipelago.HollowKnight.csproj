@@ -10,7 +10,7 @@
     </Copyright>
     <Version>0.8.1</Version>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <Company>The Archipelago Community</Company>
     <RepositoryUrl>https://github.com/ArchipelagoMW-HollowKnight/Archipelago.HollowKnight</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

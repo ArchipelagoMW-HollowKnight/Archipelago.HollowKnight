@@ -92,7 +92,7 @@
 
         public bool RandomizeElevatorPass { get; set; }
 
-        public int StartLocation { get; set; }
+        public string StartLocationName { get; set; }
 
         public int MinimumGrubPrice { get; set; }
 

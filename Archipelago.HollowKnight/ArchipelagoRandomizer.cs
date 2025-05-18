@@ -63,6 +63,19 @@ namespace Archipelago.HollowKnight
         {
             ArchipelagoSession session = Session;
             ItemChangerMod.CreateSettingsProfile();
+            if (SlotData.Options.StartLocationName is string start)
+            {
+                if (IC.RM.StartDef.Lookup.TryGetValue(start, out IC.RM.StartDef def))
+                {
+                    ItemChangerMod.ChangeStartGame(def.ToItemChangerStartDef());
+                    ArchipelagoMod.Instance.Log($"Set start to {start}");
+                }
+                else
+                {
+                    ArchipelagoMod.Instance.LogError($"Unsupported start location {start}, starting in King's Pass");
+                }
+            }
+
             // Add IC modules as needed
             // FUTURE: If Entrance rando, disable palace midwarp and some logical blockers
             // if (Entrance Rando Is Enabled) {
@@ -93,8 +106,8 @@ namespace Archipelago.HollowKnight
 
                 if (pmt is ShopPlacement shop)
                 {
-                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins 
-                        | DefaultShopItems.IseldaMapMarkers 
+                    shop.defaultShopItems = DefaultShopItems.IseldaMapPins
+                        | DefaultShopItems.IseldaMapMarkers
                         | DefaultShopItems.LegEaterRepair;
                     if (SlotData.Options.AddUnshuffledLocations)
                     {
@@ -104,7 +117,7 @@ namespace Archipelago.HollowKnight
 
                     if (!SlotData.Options.RandomizeCharms)
                     {
-                        shop.defaultShopItems |= DefaultShopItems.SlyCharms 
+                        shop.defaultShopItems |= DefaultShopItems.SlyCharms
                             | DefaultShopItems.SlyKeyCharms
                             | DefaultShopItems.IseldaCharms
                             | DefaultShopItems.SalubraCharms
@@ -188,7 +201,7 @@ namespace Archipelago.HollowKnight
                     {
                         t.destroyRewards |= SeerRewards.DreamGate | SeerRewards.AwokenDreamNail;
                     }
-                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeMaskShards) 
+                    if (SlotData.Options.AddUnshuffledLocations || SlotData.Options.RandomizeMaskShards)
                     {
                         t.destroyRewards |= SeerRewards.MaskShard;
                     }
@@ -308,7 +321,7 @@ namespace Archipelago.HollowKnight
                     case LocationNames.World_Sense:
                         location = LocationNames.Lore_Tablet_World_Sense;
                         break;
-                    // no default
+                        // no default
                 }
             }
 

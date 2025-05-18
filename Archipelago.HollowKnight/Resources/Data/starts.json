@@ -1,0 +1,267 @@
+﻿{
+  "King's Pass": {
+    "name": "King's Pass",
+    "sceneName": "Tutorial_01",
+    "x": 35.5,
+    "y": 11.4,
+    "zone": "KINGS_PASS",
+    "transition": "Tutorial_01[right1]",
+    "logic": "ANY"
+  },
+  "Stag Nest": {
+    "name": "Stag Nest",
+    "sceneName": "Cliffs_03",
+    "x": 85.8,
+    "y": 46.4,
+    "zone": "CLIFFS",
+    "transition": "Cliffs_03[right1]",
+    "logic": "ANY"
+  },
+  "West Crossroads": {
+    "name": "West Crossroads",
+    "sceneName": "Crossroads_36",
+    "x": 40.2,
+    "y": 22.0,
+    "zone": "CROSSROADS",
+    "transition": "Crossroads_36[right1]",
+    "logic": "ANY"
+  },
+  "East Crossroads": {
+    "name": "East Crossroads",
+    "sceneName": "Crossroads_03",
+    "x": 14.0,
+    "y": 68.0,
+    "zone": "CROSSROADS",
+    "transition": "Crossroads_03[top1]",
+    "logic": "ANY"
+  },
+  "Ancestral Mound": {
+    "name": "Ancestral Mound",
+    "sceneName": "Crossroads_ShamanTemple",
+    "x": 37.7,
+    "y": 46.5,
+    "zone": "SHAMAN_TEMPLE",
+    "transition": "Crossroads_ShamanTemple[left1]",
+    "logic": "ANY"
+  },
+  "West Fog Canyon": {
+    "name": "West Fog Canyon",
+    "sceneName": "Fungus3_30",
+    "x": 35.1,
+    "y": 16.4,
+    "zone": "FOG_CANYON",
+    "transition": "Fungus3_30[bot1]",
+    "logic": "ANY"
+  },
+  "East Fog Canyon": {
+    "name": "East Fog Canyon",
+    "sceneName": "Fungus3_25",
+    "x": 77.5,
+    "y": 23.7,
+    "zone": "FOG_CANYON",
+    "transition": "Fungus3_25[right1]",
+    "logic": "ANY"
+  },
+  "Queen's Station": {
+    "name": "Queen's Station",
+    "sceneName": "Fungus2_01",
+    "x": 24.0,
+    "y": 37.4,
+    "zone": "QUEENS_STATION",
+    "transition": "Fungus2_01[left1]",
+    "logic": "ANY"
+  },
+  "Fungal Wastes": {
+    "name": "Fungal Wastes",
+    "sceneName": "Fungus2_28",
+    "x": 59.6,
+    "y": 3.4,
+    "zone": "WASTES",
+    "transition": "Fungus2_28[left1]",
+    "logic": "ANY"
+  },
+  "Greenpath": {
+    "name": "Greenpath",
+    "sceneName": "Fungus1_32",
+    "x": 3.8,
+    "y": 27.4,
+    "zone": "GREEN_PATH",
+    "transition": "Fungus1_32[left1]",
+    "logic": "ANY"
+  },
+  "Lower Greenpath": {
+    "name": "Lower Greenpath",
+    "sceneName": "Fungus1_13",
+    "x": 126.2,
+    "y": 37.4,
+    "zone": "GREEN_PATH",
+    "transition": "Fungus1_13[right1]",
+    "logic": "ANY"
+  },
+  "West Blue Lake": {
+    "name": "West Blue Lake",
+    "sceneName": "Crossroads_50",
+    "x": 21.2,
+    "y": 44.4,
+    "zone": "CROSSROADS",
+    "transition": "Crossroads_50[left1]",
+    "logic": "ANY"
+  },
+  "East Blue Lake": {
+    "name": "East Blue Lake",
+    "sceneName": "Crossroads_50",
+    "x": 225.2,
+    "y": 25.4,
+    "zone": "CROSSROADS",
+    "transition": "Crossroads_50[right1]",
+    "logic": "(ITEMRANDO | MAPAREARANDO) + (ENEMYPOGOS | ELEVATOR) | FULLAREARANDO | ROOMRANDO"
+    // first branch: ensure upper Resting Grounds or King's Station is accessible
+  },
+  "City Storerooms": {
+    "name": "City Storerooms",
+    "sceneName": "Ruins1_17",
+    "x": 61.6,
+    "y": 3.4,
+    "zone": "CITY",
+    "transition": "Ruins1_17[right1]",
+    "logic": "ANY"
+  },
+  "King's Station": {
+    "name": "King's Station",
+    "sceneName": "Ruins2_10b",
+    "x": 20.9,
+    "y": 136.3,
+    "zone": "CITY",
+    "transition": "Ruins2_10b[right1]",
+    "logic": "ANY"
+  },
+  "Outside Colosseum": {
+    "name": "Outside Colosseum",
+    "sceneName": "Deepnest_East_09",
+    "x": 159.9,
+    "y": 12.4,
+    "zone": "COLOSSEUM",
+    "transition": "Deepnest_East_09[right1]",
+    "logic": "ANY"
+  },
+  "Crystallized Mound": {
+    "name": "Crystallized Mound",
+    "sceneName": "Mines_35",
+    "x": 3.2,
+    "y": 48.4,
+    "zone": "MINES",
+    "transition": "Mines_35[left1]",
+    "logic": "ANY"
+  },
+  "Mantis Village": {
+    "name": "Mantis Village",
+    "sceneName": "Fungus2_14",
+    "x": 117.8,
+    "y": 15.4,
+    "zone": "WASTES",
+    "transition": "Fungus2_14[right1]",
+    "logic": "(ITEMRANDO | MAPAREARANDO | FULLAREARANDO) + ENEMYPOGOS | ROOMRANDO | VERTICAL"
+    // first branch: ensure Queen's Station (or on full area, Fungus2_12[left1]) is reachable
+  },
+  "Kingdom's Edge": {
+    "name": "Kingdom's Edge",
+    "sceneName": "Deepnest_East_15",
+    "x": 26.5,
+    "y": 4.4,
+    "zone": "OUTSKIRTS",
+    "transition": "Deepnest_East_15[left1]",
+    "logic": "(ITEMRANDO + ENEMYPOGOS + SWIM) | MAPAREARANDO | FULLAREARANDO | ROOMRANDO"
+    // first branch: ensure King's Station Stag is reachable
+  },
+  "Hallownest's Crown": {
+    "name": "Hallownest's Crown",
+    "sceneName": "Mines_34",
+    "x": 128.3,
+    "y": 46.4,
+    "zone": "MINES",
+    "transition": "Mines_34[bot1]",
+    "logic": "(ITEMRANDO | MAPAREARANDO) + DARKROOMS | FULLAREARANDO | ROOMRANDO"
+  },
+  "West Waterways": {
+    "name": "West Waterways",
+    "sceneName": "Waterways_09",
+    "x": 34.7,
+    "y": 30.4,
+    "zone": "WATERWAYS",
+    "transition": "Waterways_09[left1]",
+    "logic": "(ITEMRANDO + ENEMYPOGOS + SHADESKIPS + 2MASKS) | MAPAREARANDO | FULLAREARANDO | ROOMRANDO"
+  },
+  "Queen's Gardens": {
+    "name": "Queen's Gardens",
+    "sceneName": "Fungus3_13",
+    "x": 25.3,
+    "y": 63.4,
+    "zone": "ROYAL_GARDENS",
+    "transition": "Fungus3_13[left1]",
+    "logic": "(ITEMRANDO | MAPAREARANDO | FULLAREARANDO) + ENEMYPOGOS + DANGEROUSSKIPS | ROOMRANDO"
+    // skip logic is minimum to ensure Hallownest_Seal-Queen's_Gardens is reachable
+  },
+  "Distant Village": {
+    "name": "Distant Village",
+    "sceneName": "Room_spider_small",
+    "x": 23.1,
+    "y": 13.4,
+    "zone": "DEEPNEST",
+    "transition": "Room_spider_small[left1]",
+    "logic": "FULLAREARANDO | ROOMRANDO"
+  },
+  "Far Greenpath": {
+    "name": "Far Greenpath",
+    "sceneName": "Fungus1_13",
+    "x": 34.9,
+    "y": 23.4,
+    "zone": "GREEN_PATH",
+    "transition": "Fungus1_13[left1]",
+    "logic": "MAPAREARANDO | FULLAREARANDO | ROOMRANDO"
+  },
+  "Hive": {
+    "name": "Hive",
+    "sceneName": "Hive_03",
+    "x": 47.2,
+    "y": 142.7,
+    "zone": "HIVE",
+    "transition": "Hive_03[right1]",
+    "logic": "ROOMRANDO"
+  },
+  "Royal Waterways": {
+    "name": "Royal Waterways",
+    "sceneName": "Waterways_03",
+    "x": 93.6,
+    "y": 4.4,
+    "zone": "WATERWAYS",
+    "transition": "Waterways_03[left1]",
+    "logic": "ROOMRANDO"
+  },
+  "City of Tears": {
+    "name": "City of Tears",
+    "sceneName": "Ruins1_27",
+    "x": 29.6,
+    "y": 6.4,
+    "zone": "CITY",
+    "transition": "Ruins1_27[left1]",
+    "logic": "ROOMRANDO"
+  },
+  "Abyss": {
+    "name": "Abyss",
+    "sceneName": "Abyss_06_Core",
+    "x": 42.0,
+    "y": 5.4,
+    "zone": "ABYSS",
+    "transition": "Abyss_06_Core[right2]",
+    "logic": "ROOMRANDO"
+  },
+  "Fungal Core": {
+    "name": "Fungal Core",
+    "sceneName": "Fungus2_30",
+    "x": 64.8,
+    "y": 21.4,
+    "zone": "WASTES",
+    "transition": "Fungus2_30[top1]",
+    "logic": "ROOMRANDO"
+  }
+}
