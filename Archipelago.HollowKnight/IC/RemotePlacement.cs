@@ -20,9 +20,18 @@ namespace Archipelago.HollowKnight.IC
                 pmt = new RemotePlacement(SINGLETON_NAME);
                 CompletionWeightTag remoteCompletionWeightTag = pmt.AddTag<CompletionWeightTag>();
                 remoteCompletionWeightTag.Weight = 0;
+                InteropTag pinTag = new()
+                {
+                    Message = "RandoSupplementalMetadata",
+                    Properties = new()
+                    {
+                        ["DoNotMakePin"] = true,
+                    }
+                };
+                pmt.AddTag(pinTag);
                 ItemChangerMod.AddPlacements(pmt.Yield());
             }
-            return (RemotePlacement) pmt;
+            return (RemotePlacement)pmt;
         }
 
         protected override void OnLoad()
