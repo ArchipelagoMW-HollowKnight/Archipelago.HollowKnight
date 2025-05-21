@@ -235,7 +235,8 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<RepositionShadeModule>();
             ItemChangerMod.Modules.Add<BenchSyncModule>();
 
-            if (SlotData.Options.DeathLink)
+            if ((SlotData.Options.DeathLink && Instance.GS.DeathLinkOverride == DeathLinkOverride.UseYaml)
+                || Instance.GS.DeathLinkOverride == DeathLinkOverride.OverrideOn)
             {
                 ItemChangerMod.Modules.Add<DeathLinkModule>();
             }
