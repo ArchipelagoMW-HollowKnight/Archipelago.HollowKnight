@@ -8,7 +8,7 @@
     <Description>The Archipelago Multiworld client for Hollow Knight</Description>
     <Copyright>
     </Copyright>
-    <Version>0.9.0</Version>
+    <Version>0.10.0</Version>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>preview</LangVersion>
     <Company>The Archipelago Community</Company>

@@ -9,6 +9,7 @@ using ItemChanger.Extensions;
 using ItemChanger.Modules;
 using ItemChanger.Placements;
 using ItemChanger.Tags;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,6 +58,8 @@ namespace Archipelago.HollowKnight
             itemFactory = new ItemFactory();
             costFactory = new CostFactory(slotData.LocationCosts);
             NotchCosts = slotData.NotchCosts;
+
+            ArchipelagoMod.Instance.Log("Initializing ArchipelagoRandomizer with slot data: " + JsonConvert.SerializeObject(SlotData));
         }
 
         public void Randomize()
