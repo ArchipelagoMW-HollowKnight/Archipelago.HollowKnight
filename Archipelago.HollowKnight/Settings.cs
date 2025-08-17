@@ -17,7 +17,6 @@
     public record APLocalSettings
     {
         public ConnectionDetails ConnectionDetails { get; set; }
-        public int ItemIndex { get; set; }
         public string RoomSeed { get; set; }
         public long Seed { get; set; }
     }

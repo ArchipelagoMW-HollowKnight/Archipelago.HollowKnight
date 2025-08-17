@@ -1,4 +1,5 @@
-﻿using Archipelago.MultiClient.Net;
+﻿using Archipelago.HollowKnight.IC.Tags;
+using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Exceptions;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
@@ -105,12 +106,11 @@ namespace Archipelago.HollowKnight.IC.Modules
         {
             // Called when marking a location as checked remotely (i.e. through ReceiveItem, etc.)
             // This also grants items at said locations.
-            AbstractPlacement pmt;
             bool hadNewlyObtainedItems = false;
             bool hadUnobtainedItems = false;
 
             ArchipelagoMod.Instance.LogDebug($"Marking location {locationId} as checked.");
-            if (!ArchipelagoPlacementTag.PlacementsByLocationId.TryGetValue(locationId, out pmt))
+            if (!ArchipelagoPlacementTag.PlacementsByLocationId.TryGetValue(locationId, out AbstractPlacement pmt))
             {
                 ArchipelagoMod.Instance.LogDebug($"Could not find a placement for location {locationId}");
                 return;
@@ -186,12 +186,6 @@ namespace Archipelago.HollowKnight.IC.Modules
 
         private async Task Synchronize()
         {
-            // discard any items that we have already handled from previous sessions
-            for (int i = 0; i < ArchipelagoMod.Instance.LS.ItemIndex; i++)
-            {
-                ItemInfo seen = session.Items.DequeueItem();
-                ArchipelagoMod.Instance.LogDebug($"Fast-forwarding past already-obtained {seen.ItemName} at index {i}");
-            }
             // receive from the server any items that are pending
             while (ReceiveNextItem(true)) { }
             // ensure any already-checked locations (co-op, restarting save) are marked cleared
@@ -212,14 +206,7 @@ namespace Archipelago.HollowKnight.IC.Modules
                 return false; // No items are waiting.
             }
 
-            APLocalSettings settings = ArchipelagoMod.Instance.LS;
-
             ItemInfo itemInfo = session.Items.DequeueItem(); // Read the next item
-            if (settings.ItemIndex >= session.Items.Index) // We've already handled this, so be done
-            {
-                return true;
-            }
-            ArchipelagoMod.Instance.LogDebug($"Item Index from lib is: {session.Items.Index}. From APSettings it is: {settings.ItemIndex}");
 
             try
             {
@@ -228,10 +215,6 @@ namespace Archipelago.HollowKnight.IC.Modules
             catch (Exception ex)
             {
                 ArchipelagoMod.Instance.LogError($"Unexpected exception during receive for item {JsonConvert.SerializeObject(itemInfo.ToSerializable())}: {ex}");
-            }
-            finally
-            {
-                ArchipelagoMod.Instance.LS.ItemIndex++;
             }
 
             return true;
@@ -249,14 +232,25 @@ namespace Archipelago.HollowKnight.IC.Modules
                 return;
             }
 
+            ArchipelagoRemoteItemCounterModule remoteTracker = ItemChangerMod.Modules.GetOrAdd<ArchipelagoRemoteItemCounterModule>();
+            bool shouldReceive = remoteTracker.ShouldReceiveServerItem(itemInfo);
+            remoteTracker.IncrementServerCountForItem(itemInfo);
+            if (!shouldReceive)
+            {
+                ArchipelagoMod.Instance.LogDebug($"Fast-forwarding past already received item {name} from {itemInfo.Player} at location {itemInfo.LocationDisplayName} ({itemInfo.LocationId})");
+                return;
+            }
+
             // If we're still here, this is an item from someone else.  We'll make up our own dummy placement and grant the item.
             AbstractItem item = Finder.GetItem(name);
             if (item == null)
             {
-                ArchipelagoMod.Instance.LogDebug($"Could not find an item named '{name}'. " +
+                ArchipelagoMod.Instance.LogWarn($"Could not find an item named '{name}'. " +
                     $"This means that item {itemInfo.ItemId} was not received.");
                 return;
             }
+            ArchipelagoRemoteItemTag remoteItemTag = new(itemInfo);
+            item.AddTag(remoteItemTag);
 
             string sender;
             if (itemInfo.LocationId == -1)

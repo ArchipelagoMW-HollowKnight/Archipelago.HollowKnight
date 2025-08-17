@@ -3,7 +3,6 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ItemChanger;
 using ItemChanger.Tags;
-using System;
 using System.Collections.Generic;
 
 namespace Archipelago.HollowKnight.IC

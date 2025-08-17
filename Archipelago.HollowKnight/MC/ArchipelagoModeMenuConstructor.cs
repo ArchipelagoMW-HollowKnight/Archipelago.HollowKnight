@@ -164,7 +164,6 @@ namespace Archipelago.HollowKnight.MC
                 ArchipelagoMod.Instance.LS = new APLocalSettings()
                 {
                     ConnectionDetails = ArchipelagoMod.Instance.GS.MenuConnectionDetails with { },
-                    ItemIndex = 0
                 };
             }
             else if (ArchipelagoMod.Instance.LS.ConnectionDetails != null)

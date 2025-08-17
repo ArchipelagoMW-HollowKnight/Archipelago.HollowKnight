@@ -108,7 +108,6 @@ namespace Archipelago.HollowKnight
             if (randomize)
             {
                 LogDebug("StartOrResumeGame: Beginning first time randomization.");
-                LS.ItemIndex = 0;
                 LS.Seed = SlotData.Seed;
                 LS.RoomSeed = session.RoomState.Seed;
 
@@ -251,7 +250,7 @@ namespace Archipelago.HollowKnight
         /// <returns></returns>
         public APGlobalSettings OnSaveGlobal()
         {
-            var r = GS with
+            APGlobalSettings r = GS with
             {
                 MenuConnectionDetails = GS.MenuConnectionDetails with { ServerPassword = null }
             };
@@ -262,7 +261,7 @@ namespace Archipelago.HollowKnight
         {
             return [
                 new IMenuMod.MenuEntry(
-                    "Enable Gifting", 
+                    "Enable Gifting",
                     ["false", "true"],
                     "Enable or disable interaction with the Archipelago gifting system. Requires reloading the save to take effect.",
                     (v) => GS.EnableGifting = v == 1,
