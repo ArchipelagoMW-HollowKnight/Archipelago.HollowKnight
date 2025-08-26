@@ -88,6 +88,10 @@
 
         public bool DifficultSkips { get; set; }
 
+        public bool Slopeballs { get; set; }
+
+        public bool ShriekPogos { get; set; }
+
         public bool RemoveSpellUpgrades { get; set; }
 
         public bool RandomizeElevatorPass { get; set; }

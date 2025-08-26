@@ -272,6 +272,11 @@ namespace Archipelago.HollowKnight
             {
                 ItemChangerMod.Modules.Add<SplitSuperdash>();
             }
+
+            if (SlotData.Options.Slopeballs)
+            {
+                ItemChangerMod.Modules.Add<ToggleableFireballUpgrade>();
+            }
         }
 
         private void AddHelperPlatforms()
