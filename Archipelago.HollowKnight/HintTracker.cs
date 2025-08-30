@@ -20,7 +20,7 @@ public class HintTracker : Module
 {
 
     public static event Action OnArchipelagoHintUpdate;
-    
+
     /// <summary>
     ///  List of MultiClient.Net Hint's
     /// </summary>
@@ -34,6 +34,7 @@ public class HintTracker : Module
 
     private void UpdateHints(Hint[] arrayHints)
     {
+
         Hints = arrayHints.ToList();
         foreach (Hint hint in Hints)
         {
@@ -47,6 +48,8 @@ public class HintTracker : Module
                 continue;
             }
 
+            ArchipelagoMod.Instance.LogDebug($"Hint data received for item {hint.ItemId} at location {hint.LocationId}");
+
             AbstractPlacement placement = ArchipelagoPlacementTag.PlacementsByLocationId[hint.LocationId];
 
             if (placement == null)
@@ -58,12 +61,14 @@ public class HintTracker : Module
             foreach (ArchipelagoItemTag tag in placement.Items.Select(item => item.GetTag<ArchipelagoItemTag>())
                          .Where(tag => tag.Location == hint.LocationId))
             {
+                ArchipelagoMod.Instance.LogDebug("Setting hinted true for item");
                 tag.Hinted = true;
             }
 
             // if all items inside a placement have been hinted for then mark the entire placement as hinted.
             if (placement.Items.TrueForAll(item => item.GetTag<ArchipelagoItemTag>().Hinted))
             {
+                ArchipelagoMod.Instance.LogDebug("Setting hinted true for placement");
                 placement.GetTag<ArchipelagoPlacementTag>().Hinted = true;
             }
 
@@ -84,7 +89,7 @@ public class HintTracker : Module
                 }
                 MultiPreviewRecordTag previewRecordTag = shop.GetOrAddTag<MultiPreviewRecordTag>();
                 previewRecordTag.previewTexts ??= new string[shop.Items.Count];
-                
+
                 foreach ((string, AbstractItem item) p in previewText)
                 {
                     string str = p.Item1;
@@ -100,7 +105,7 @@ public class HintTracker : Module
                 List<string> previewText = new();
                 foreach (AbstractItem item in placement.Items)
                 {
-                    if(item.WasEverObtained())
+                    if (item.WasEverObtained())
                     {
                         continue;
                     }
@@ -167,7 +172,7 @@ public class HintTracker : Module
             {
                 if (hint.LocationId == location)
                 {
-                    hint.Found = true; 
+                    hint.Found = true;
                     try
                     {
                         OnArchipelagoHintUpdate?.Invoke();
