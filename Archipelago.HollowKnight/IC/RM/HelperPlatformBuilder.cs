@@ -21,19 +21,18 @@ namespace Archipelago.HollowKnight.IC.RM
 
         public static void AddStartLocationRequiredPlatforms(SlotOptions options)
         {
-            // FUTURE: when we support alternate starts, this should be updated based on the actual start location name
-            string startLocationName = "King's Pass";
+            string startLocationName = options.StartLocationName ?? StartLocationNames.Kings_Pass;
 
             switch (startLocationName)
             {
                 // Platforms to allow escaping the Hive start regardless of difficulty or initial items
-                case "Hive":
+                case StartLocationNames.Hive:
                     ItemChangerMod.AddDeployer(new SmallPlatform { SceneName = SceneNames.Hive_03, X = 58.5f, Y = 134f, Test = lacksRightClaw });
                     ItemChangerMod.AddDeployer(new SmallPlatform { SceneName = SceneNames.Hive_03, X = 58.5f, Y = 138.5f, Test = lacksAnyVertical });
                     break;
 
                 // Drop the vine platforms and add small platforms for jumping up.
-                case "Far Greenpath":
+                case StartLocationNames.Far_Greenpath:
                     ItemChangerMod.AddDeployer(new SmallPlatform { SceneName = SceneNames.Fungus1_13, X = 45f, Y = 16.5f, Test = lacksLeftClaw });
                     ItemChangerMod.AddDeployer(new SmallPlatform { SceneName = SceneNames.Fungus1_13, X = 64f, Y = 16.5f, Test = lacksRightClaw });
                     SD.Save(SceneNames.Fungus1_13, "Vine Platform (1)");
@@ -42,12 +41,11 @@ namespace Archipelago.HollowKnight.IC.RM
 
                 // With the Lower Greenpath start, getting to the rest of Greenpath requires
                 // cutting the vine to the right of the vessel fragment.
-                case "Lower Greenpath":
+                case StartLocationNames.Lower_Greenpath:
                     if (options.RandomizeNail)
                     {
                         SD.Save(SceneNames.Fungus1_13, "Vine Platform");
                     }
-
                     break;
             }
         }
@@ -56,8 +54,7 @@ namespace Archipelago.HollowKnight.IC.RM
         {
             // FUTURE: when we support room rando, this should be updated based on transition placements.
             HashSet<string> targetNames = new();
-            // FUTURE: when we support alternate starts, this should be updated based on the actual start location name
-            string startLocationName = "King's Pass";
+            string startLocationName = options.StartLocationName ?? StartLocationNames.Kings_Pass;
 
             if (!options.ExtraPlatforms)
             {
@@ -126,7 +123,7 @@ namespace Archipelago.HollowKnight.IC.RM
                 ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Fungus3_05, X = 65.7f, Y = 11f + 4.5f * i, Test = lacksRightClaw });
             }
 
-            if (startLocationName != "Hive")
+            if (startLocationName != StartLocationNames.Hive)
             {
                 ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Hive_03, X = 58.5f, Y = 134f, Test = lacksAnyVertical });
                 ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Hive_03, X = 58.5f, Y = 138.5f, Test = lacksAnyVertical });
@@ -144,7 +141,7 @@ namespace Archipelago.HollowKnight.IC.RM
             ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Ruins1_05c, X = 26.6f, Y = 73.2f, Test = lacksAnyVertical });
 
             // Platforms to climb back up to King's Pass with no items
-            if (!targetNames.Contains($"{SceneNames.Town}[right1]") && startLocationName == "King's Pass")
+            if (!targetNames.Contains($"{SceneNames.Town}[right1]") && startLocationName == StartLocationNames.Kings_Pass)
             {
                 for (int i = 0; i < 6; i++)
                 {
@@ -157,7 +154,7 @@ namespace Archipelago.HollowKnight.IC.RM
                 && !targetNames.Contains($"{SceneNames.Waterways_04}[left2]")
                 && !targetNames.Contains($"{SceneNames.Waterways_04b}[left1]")
                 && !targetNames.Contains($"{SceneNames.Waterways_09}[left1]")
-                && startLocationName != "West Waterways")
+                && startLocationName != StartLocationNames.West_Waterways)
             {
                 ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Waterways_04, X = 148f, Y = 23.1f, Test = lacksAnyVertical });
                 ItemChangerMod.AddDeployer(new SmallPlatform() { SceneName = SceneNames.Waterways_04, X = 139f, Y = 32f, Test = lacksAnyVertical });

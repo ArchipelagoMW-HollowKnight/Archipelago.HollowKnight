@@ -19,6 +19,7 @@
     <HollowKnightRefs>../API</HollowKnightRefs>
     <ExportDir>bin/Publish</ExportDir>
     <Authors>Hussein Farran, Daniel Grace, BadMagic, KonoTyran, Dragonglove</Authors>
+    <AdditionalFileItemNames>EmbeddedResource</AdditionalFileItemNames>
   </PropertyGroup>
   <!--
         Create this file somewhere in the project directory. It should contain a property group with HollowKnightRefs pointing to your Managed folder.
@@ -54,6 +55,10 @@
     </PackageReference>
     <PackageReference Include="Archipelago.Gifting.Net" Version="0.4.3" />
     <PackageReference Include="PolySharp" Version="1.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="RandoConstantGenerators" Version="1.2.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

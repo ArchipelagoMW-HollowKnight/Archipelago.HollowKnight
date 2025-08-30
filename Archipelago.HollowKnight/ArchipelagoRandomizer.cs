@@ -237,6 +237,7 @@ namespace Archipelago.HollowKnight
             ItemChangerMod.Modules.Add<HintTracker>();
             ItemChangerMod.Modules.Add<RepositionShadeModule>();
             ItemChangerMod.Modules.Add<BenchSyncModule>();
+            ItemChangerMod.Modules.Add<StartLocationSceneEditsModule>();
 
             if (SlotData.Options.DeathLink)
             {
