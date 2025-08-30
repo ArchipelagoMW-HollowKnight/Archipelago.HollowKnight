@@ -52,6 +52,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           path: artifacts
+      - run: Get-ChildItem -Recurse
       - name: Get build details
         id: details
         # this assumes that an MSBuild task that writes the SHA256 of the zip file to SHA.txt, and the mod version (usually
