@@ -1,6 +1,7 @@
-﻿using RandoConstantGenerators;
+﻿using DataDrivenConstants.Marker;
 
 namespace Archipelago.HollowKnight;
 
-[GenerateJsonConsts("$.*~", "Data/starts.json")]
+[JsonData("$.*~", "**/Data/starts.json")]
+[ReplacementRule("'", "")]
 public static partial class StartLocationNames { }

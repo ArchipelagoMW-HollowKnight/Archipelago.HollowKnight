@@ -19,7 +19,6 @@
     <HollowKnightRefs>../API</HollowKnightRefs>
     <ExportDir>bin/Publish</ExportDir>
     <Authors>Hussein Farran, Daniel Grace, BadMagic, KonoTyran, Dragonglove</Authors>
-    <AdditionalFileItemNames>EmbeddedResource</AdditionalFileItemNames>
   </PropertyGroup>
   <!--
         Create this file somewhere in the project directory. It should contain a property group with HollowKnightRefs pointing to your Managed folder.
@@ -46,6 +45,7 @@
   </Target>
   <ItemGroup>
     <EmbeddedResource Include="Resources\**\*" />
+    <AdditionalFiles Include="Resources\**\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
@@ -58,7 +58,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="RandoConstantGenerators" Version="1.2.0">
+    <PackageReference Include="DataDrivenConstants" Version="1.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
