@@ -49,7 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
-    <PackageReference Include="Archipelago.MultiClient.Net.Analyzers" Version="1.5.0">
+    <PackageReference Include="Archipelago.MultiClient.Net.Analyzers" Version="2.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -28,7 +28,7 @@ namespace Archipelago.HollowKnight.IC.Modules
         private Dictionary<BenchKey, Bench> benchLookup;
 
         [DataStorageProperty(nameof(session), Scope.Slot, DATASTORAGE_KEY_UNLOCKED_BENCHES)]
-        private readonly DataStorageElement _unlockedBenches;
+        private partial DataStorageElement UnlockedBenches { get; set; }
 
         public override async void Initialize()
         {
