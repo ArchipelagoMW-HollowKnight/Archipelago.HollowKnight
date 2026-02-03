@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup MAPI
-        uses: BadMagic100/setup-hk@v2
+        uses: BadMagic100/setup-hk@v3
         with:
           apiPath: API
           dependencyFilePath: Archipelago.HollowKnight/ModDependencies.txt
