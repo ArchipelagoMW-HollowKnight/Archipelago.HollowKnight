@@ -79,13 +79,6 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            // Add IC modules as needed
-            // FUTURE: If Entrance rando, disable palace midwarp and some logical blockers
-            // if (Entrance Rando Is Enabled) {
-            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.DisablePalaceMidWarp>();
-            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.RemoveInfectedBlockades>();
-            // }
-
             AddItemChangerModules();
             AddHelperPlatforms();
 
@@ -277,6 +270,16 @@ namespace Archipelago.HollowKnight
             if (SlotData.Options.Slopeballs)
             {
                 ItemChangerMod.Modules.Add<ToggleableFireballUpgrade>();
+            }
+
+            if (SlotData.Options.RandomizeEntrances)
+            {
+                ItemChangerMod.Modules.Add<EntranceRandomizerModule>();
+
+                // NOTE: This is leftover from prior comments but I'm leaving these here as I'm unsure where these should properly go with this new logic and it likely doesn't include other needed ones
+                // TODO: Disable palace midwarp and some logical blockers when we have entrance rando
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.DisablePalaceMidWarp>();
+                ItemChangerMod.Modules.Add<ItemChanger.Modules.RemoveInfectedBlockades>();
             }
         }
 
