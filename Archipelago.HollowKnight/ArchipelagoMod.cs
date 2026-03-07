@@ -18,6 +18,11 @@ namespace Archipelago.HollowKnight
 {
     public class ArchipelagoMod : Mod, IGlobalSettings<APGlobalSettings>, ILocalSettings<APLocalSettings>, IMenuMod
     {
+        internal class PreloadFactory(GameObject flowerPickup)
+        {
+            public GameObject GetNewFlowerPickup() => UnityEngine.Object.Instantiate(flowerPickup);
+        }
+
         // Events support
         public static event Action OnArchipelagoGameStarted;
         public static event Action OnArchipelagoGameEnded;
@@ -51,6 +56,8 @@ namespace Archipelago.HollowKnight
         public SlotData SlotData { get; private set; }
         public bool ArchipelagoEnabled { get; set; }
 
+        internal PreloadFactory Preloads { get; private set; }
+
         public bool ToggleButtonInsideMenu => false;
 
         internal SpriteManager spriteManager;
@@ -60,12 +67,18 @@ namespace Archipelago.HollowKnight
 
         public ArchipelagoMod() : base("Archipelago") { }
 
+        public override List<(string, string)> GetPreloadNames()
+        {
+            return [(SceneNames.Fungus3_49, "gg_white_flower")];
+        }
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             base.Initialize();
             Log("Initializing");
             Instance = this;
             spriteManager = new SpriteManager(typeof(ArchipelagoMod).Assembly, "Archipelago.HollowKnight.Resources.");
+            Preloads = new PreloadFactory(preloadedObjects[SceneNames.Fungus3_49]["gg_white_flower"]);
 
             MenuChanger.ModeMenu.AddMode(new ArchipelagoModeMenuConstructor());
             Log("Initialized");

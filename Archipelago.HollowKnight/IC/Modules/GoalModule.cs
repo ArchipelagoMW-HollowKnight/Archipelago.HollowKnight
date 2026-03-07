@@ -21,6 +21,12 @@ namespace Archipelago.HollowKnight.IC.Modules
         {
             goal = Goal.GetGoal(ArchipelagoMod.Instance.SlotData.Options.Goal);
             goal.Select();
+            // if the player could do godhome flower to goal, then place a flower in grey mourner
+            // as an insurance policy.
+            if (goal is EndingGoal or AnyGoal)
+            {
+                ItemChangerMod.Modules.GetOrAdd<RepickableFlowerModule>();
+            }
             Events.OnEnterGame += OnEnterGame;
         }
 
