@@ -34,7 +34,7 @@
 
     public enum ShuffleEntrancesMode
     {
-        Coupled = 1,
-        Decoupled = 2,
+        Coupled = 0,
+        Decoupled = 1,
     }
 }
