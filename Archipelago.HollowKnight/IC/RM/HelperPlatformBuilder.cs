@@ -50,10 +50,10 @@ namespace Archipelago.HollowKnight.IC.RM
             }
         }
 
-        public static void AddConveniencePlatforms(SlotOptions options)
+        public static void AddConveniencePlatforms(SlotData data)
         {
-            // FUTURE: when we support room rando, this should be updated based on transition placements.
-            HashSet<string> targetNames = new();
+            SlotOptions options = data.Options;
+            HashSet<string> targetNames = data.EntrancePairs != null ? [.. data.EntrancePairs.Values] : [];
             string startLocationName = options.StartLocationName ?? StartLocationNames.Kings_Pass;
 
             if (!options.ExtraPlatforms)

@@ -79,15 +79,9 @@ namespace Archipelago.HollowKnight
                 }
             }
 
-            // Add IC modules as needed
-            // FUTURE: If Entrance rando, disable palace midwarp and some logical blockers
-            // if (Entrance Rando Is Enabled) {
-            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.DisablePalaceMidWarp>();
-            //     ItemChangerMod.Modules.Add<ItemChanger.Modules.RemoveInfectedBlockades>();
-            // }
-
             AddItemChangerModules();
             AddHelperPlatforms();
+            ApplyTransitionOverrides();
 
             ApplyCharmCosts();
 
@@ -278,12 +272,66 @@ namespace Archipelago.HollowKnight
             {
                 ItemChangerMod.Modules.Add<ToggleableFireballUpgrade>();
             }
+
+            if (SlotData.Options.EntranceRandoType != EntranceRandoType.None)
+            {
+                HashSet<string> targetNames = SlotData.EntrancePairs != null ? [.. SlotData.EntrancePairs.Values] : [];
+                if (targetNames.Contains($"{SceneNames.White_Palace_18}[top1]")
+                    || targetNames.Contains($"{SceneNames.White_Palace_17}[right1]")
+                    || targetNames.Contains($"{SceneNames.White_Palace_19}[top1]"))
+                {
+                    ItemChangerMod.Modules.Add<ItemChanger.Modules.ReversePathOfPainSaw>();
+                }
+                ItemChangerMod.Modules.Add<DisablePalaceMidWarp>();
+                ItemChangerMod.Modules.Add<RemoveInfectedBlockades>();
+            }
         }
 
         private void AddHelperPlatforms()
         {
-            HelperPlatformBuilder.AddConveniencePlatforms(SlotData.Options);
+            HelperPlatformBuilder.AddConveniencePlatforms(SlotData);
             HelperPlatformBuilder.AddStartLocationRequiredPlatforms(SlotData.Options);
+        }
+
+        private void ApplyTransitionOverrides()
+        {
+            Dictionary<string, string> entrances = SlotData.EntrancePairs;
+
+            if (entrances == null || entrances.Count == 0)
+            {
+                ArchipelagoMod.Instance.Log("[ER] No entrance pairings provided");
+                return;
+            }
+
+            ArchipelagoMod.Instance.Log($"[ER] EntranceRandomizerModule initializing with {entrances.Count} entrances");
+
+            foreach (KeyValuePair<string, string> pair in entrances)
+            {
+                if (pair.Key == null || pair.Value == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    Transition sourceTransition = ParseTransition(pair.Key);
+                    Transition targetTransition = ParseTransition(pair.Value);
+
+                    ItemChangerMod.AddTransitionOverride(sourceTransition, targetTransition);
+
+                    ArchipelagoMod.Instance.LogDebug(
+                        $"[ER] Overrode transition: {pair.Key} -> {pair.Value}"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    ArchipelagoMod.Instance.LogWarn(
+                        $"[ER] Failed to parse transition pair {pair.Key} -> {pair.Value}: {ex.Message}"
+                    );
+                }
+            }
+
+            ArchipelagoMod.Instance.Log($"[ER] Finished overriding transitions");
         }
 
         private void ApplyCharmCosts()
@@ -392,6 +440,22 @@ namespace Archipelago.HollowKnight
             }
 
             return location;
+        }
+
+        private Transition ParseTransition(string transitionString)
+        {
+            int bracketStart = transitionString.IndexOf('[');
+            int bracketEnd = transitionString.IndexOf(']');
+
+            if (bracketStart < 0 || bracketEnd < 0)
+            {
+                throw new ArgumentException($"Invalid transition format: {transitionString}");
+            }
+
+            string sceneName = transitionString[..bracketStart].Trim();
+            string doorName = transitionString[(bracketStart + 1)..bracketEnd].Trim();
+
+            return new Transition(sceneName, doorName);
         }
     }
 }

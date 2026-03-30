@@ -22,5 +22,8 @@ namespace Archipelago.HollowKnight.SlotDataModel
 
         [JsonProperty("is_race")]
         public bool DisableLocalSpoilerLogs { get; set; }
+
+        [JsonProperty("entrance_pairs")]
+        public Dictionary<string, string> EntrancePairs { get; set; }
     }
 }

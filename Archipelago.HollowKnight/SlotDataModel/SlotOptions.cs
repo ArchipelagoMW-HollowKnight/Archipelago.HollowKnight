@@ -135,5 +135,9 @@
         public bool SplitCrystalHeart { get; set; }
 
         public bool AddUnshuffledLocations { get; set; }
+
+        public EntranceRandoType EntranceRandoType { get; set; }
+
+        public ShuffleEntrancesMode ShuffleEntrancesMode { get; set; }
     }
 }
