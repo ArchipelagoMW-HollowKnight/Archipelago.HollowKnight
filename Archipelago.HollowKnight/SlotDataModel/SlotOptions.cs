@@ -136,6 +136,8 @@
 
         public bool AddUnshuffledLocations { get; set; }
 
-        public bool RandomizeEntrances { get; set; }
+        public EntranceRandoType EntranceRandoType { get; set; }
+
+        public ShuffleEntrancesMode ShuffleEntrancesMode { get; set; }
     }
 }

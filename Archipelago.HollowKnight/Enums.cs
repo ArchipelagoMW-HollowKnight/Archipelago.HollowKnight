@@ -21,4 +21,20 @@
         NoPathOfPain = 2,
         Include = 3
     }
+
+    public enum EntranceRandoType
+    {
+        None = 0,
+        MapArea = 1,
+        FullArea = 2,
+        Room = 3,
+        ConnectedArea = 4,
+        Doors = 5,
+    }
+
+    public enum ShuffleEntrancesMode
+    {
+        Coupled = 1,
+        Decoupled = 2,
+    }
 }
